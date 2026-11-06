@@ -16,7 +16,7 @@ import {
 } from "../vendor/three-runtime.js";
 import { LANDSCAPE_BOUNDS, TERRARIUM_BOUNDS } from "../core/config.js";
 import { clamp, createSeededRandom, damp, smoothstep } from "../core/math.js";
-const STARFIELD_HEIGHT_OFFSET = 0.6;
+const STARFIELD_HEIGHT_OFFSET = 0.3;
 // Vertical gap between the world top and the top of the star band; stars and
 // meteors share it so the whole starfield stays one coherent shell.
 const STARFIELD_TOP_GAP = 1.7;

@@ -112,7 +112,7 @@ class AuroraEffect {
     }
     // Keep the curtains just a touch above their original height; the depth
     // repeats stay at the same band across the wider land.
-    const hemLift = 0.4;
+    const hemLift = 0.1;
     for (const ribbon of i) ribbon.y0 += hemLift;
     let l = 0;
     i.forEach((h, f) => {

@@ -4247,7 +4247,7 @@ void main() {
     sizeX: LANDSCAPE_BOUNDS.halfW * 2,
     sizeZ: LANDSCAPE_BOUNDS.halfD * 2
   };
-  const CLOUD_VISUAL_HEIGHT_OFFSET = 0.75;
+  const CLOUD_VISUAL_HEIGHT_OFFSET = 0.45;
   const CLOUD_LAYER_HEIGHTS = {
     minY: 4.5 + CLOUD_VISUAL_HEIGHT_OFFSET,
     maxY: 6.5 + CLOUD_VISUAL_HEIGHT_OFFSET,
@@ -4260,7 +4260,7 @@ void main() {
   };
   const CELESTIAL_ORBIT = {
     radius: 8.5,
-    center: [0, 5, -9.5],
+    center: [0, 4.7, -9.5],
     yaw: -0.55
   };
   function rotateCelestialDirection(r) {
@@ -21316,7 +21316,7 @@ void main() {
   }
 }
 {
-  const STARFIELD_HEIGHT_OFFSET = 0.6;
+  const STARFIELD_HEIGHT_OFFSET = 0.3;
   const STARFIELD_TOP_GAP = 1.7;
   const STAR_VERTEX_GLSL = `
 attribute vec3 aStar;      // seed, magnitude (0 faint … 1 bright), colour temperature
@@ -21949,7 +21949,7 @@ void main() {
           }
         }
       }
-      const hemLift = 0.4;
+      const hemLift = 0.1;
       for (const ribbon of i) ribbon.y0 += hemLift;
       let l = 0;
       i.forEach((h, f) => {

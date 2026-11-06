@@ -26,7 +26,7 @@ const FIELD_BOUNDS = {
 };
 // Display lift only: precipitation maps this added space back to its original
 // climate height without changing the world's lapse rate or ground climate.
-const CLOUD_VISUAL_HEIGHT_OFFSET = 0.75;
+const CLOUD_VISUAL_HEIGHT_OFFSET = 0.45;
 const CLOUD_LAYER_HEIGHTS = {
   minY: 4.5 + CLOUD_VISUAL_HEIGHT_OFFSET,
   maxY: 6.5 + CLOUD_VISUAL_HEIGHT_OFFSET,
@@ -42,7 +42,7 @@ const WATER_LEVEL_CONFIG = {
 const CELESTIAL_ORBIT = {
   // Display orbit behind the taller landscape; lighting still uses sunDir/moonDir.
   radius: 8.5,
-  center: [0, 5, -9.5],
+  center: [0, 4.7, -9.5],
   yaw: -0.55,
 };
 function rotateCelestialDirection(r) {

@@ -113,7 +113,25 @@ class LifeSystem {
       n("leaves", () => new FallingLeaves(t, this.group)),
       n("wisps", () => new WindWisps(t, this.group)),
       n("insects", () => new InsectSystem(t, this.group, this)),
-      n("birds", () => new BirdFlock(t, this.group, this)),
+      n(
+        "birds",
+        () =>
+          new BirdFlock(t, this.group, this, {
+            side: -1,
+            count: [5, 7, 9],
+            seed: 7151,
+          }),
+      ),
+      n(
+        "birdsEast",
+        () =>
+          new BirdFlock(t, this.group, this, {
+            side: 1,
+            count: [3, 4, 5],
+            seed: 7152,
+            roamDelay: 6,
+          }),
+      ),
       i.on("tree:shake", (a) => this.leaves?.shake?.(a, this.env)),
       i.on("wind:stroke", (a) => {
         (this.wisps?.stroke?.(a, this.env),
@@ -121,7 +139,7 @@ class LifeSystem {
           this.insects?.disturb?.(a.x, a.z, 0.6 + (a.strength || 0)));
       }));
     const o = (a, l, c) => {
-      (this.birds?.scatter?.(a, l, c), this.insects?.disturb?.(a, l, c));
+      (this.scatterBirds(a, l, c), this.insects?.disturb?.(a, l, c));
     };
     (i.on("tap", () => o(void 0, void 0, 1)),
       i.on("lightning", (a) => {
@@ -132,8 +150,9 @@ class LifeSystem {
       this._updateEnv(0),
       this._reset());
   }
-  scatterBirds(t, e) {
-    this.birds?.scatter?.(t, e, 1);
+  scatterBirds(x, z, strength = 1) {
+    this.birds?.scatter(x, z, strength);
+    this.birdsEast?.scatter(x, z, strength);
   }
   _updateEnv(t) {
     const { world: e, wind: i, fields: s } = this.ctx,

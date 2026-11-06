@@ -23612,9 +23612,21 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
     return w.setAttribute("position", new ThreeFloat32BufferAttribute(r, 3)), w.setAttribute("normal", new ThreeFloat32BufferAttribute(t, 3)), w.setAttribute("color", new ThreeFloat32BufferAttribute(e, 3)), w.setAttribute("aWing", new ThreeFloat32BufferAttribute(i, 2)), w.computeBoundingSphere(), w.boundingSphere.radius = 0.08, w;
   }
   let BirdFlock = class {
-    constructor(t, e, i) {
+    constructor(t, e, i, {
+      side,
+      count,
+      seed,
+      roamDelay = 0
+    }) {
       this.ctx = t, this.life = i;
-      const s = this.N = t.quality.pick(5, 7, 9),
+      this.random = createSeededRandom(seed);
+      this.homeX = side * 4;
+      this.homeZ = 1.5;
+      this.roamDelay = roamDelay;
+      const edge = LANDSCAPE_BOUNDS.halfW - 0.15;
+      this.minX = side < 0 ? -edge : 0;
+      this.maxX = side < 0 ? 0 : edge;
+      const s = this.N = t.quality.pick(...count),
         n = createBirdGeometry();
       this.flap = new ThreeInstancedBufferAttribute(new Float32Array(s * 4), 4).setUsage(ThreeDynamicDrawUsage), n.setAttribute("iFlap", this.flap);
       const o = new ThreeMeshStandardMaterial({
@@ -23645,10 +23657,10 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
       a.onBeforeCompile = l => {
         l.vertexShader = BIRD_VERTEX_DECLARATIONS + l.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>
 ` + BIRD_WING_TRANSFORM.replace("#ifdef BIRD_NORMALS", "#if 0"));
-      }, a.customProgramCacheKey = () => "wg-life-birds-depth", this.mesh = new ThreeInstancedMesh(n, o, s), this.mesh.name = "life-birds", this.mesh.castShadow = !0, this.mesh.receiveShadow = !1, this.mesh.customDepthMaterial = a, this.mesh.frustumCulled = !1, this.mesh.instanceMatrix.setUsage(ThreeDynamicDrawUsage);
-      for (let l = 0; l < s; l++) l % 3 === 2 ? birdColorScratch.setRGB(1.35, 1, 0.7) : birdColorScratch.setRGB(0.75, 0.82, 1.08), birdColorScratch.multiplyScalar(0.9 + Math.random() * 0.2), this.mesh.setColorAt(l, birdColorScratch);
+      }, a.customProgramCacheKey = () => "wg-life-birds-depth", this.mesh = new ThreeInstancedMesh(n, o, s), this.mesh.name = side < 0 ? "life-birds" : "life-birds-east", this.mesh.castShadow = !0, this.mesh.receiveShadow = !1, this.mesh.customDepthMaterial = a, this.mesh.frustumCulled = !1, this.mesh.instanceMatrix.setUsage(ThreeDynamicDrawUsage);
+      for (let l = 0; l < s; l++) l % 3 === 2 ? birdColorScratch.setRGB(1.35, 1, 0.7) : birdColorScratch.setRGB(0.75, 0.82, 1.08), birdColorScratch.multiplyScalar(0.9 + this.random() * 0.2), this.mesh.setColorAt(l, birdColorScratch);
       e.add(this.mesh), this.px = new Float32Array(s), this.py = new Float32Array(s), this.pz = new Float32Array(s), this.vx = new Float32Array(s), this.vy = new Float32Array(s), this.vz = new Float32Array(s), this.state = new Uint8Array(s), this.timer = new Float32Array(s), this.perch = new Int16Array(s).fill(-1), this.phase = new Float32Array(s), this.amp = new Float32Array(s), this.fold = new Float32Array(s), this.tilt = new Float32Array(s), this.yaw = new Float32Array(s), this.pitch = new Float32Array(s), this.roll = new Float32Array(s), this.burst = new Float32Array(s), this.hop = new Float32Array(s), this.look = new Float32Array(s), this.speed = new Float32Array(s);
-      for (let l = 0; l < s; l++) this.speed[l] = 1.15 + Math.random() * 0.35;
+      for (let l = 0; l < s; l++) this.speed[l] = 1.15 + this.random() * 0.35;
       this.goal = new ThreeVector3(0, 2.2, 0.5), this.goalT = 0, this.mode = "roam", this.modeT = 14, this.panic = 0, this.perches = [], this.occupied = [], this._stay = null, this._treeRegistry = getTreeRegistry(t), this._treeRevision = -1, this._buildPerches();
     }
     hide() {
@@ -23658,7 +23670,7 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
       const previous = this.perches;
       const perches = [];
       const add = (perch, anchor, slot, source) => {
-        if (Math.abs(perch.x) > LANDSCAPE_BOUNDS.halfW - 0.15 || Math.abs(perch.z) > LANDSCAPE_BOUNDS.halfD - 0.15) return;
+        if (perch.x < this.minX || perch.x >= this.maxX || Math.abs(perch.z) > LANDSCAPE_BOUNDS.halfD - 0.15) return;
         perches.push({
           ...perch,
           anchor,
@@ -23750,7 +23762,7 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
         if (this.occupied[c] >= 0) continue;
         const h = l[c];
         if (s === "shelter" && !h.shelter || s === "roost" && !h.roost && !h.shelter || s === "open" && h.shelter) continue;
-        const f = Math.hypot(h.x - t, h.z - i) + Math.abs(h.y - e) * 0.3 + Math.random() * 0.25;
+        const f = Math.hypot(h.x - t, h.z - i) + Math.abs(h.y - e) * 0.3 + this.random() * 0.25;
         f < a && f < n && (a = f, o = c);
       }
       return o;
@@ -23760,23 +23772,23 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
       const e = this._wantStay(t);
       this._stay = e;
       const i = this._activeCount(t);
-      this.panic = 0, this.mode = "roam", this.modeT = 10 + Math.random() * 10, this._newGoal();
+      this.panic = 0, this.mode = "roam", this.modeT = 10 + this.roamDelay + this.random() * 5, this._newGoal(true);
       for (let s = 0; s < this.N; s++) {
         if (this.perch[s] = -1, e || s >= i) {
-          const o = this._pickPerch((Math.random() - 0.5) * 6, 1, (Math.random() - 0.5) * 4, e === "shelter" ? "shelter" : "roost");
+          const o = this._pickPerch(this.homeX + (this.random() - 0.5) * 6, 1, this.homeZ + (this.random() - 0.5) * 4, e === "shelter" ? "shelter" : "roost");
           if (o >= 0) {
             this._settle(s, o);
             continue;
           }
         }
         const n = s / this.N * Math.PI * 2;
-        this.px[s] = this.goal.x + Math.cos(n) * 0.35, this.py[s] = this.goal.y + (Math.random() - 0.5) * 0.2, this.pz[s] = this.goal.z + Math.sin(n) * 0.3, this.vx[s] = 1.1, this.vy[s] = 0, this.vz[s] = 0.3, this.state[s] = BIRD_FLYING, this.fold[s] = 0, this.amp[s] = 0.8, this.phase[s] = Math.random() * 6.28;
+        this.px[s] = this.goal.x + Math.cos(n) * 0.35, this.py[s] = this.goal.y + (this.random() - 0.5) * 0.2, this.pz[s] = this.goal.z + Math.sin(n) * 0.3, this.vx[s] = Math.sign(this.homeX) * 1.1, this.vy[s] = 0, this.vz[s] = 0.3, this.state[s] = BIRD_FLYING, this.fold[s] = 0, this.amp[s] = 0.8, this.phase[s] = this.random() * 6.28;
       }
       this._write(0);
     }
     _settle(t, e) {
       const i = this.perches[e];
-      this.perch[t] = e, this.occupied[e] = t, this.state[t] = BIRD_PERCHED, this.px[t] = i.x, this.py[t] = i.y, this.pz[t] = i.z, this.vx[t] = this.vy[t] = this.vz[t] = 0, this.fold[t] = 1, this.amp[t] = 0, this.yaw[t] = Math.random() * 6.28, this.pitch[t] = 0, this.roll[t] = 0, this.timer[t] = 5 + Math.random() * 10;
+      this.perch[t] = e, this.occupied[e] = t, this.state[t] = BIRD_PERCHED, this.px[t] = i.x, this.py[t] = i.y, this.pz[t] = i.z, this.vx[t] = this.vy[t] = this.vz[t] = 0, this.fold[t] = 1, this.amp[t] = 0, this.yaw[t] = this.random() * 6.28, this.pitch[t] = 0, this.roll[t] = 0, this.timer[t] = 5 + this.random() * 10;
     }
     _wantStay(t) {
       return t.rain > 0.2 || t.storm > 0.45 || t.snow > 0.5 ? "shelter" : t.night > 0.6 ? "roost" : null;
@@ -23784,18 +23796,27 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
     _activeCount(t) {
       return Math.max(1, Math.round(this.N * clamp(t.activity * 1.1, 0.2, 1)));
     }
-    _newGoal() {
-      const t = this.ctx.terrain;
-      for (let e = 0; e < 8; e++) {
-        const i = (Math.random() - 0.5) * 2 * (LANDSCAPE_BOUNDS.halfW - 1.4),
-          s = (Math.random() - 0.5) * 2 * (LANDSCAPE_BOUNDS.halfD - 1.1) + 0.3,
-          n = t.height(i, s);
-        if (!(n > 2.6)) {
-          this.goal.set(i, Math.min(n + 0.9 + Math.random() * 1, this._ceiling(i, s) - 0.2), s);
+    _newGoal(startAtHome = false) {
+      const {
+        terrain
+      } = this.ctx;
+      let x = this.homeX;
+      let z = this.homeZ;
+      if (!startAtHome) {
+        const minX = this.minX + 1.4;
+        const maxX = this.maxX - 1.4;
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const sampleX = minX + this.random() * (maxX - minX);
+          const sampleZ = (this.random() - 0.5) * 2 * (LANDSCAPE_BOUNDS.halfD - 1.1) + 0.3;
+          if (terrain.height(sampleX, sampleZ) > 2.6) continue;
+          x = sampleX;
+          z = sampleZ;
           break;
         }
       }
-      this.goalT = 4 + Math.random() * 5;
+      const height = terrain.height(x, z);
+      this.goal.set(x, Math.min(height + 0.9 + this.random(), this._ceiling(x, z) - 0.2), z);
+      this.goalT = 4 + this.random() * 5;
     }
     _ceiling(t, e) {
       let i = LANDSCAPE_BOUNDS.topY - 0.7;
@@ -23810,8 +23831,9 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
     }
     scatter(t, e, i = 1) {
       const s = this._stay;
-      this.panic = Math.max(this.panic, s ? 1.1 : 2.2 + i * 0.6);
       const n = s && t !== void 0 ? 1.6 : 4 + i * 2;
+      if (t !== void 0 && !this.px.some((x, bird) => Math.hypot(x - t, this.pz[bird] - e) <= n)) return;
+      this.panic = Math.max(this.panic, s ? 1.1 : 2.2 + i * 0.6);
       for (let o = 0; o < this.N; o++) {
         if (t !== void 0 && Math.hypot(this.px[o] - t, this.pz[o] - e) > n) {
           this.state[o] === BIRD_PERCHED && (this.hop[o] = 0.18);
@@ -23819,11 +23841,11 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
         }
         if (this.state[o] === BIRD_PERCHED || this.state[o] === BIRD_LANDING) {
           this._freePerch(o), this.state[o] = BIRD_FLYING;
-          const a = Math.random() * Math.PI * 2;
-          this.vx[o] = Math.cos(a) * 0.9, this.vz[o] = Math.sin(a) * 0.9, this.vy[o] = 1.2 + Math.random() * 0.6, this.amp[o] = 1.1, this.burst[o] = 1.2, this.timer[o] = 0.25 * o;
-        } else this.vx[o] += (Math.random() - 0.5) * 1.6, this.vy[o] += 0.5 + Math.random() * 0.5, this.vz[o] += (Math.random() - 0.5) * 1.6, this.burst[o] = 1;
+          const a = this.random() * Math.PI * 2;
+          this.vx[o] = Math.cos(a) * 0.9, this.vz[o] = Math.sin(a) * 0.9, this.vy[o] = 1.2 + this.random() * 0.6, this.amp[o] = 1.1, this.burst[o] = 1.2, this.timer[o] = 0.25 * o;
+        } else this.vx[o] += (this.random() - 0.5) * 1.6, this.vy[o] += 0.5 + this.random() * 0.5, this.vz[o] += (this.random() - 0.5) * 1.6, this.burst[o] = 1;
       }
-      this.mode = "roam", this.modeT = Math.max(this.modeT, 6 + Math.random() * 6), this._newGoal();
+      this.mode = "roam", this.modeT = Math.max(this.modeT, 6 + this.random() * 6), this._newGoal();
     }
     update(t, e, i) {
       this._treeRegistry.revision !== this._treeRevision && this._buildPerches();
@@ -23837,7 +23859,7 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
       const o = this._activeCount(i);
       this.panic = Math.max(0, this.panic - t);
       const a = this.panic > 0;
-      if (this.goalT -= t, this.goalT <= 0 && this._newGoal(), this.modeT -= t, !a) if (n ? this.mode = "stay" : this.mode === "stay" && (this.mode = "roam", this.modeT = 8 + Math.random() * 8, this._releaseAll(0.4, 3)), n) for (let m = 0; m < s; m++) {
+      if (this.goalT -= t, this.goalT <= 0 && this._newGoal(), this.modeT -= t, !a) if (n ? this.mode = "stay" : this.mode === "stay" && (this.mode = "roam", this.modeT = 8 + this.random() * 8, this._releaseAll(0.4, 3)), n) for (let m = 0; m < s; m++) {
         if (this.state[m] === BIRD_PERCHED) continue;
         if (this.state[m] === BIRD_LANDING) {
           const y = this.perches[this.perch[m]];
@@ -23846,15 +23868,15 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
         const w = this._pickPerch(this.px[m], this.py[m], this.pz[m], n);
         w >= 0 && this._approach(m, w);
       } else if (this.mode === "roam" && this.modeT <= 0) {
-        this.mode = "rest", this.modeT = 9 + Math.random() * 9;
+        this.mode = "rest", this.modeT = 9 + this.random() * 9;
         const m = this.perches,
-          w = m.length ? m[Math.floor(Math.random() * m.length)] : null;
+          w = m.length ? m[Math.floor(this.random() * m.length)] : null;
         for (let y = 0; y < s; y++) {
           if (this.state[y] !== BIRD_FLYING) continue;
           const _ = w ? this._pickPerch(w.x, w.y, w.z, "open", 2.5) : -1;
           _ >= 0 && this._approach(y, _);
         }
-      } else this.mode === "rest" && this.modeT <= 0 && (this.mode = "roam", this.modeT = 12 + Math.random() * 14, this._newGoal(), this._releaseAll(0.35, o));
+      } else this.mode === "rest" && this.modeT <= 0 && (this.mode = "roam", this.modeT = 12 + this.random() * 14, this._newGoal(), this._releaseAll(0.35, o));
       let l = 0,
         c = 0,
         h = 0,
@@ -23864,8 +23886,11 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
         p = 0;
       for (let m = 0; m < s; m++) this.state[m] === BIRD_FLYING && (l += this.px[m], c += this.py[m], h += this.pz[m], f += this.vx[m], u += this.vy[m], d += this.vz[m], p++);
       p && (l /= p, c /= p, h /= p, f /= p, u /= p, d /= p);
+      const {
+        minX,
+        maxX
+      } = this;
       const v = this.ctx.terrain,
-        g = LANDSCAPE_BOUNDS.halfW - 0.15,
         x = LANDSCAPE_BOUNDS.halfD - 0.15;
       for (let m = 0; m < s; m++) {
         const w = this.state[m];
@@ -23913,13 +23938,13 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
             Zt = X.y + Math.min(0.35, Qt * 0.45) - b,
             J = Math.hypot(vt, Zt, gt);
           if (Math.hypot(vt, X.y - b, gt) < 0.03) {
-            this._settle(m, this.perch[m]), this.timer[m] = 4 + Math.random() * 10;
+            this._settle(m, this.perch[m]), this.timer[m] = 4 + this.random() * 10;
             continue;
           }
           const nt = Math.min(this.speed[m] * 1.1, J * 2.4 + 0.12);
           y += (vt / (J || 1) * nt - this.vx[m]) * 4.5, _ += (Zt / (J || 1) * nt - this.vy[m]) * 4.5, M += (gt / (J || 1) * nt - this.vz[m]) * 4.5, this.timer[m] -= t, this.timer[m] < -12 && (this._freePerch(m), this.state[m] = BIRD_FLYING);
         }
-        if (A > g ? y -= (A - g) * 9 : A < -g && (y -= (A + g) * 9), S > x ? M -= (S - x) * 9 : S < -x && (M -= (S + x) * 9), w === BIRD_FLYING) {
+        if (A > maxX ? y -= (A - maxX) * 9 : A < minX && (y -= (A - minX) * 9), S > x ? M -= (S - x) * 9 : S < -x && (M -= (S + x) * 9), w === BIRD_FLYING) {
           const vt = Math.max(v.height(A, S), v.height(A + this.vx[m] * 0.6, S + this.vz[m] * 0.6)) + 0.38;
           b < vt && (_ += (vt - b) * 14);
           const gt = this._ceiling(A, S);
@@ -23968,13 +23993,13 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
       let i = 0;
       for (let s = 0; s < this.N; s++) if (this.state[s] === BIRD_PERCHED) {
         if (i >= e) break;
-        this.timer[s] = Math.min(this.timer[s], i * t + Math.random() * 0.3), i++;
+        this.timer[s] = Math.min(this.timer[s], i * t + this.random() * 0.3), i++;
       }
     }
     _takeoff(t) {
       this._freePerch(t), this.state[t] = BIRD_FLYING;
       const e = this.yaw[t];
-      this.vx[t] = Math.sin(e) * 0.7, this.vz[t] = Math.cos(e) * 0.7, this.vy[t] = 0.9 + Math.random() * 0.3, this.amp[t] = 1, this.burst[t] = 0.8, this.fold[t] = 0.3;
+      this.vx[t] = Math.sin(e) * 0.7, this.vz[t] = Math.cos(e) * 0.7, this.vy[t] = 0.9 + this.random() * 0.3, this.amp[t] = 1, this.burst[t] = 0.8, this.fold[t] = 0.3;
     }
     _perched(t, e, i, s, n, o, a) {
       const l = this.perches[this.perch[t]];
@@ -23982,7 +24007,7 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
         this.state[t] = BIRD_FLYING;
         return;
       }
-      this.look[t] -= e, this.look[t] <= 0 && (this.look[t] = 0.6 + Math.random() * 2.2, this.yaw[t] += (Math.random() - 0.5) * 2.2, Math.random() < 0.25 && (this.hop[t] = 0.18)), this.hop[t] = Math.max(0, this.hop[t] - e);
+      this.look[t] -= e, this.look[t] <= 0 && (this.look[t] = 0.6 + this.random() * 2.2, this.yaw[t] += (this.random() - 0.5) * 2.2, this.random() < 0.25 && (this.hop[t] = 0.18)), this.hop[t] = Math.max(0, this.hop[t] - e);
       const c = this.hop[t] > 0 ? Math.sin(this.hop[t] / 0.18 * Math.PI) * 0.012 : 0;
       this.px[t] = l.x, this.py[t] = l.y + c, this.pz[t] = l.z, this.fold[t] = damp(this.fold[t], this.hop[t] > 0 ? 0.6 : 1, 8, e), this.amp[t] = damp(this.amp[t], this.hop[t] > 0 ? 0.5 : 0, 8, e), this.phase[t] += e * 9, this.pitch[t] = damp(this.pitch[t], 0.15 + (Math.sin(i * 0.7 + t) > 0.85 ? 0.5 : 0), 6, e), this.roll[t] = damp(this.roll[t], 0, 6, e), this.tilt[t] = Math.sin(i * 0.9 + t * 3.1) > 0.8 ? 1 : 0, !(a || n) && (t >= o || (this.timer[t] -= e, this.timer[t] <= 0 && this.mode !== "rest" ? this._takeoff(t) : this.timer[t] <= -4 && this._takeoff(t)));
     }
@@ -26203,18 +26228,28 @@ void main() {
           console.error(`[life] ${a} failed to initialise`, c);
         }
       };
-      n("smoke", () => new ChimneySmoke(t, this.group, this.props.chimneyTop)), n("leaves", () => new FallingLeaves(t, this.group)), n("wisps", () => new WindWisps(t, this.group)), n("insects", () => new InsectSystem(t, this.group, this)), n("birds", () => new BirdFlock(t, this.group, this)), i.on("tree:shake", a => this.leaves?.shake?.(a, this.env)), i.on("wind:stroke", a => {
+      n("smoke", () => new ChimneySmoke(t, this.group, this.props.chimneyTop)), n("leaves", () => new FallingLeaves(t, this.group)), n("wisps", () => new WindWisps(t, this.group)), n("insects", () => new InsectSystem(t, this.group, this)), n("birds", () => new BirdFlock(t, this.group, this, {
+        side: -1,
+        count: [5, 7, 9],
+        seed: 7151
+      })), n("birdsEast", () => new BirdFlock(t, this.group, this, {
+        side: 1,
+        count: [3, 4, 5],
+        seed: 7152,
+        roamDelay: 6
+      })), i.on("tree:shake", a => this.leaves?.shake?.(a, this.env)), i.on("wind:stroke", a => {
         this.wisps?.stroke?.(a, this.env), this.leaves?.stroke?.(a, this.env), this.insects?.disturb?.(a.x, a.z, 0.6 + (a.strength || 0));
       });
       const o = (a, l, c) => {
-        this.birds?.scatter?.(a, l, c), this.insects?.disturb?.(a, l, c);
+        this.scatterBirds(a, l, c), this.insects?.disturb?.(a, l, c);
       };
       i.on("tap", () => o(void 0, void 0, 1)), i.on("lightning", a => {
         o(a?.end?.x, a?.end?.z, 2), this.insects?.flash?.();
       }), i.on("splash", a => this.boatSystem.splash(a)), i.on("scenario", () => this._reset()), this._updateEnv(0), this._reset();
     }
-    scatterBirds(t, e) {
-      this.birds?.scatter?.(t, e, 1);
+    scatterBirds(x, z, strength = 1) {
+      this.birds?.scatter(x, z, strength);
+      this.birdsEast?.scatter(x, z, strength);
     }
     _updateEnv(t) {
       const {

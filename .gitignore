@@ -1,0 +1,40 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+.vite/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials*.json
+*.local
+
+# Work files and generated reports
+.qa/
+output/
+exports/
+previews/
+reports/*
+!reports/module-order.json
+*.log
+*.tmp
+*.bak
+
+# Raw asset archives and intermediate models
+assets/*.zip
+assets/*.ply
+assets/source-models/
+assets/model-references/
+assets/imported-models/high-detail/
+assets/characters/source/
+
+# Editor and operating system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini

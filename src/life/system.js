@@ -14,6 +14,7 @@ import { FallingLeaves } from "./leaves.js";
 import { WindWisps } from "./wisps.js";
 import { InsectSystem } from "./insects.js";
 import { BirdFlock } from "./birds.js";
+import { MigrationGeese } from "./migration-geese.js";
 class LifeSystem {
   constructor(t) {
     this.ctx = t;
@@ -132,6 +133,7 @@ class LifeSystem {
             roamDelay: 6,
           }),
       ),
+      n("migrationGeese", () => new MigrationGeese(t, this.group)),
       i.on("tree:shake", (a) => this.leaves?.shake?.(a, this.env)),
       i.on("wind:stroke", (a) => {
         (this.wisps?.stroke?.(a, this.env),

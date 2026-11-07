@@ -76,6 +76,8 @@ import "./props/material.js";
 import "./life/smoke.js";
 import "./landmarks/train-smoke.js";
 import "./life/birds.js";
+import "./life/migration-goose-geometry.js";
+import "./life/migration-geese.js";
 import "./life/butterfly-habitat.js";
 import "./life/insects.js";
 import "./life/leaves.js";

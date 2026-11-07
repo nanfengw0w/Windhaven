@@ -4260,7 +4260,7 @@ void main() {
   };
   const CELESTIAL_ORBIT = {
     radius: 8.5,
-    center: [0, 4.7, -9.5],
+    center: [0, 5, -9.5],
     yaw: -0.55
   };
   function rotateCelestialDirection(r) {
@@ -7456,7 +7456,7 @@ vec3 applyHaze(vec3 col, float d, float heightY) {
       return console.error("[scenario] spawn", e), null;
     }
   }
-  const FEATURED_WEATHER_SCENARIOS = ["calm", "rain", "storm", "snow", "meteor"];
+  const FEATURED_WEATHER_SCENARIOS = ["calm", "rain", "storm", "snow", "meteor", "migration"];
   const SCENARIOS = {
     calm(r) {
       const {
@@ -7651,6 +7651,22 @@ vec3 applyHaze(vec3 col, float d, float heightY) {
         y: CLOUD_LAYER_HEIGHTS.maxY - 0.3,
         size: 0.9,
         water: 0.35
+      });
+    },
+    migration(ctx) {
+      const {
+        world
+      } = ctx;
+      world.season = 2.15;
+      world.timeOfDay = 0.735;
+      world.tempOffset = 0;
+      getCloudModule(ctx)?.clear?.();
+      spawnScenarioCloud(ctx, {
+        x: 4.4,
+        z: -6.1,
+        y: CLOUD_LAYER_HEIGHTS.defaultY + 0.45,
+        size: 0.82,
+        water: 0.24
       });
     }
   };
@@ -24020,6 +24036,236 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
   };
 }
 {
+  const WING_ROOT_X = 0.009;
+  const WING_TIP_X = 0.125;
+  const BODY_SIDES = 6;
+  const BODY_PROFILE = [[-0.069, 0.003, 0.004, 0.0015], [-0.05, 0.002, 0.012, 0.004], [-0.031, 0, 0.018, 0.012], [-0.005, 0, 0.021, 0.017], [0.02, 0.002, 0.015, 0.013], [0.034, 0.006, 0.008, 0.009], [0.048, 0.011, 0.005, 0.006], [0.072, 0.014, 0.0048, 0.005], [0.083, 0.016, 0.0068, 0.0064], [0.094, 0.015, 0.006, 0.005], [0.097, 0.014, 0.0035, 0.0028], [0.108, 0.013, 0.001, 0.001]];
+  const WING_PROFILE = [[WING_ROOT_X, 0.002, 0.017, -0.029], [0.033, 0.005, 0.023, -0.038], [0.059, 0.008, 0.019, -0.046], [0.085, 0.007, 0.007, -0.053], [0.106, 0.004, -0.007, -0.055], [0.119, 0.002, -0.02, -0.052], [WING_TIP_X, 0.001, -0.035, -0.044]];
+  function createMigrationGooseGeometry() {
+    const positions = [];
+    const wingSides = [];
+    const indices = [];
+    const vertex = (x, y, z, wingSide = 0) => {
+      positions.push(x, y, z);
+      wingSides.push(wingSide);
+    };
+    const quad = (a, b, c, d) => indices.push(a, b, c, a, c, d);
+    for (const [z, centerY, width, height] of BODY_PROFILE) {
+      for (let side = 0; side < BODY_SIDES; side++) {
+        const angle = side / BODY_SIDES * Math.PI * 2;
+        vertex(Math.cos(angle) * width, centerY + Math.sin(angle) * height, z);
+      }
+    }
+    for (let ring = 0; ring < BODY_PROFILE.length - 1; ring++) {
+      const start = ring * BODY_SIDES;
+      for (let side = 0; side < BODY_SIDES; side++) {
+        const a = start + side;
+        const b = start + (side + 1) % BODY_SIDES;
+        quad(a, b, b + BODY_SIDES, a + BODY_SIDES);
+      }
+    }
+    const head = (BODY_PROFILE.length - 1) * BODY_SIDES;
+    for (let side = 1; side < BODY_SIDES - 1; side++) {
+      indices.push(0, side + 1, side, head, head + side, head + side + 1);
+    }
+    for (const side of [-1, 1]) {
+      const start = wingSides.length;
+      for (const [x, y, leading, trailing] of WING_PROFILE) {
+        vertex(x * side, y, leading, side);
+        vertex(x * side, y + 0.004, leading * 0.6 + trailing * 0.4, side);
+        vertex(x * side, y - 0.002, trailing, side);
+      }
+      for (let station = 0; station < WING_PROFILE.length - 1; station++) {
+        const a = start + station * 3;
+        quad(a, a + 1, a + 4, a + 3);
+        quad(a + 1, a + 2, a + 5, a + 4);
+      }
+    }
+    const geometry = new ThreeBufferGeometry();
+    geometry.setAttribute("position", new ThreeFloat32BufferAttribute(positions, 3));
+    geometry.setAttribute("aGooseWingSide", new ThreeFloat32BufferAttribute(wingSides, 1));
+    geometry.setIndex(indices);
+    geometry.computeBoundingSphere();
+    return geometry;
+  }
+  function createMigrationGooseMaterial() {
+    const material = new ThreeMeshBasicMaterial({
+      color: 0x2e2220,
+      side: ThreeDoubleSide
+    });
+    material.name = "migration-goose-silhouette";
+    bindMapClipping(material);
+    const clipShader = material.onBeforeCompile;
+    const clipProgramKey = material.customProgramCacheKey();
+    material.onBeforeCompile = shader => {
+      clipShader(shader);
+      shader.vertexShader = `attribute float aGooseWingSide;
+attribute vec2 aGooseFlap; // phase, amplitude in radians
+` + shader.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>
+if (abs(aGooseWingSide) > 0.5) {
+  vec2 hinge = vec2(${WING_ROOT_X} * aGooseWingSide, 0.002);
+  vec2 wing = transformed.xy - hinge;
+  float span = abs(wing.x) / ${WING_TIP_X - WING_ROOT_X};
+  float lag = 0.65 * smoothstep(0.35, 1.0, span);
+  float angle = (0.10 + sin(aGooseFlap.x - lag) * aGooseFlap.y) * aGooseWingSide;
+  float c = cos(angle);
+  float s = sin(angle);
+  transformed.xy = hinge + mat2(c, s, -s, c) * wing;
+}`);
+    };
+    material.customProgramCacheKey = () => `wg-migration-goose-${clipProgramKey}`;
+    return material;
+  }
+}
+{
+  const MIGRATION_LANES = [{
+    phase: 24.5,
+    duration: 36,
+    period: 44,
+    scale: 1,
+    chains: [[39, 0, 40, 0, -1.8, -0.85, 0.5], [24, 0.85, 23, 0.32, 1.95, 0.64, -0.42], [9, 27, 36, 0.95, 2.05, 0.36, 0.48]],
+    waypoints: [[31, 5.1, 2.2], [12, 4.6, 0.9], [8, 5.35, -1.35], [4.2, 5.72, -3], [0, 5.48, -1.9], [-4, 5.22, 1], [-7.5, 5, 2], [-12, 4.9, 0.45], [-35, 4.65, -5]]
+  }, {
+    phase: 13,
+    duration: 38,
+    period: 47,
+    scale: 1.14,
+    chains: [[13, 0, 11.5, 0.25, -1.6, 0.6, 0.42], [15, 14.5, 27, -0.85, 1.6, -0.25, -0.35], [11, 30, 40.5, 0.9, -0.45, -0.44, 0.58]],
+    waypoints: [[32, 4.3, 19], [13, 4.05, 11], [8, 3.75, 6.1], [4, 3.7, 2.9], [-0.5, 4, 1.6], [-4, 4.4, 0.7], [-8, 4.4, -0.25], [-12, 4.25, -0.5], [-36, 4, -3]]
+  }, {
+    phase: 30,
+    duration: 35,
+    period: 41,
+    scale: 0.72,
+    chains: [[14, 0, 12, 0, 1.42, -0.25, 0.3], [7, 0.7, 7.3, -0.24, -1.28, 0.08, -0.18], [13, 15.5, 27.5, -0.5, -1.5, -0.38, 0.52], [6, 16.4, 22.5, -0.2, 0.85, 0.3, 0.1], [13, 31, 43, 0.9, -0.85, 0.52, 0.34]],
+    waypoints: [[33, 6.4, -18], [13, 7, -10], [8, 8.55, -6.2], [4, 7.65, -4.6], [-1, 6.55, -4.9], [-6, 6.05, -5.6], [-11, 5.6, -4.8], [-39, 5.5, 4.7]]
+  }];
+  function createMigrationFormation(chains, density, unitsPerSecond, scale, random) {
+    const birds = [];
+    for (const [count, start, end, startSide, endSide, bend, lift] of chains) {
+      const groupSeed = random() * 100;
+      const gaps = Array.from({
+        length: count - 1
+      }, () => 0.45 + random() * 1.1);
+      const totalGap = gaps.reduce((total, gap) => total + gap, 0);
+      const retained = Math.max(2, Math.round(count * density));
+      let next = 0;
+      let gap = 0;
+      for (let index = 0; index < count; index++) {
+        const progress = index === count - 1 ? 1 : gap / totalGap;
+        const distance = lerp(start, end, progress);
+        if (index < gaps.length) gap += gaps[index];
+        const arc = Math.sin(progress * Math.PI);
+        const bird = {
+          delay: distance / unitsPerSecond,
+          lateral: lerp(startSide, endSide, progress) + arc * bend + (random() - 0.5) * 0.26,
+          lift: lift * arc + (random() - 0.5) * 0.33,
+          groupSeed,
+          size: scale * (0.88 + random() * 0.24),
+          phase: random() * Math.PI * 2,
+          wingRate: 10 + random() * 6
+        };
+        if (index === Math.round(next * (count - 1) / (retained - 1))) {
+          birds.push(bird);
+          next++;
+        }
+      }
+    }
+    return birds;
+  }
+  class MigrationGeese {
+    constructor(ctx, group) {
+      this.world = ctx.world;
+      this.flow = createSimplexNoise(27631);
+      const random = createSeededRandom(55129);
+      const density = ctx.quality.pick(0.56, 0.77, 1);
+      this.lanes = MIGRATION_LANES.map(lane => {
+        const curve = new Ry.CatmullRomCurve3(lane.waypoints.map(point => new ThreeVector3(...point)));
+        const unitsPerSecond = curve.getLength() / lane.duration;
+        return {
+          phase: lane.phase,
+          duration: lane.duration,
+          period: lane.period,
+          curve,
+          birds: createMigrationFormation(lane.chains, density, unitsPerSecond, lane.scale, random)
+        };
+      });
+      const capacity = this.lanes.reduce((total, lane) => total + lane.birds.length, 0);
+      this.flap = new ThreeInstancedBufferAttribute(new Float32Array(capacity * 2), 2);
+      this.flap.setUsage(ThreeDynamicDrawUsage);
+      const geometry = createMigrationGooseGeometry();
+      geometry.setAttribute("aGooseFlap", this.flap);
+      this.mesh = new ThreeInstancedMesh(geometry, createMigrationGooseMaterial(), capacity);
+      this.mesh.name = "life-migration-geese";
+      this.mesh.instanceMatrix.setUsage(ThreeDynamicDrawUsage);
+      this.mesh.frustumCulled = false;
+      this.mesh.userData.noReflect = true;
+      group.add(this.mesh);
+      this.position = new ThreeVector3();
+      this.tangent = new ThreeVector3();
+      this.scale = new ThreeVector3();
+      this.rotation = new ThreeEuler(0, 0, 0, "YXZ");
+      this.quaternion = new ThreeQuaternion();
+      this.matrix = new ThreeMatrix4();
+      this.reset();
+    }
+    hide() {
+      this.mesh.visible = false;
+      this.mesh.count = 0;
+    }
+    reset() {
+      this.elapsed = 0;
+      this.hide();
+    }
+    update(dt, _time, env) {
+      const {
+        sunElevation
+      } = this.world;
+      if (env.autumn < 0.5 || env.time < 0.5 || sunElevation < -0.18 || sunElevation > 0.32) {
+        this.reset();
+        return;
+      }
+      this.elapsed += dt;
+      let visible = 0;
+      for (const lane of this.lanes) {
+        const laneTime = this.elapsed + lane.phase;
+        for (const bird of lane.birds) {
+          const flightTime = laneTime - bird.delay;
+          const wave = Math.floor(flightTime / lane.period);
+          const age = flightTime - wave * lane.period;
+          const progress = age / lane.duration;
+          if (progress <= 0 || progress >= 1) continue;
+          const point = lane.curve.getPointAt(progress, this.position);
+          const tangent = lane.curve.getTangentAt(progress, this.tangent);
+          const bob = this.elapsed * 1.7 + bird.phase;
+          const groupSeed = bird.groupSeed + wave * 6.3;
+          const sway = this.flow.noise2((age + bird.delay) * 0.16, groupSeed);
+          const lift = this.flow.noise2(age * 0.14, groupSeed + 101);
+          const spacing = bird.lateral * (1 + 0.17 * sway) + 0.52 * sway + Math.sin(bob * 0.53) * 0.14;
+          point.x -= tangent.z * spacing;
+          point.z += tangent.x * spacing;
+          point.y += bird.lift + 0.43 * lift + Math.sin(bob) * 0.105;
+          if (Math.abs(point.x) > LANDSCAPE_BOUNDS.halfW + 0.2 || Math.abs(point.z) > LANDSCAPE_BOUNDS.halfD + 0.2) continue;
+          this.scale.setScalar(bird.size);
+          this.rotation.set(-Math.asin(tangent.y) + Math.sin(bob) * 0.045, Math.atan2(tangent.x, tangent.z) + 0.06 * sway, Math.sin(bob * 0.7) * 0.13 + 0.12 * sway);
+          this.quaternion.setFromEuler(this.rotation);
+          this.matrix.compose(point, this.quaternion, this.scale);
+          this.mesh.setMatrixAt(visible, this.matrix);
+          const beat = Math.sin(this.elapsed * 2.35 + bird.phase);
+          this.flap.setXY(visible, this.elapsed * bird.wingRate + bird.phase, 0.62 * smoothstep(-0.4, 0.65, beat));
+          visible++;
+        }
+      }
+      this.mesh.count = visible;
+      this.mesh.visible = visible > 0;
+      if (visible > 0) {
+        this.mesh.instanceMatrix.needsUpdate = true;
+        this.flap.needsUpdate = true;
+      }
+    }
+  }
+}
+{
   const leafWindScratch = {
     x: 0,
     z: 0
@@ -26237,7 +26483,7 @@ void main() {
         count: [3, 4, 5],
         seed: 7152,
         roamDelay: 6
-      })), i.on("tree:shake", a => this.leaves?.shake?.(a, this.env)), i.on("wind:stroke", a => {
+      })), n("migrationGeese", () => new MigrationGeese(t, this.group)), i.on("tree:shake", a => this.leaves?.shake?.(a, this.env)), i.on("wind:stroke", a => {
         this.wisps?.stroke?.(a, this.env), this.leaves?.stroke?.(a, this.env), this.insects?.disturb?.(a.x, a.z, 0.6 + (a.strength || 0));
       });
       const o = (a, l, c) => {
@@ -30736,6 +30982,7 @@ void main() {
     rain: createHudSvg('<path d="M7 14.5h9.5a3.6 3.6 0 0 0 .5-7.1 5 5 0 0 0-9.6 1.1A3 3 0 0 0 7 14.5z"/><path d="M8.5 17.5l-1 2.5M12.5 17.5l-1 2.5M16.5 17.5l-1 2.5"/>', 'stroke-width="2"'),
     storm: createHudSvg('<path d="M6.5 14.5a3.1 3.1 0 0 1-.1-6.2 5 5 0 0 1 9.7-1.1 3.7 3.7 0 0 1 1.5 7.1"/><path d="m12.5 11-4 6h4l-1 4 5-7h-4z"/>'),
     meteor: createHudSvg('<path d="m20.5 3.5-9 9M20.5 9l-5 5M15 3.5l-5 5"/><path d="m7 11 1.5 3.5L12 16l-3.5 1.5L7 21l-1.5-3.5L2 16l3.5-1.5z"/>'),
+    migration: createHudSvg('<path d="M3 17h18M6 20h12M7 17a5 5 0 0 1 10 0M3 8q2-.5 3.5 2 1.5-2.5 3.5-2M13 6q2-.5 3.5 2 1.5-2.5 3.5-2"/>'),
     flake: createHudSvg(`<path d="${createSnowflakePath(12, 12, 9, 3)}"/>`, 'stroke-width="2"'),
     spring: `<svg class="wg-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${createFlowerIconMarkup()}</svg>`,
     summer: createHudSvg(`<circle cx="12" cy="12" r="4.3" fill="currentColor" stroke="none"/><path d="${createSunRayPath(12, 12, 6.8, 9.6)}" stroke-width="1.9"/>`),
@@ -32298,6 +32545,10 @@ void main() {
     name: "meteor",
     label: "流星雨",
     icon: "meteor"
+  }, {
+    name: "migration",
+    label: "秋暮雁阵",
+    icon: "migration"
   }];
   class WeatherPresets {
     constructor(ctx, hud, root) {

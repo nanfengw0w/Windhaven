@@ -115,6 +115,9 @@ const HUD_ICONS = {
   meteor: createHudSvg(
     '<path d="m20.5 3.5-9 9M20.5 9l-5 5M15 3.5l-5 5"/><path d="m7 11 1.5 3.5L12 16l-3.5 1.5L7 21l-1.5-3.5L2 16l3.5-1.5z"/>',
   ),
+  migration: createHudSvg(
+    '<path d="M3 17h18M6 20h12M7 17a5 5 0 0 1 10 0M3 8q2-.5 3.5 2 1.5-2.5 3.5-2M13 6q2-.5 3.5 2 1.5-2.5 3.5-2"/>',
+  ),
   flake: createHudSvg(
     `<path d="${createSnowflakePath(12, 12, 9, 3)}"/>`,
     'stroke-width="2"',

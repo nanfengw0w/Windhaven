@@ -14,7 +14,14 @@ function spawnScenarioCloud(r, t) {
     return (console.error("[scenario] spawn", e), null);
   }
 }
-const FEATURED_WEATHER_SCENARIOS = ["calm", "rain", "storm", "snow", "meteor"];
+const FEATURED_WEATHER_SCENARIOS = [
+  "calm",
+  "rain",
+  "storm",
+  "snow",
+  "meteor",
+  "migration",
+];
 const SCENARIOS = {
   calm(r) {
     const { world: t } = r;
@@ -239,6 +246,20 @@ const SCENARIOS = {
         size: 0.9,
         water: 0.35,
       }));
+  },
+  migration(ctx) {
+    const { world } = ctx;
+    world.season = 2.15;
+    world.timeOfDay = 0.735;
+    world.tempOffset = 0;
+    getCloudModule(ctx)?.clear?.();
+    spawnScenarioCloud(ctx, {
+      x: 4.4,
+      z: -6.1,
+      y: CLOUD_LAYER_HEIGHTS.defaultY + 0.45,
+      size: 0.82,
+      water: 0.24,
+    });
   },
 };
 function extendScenarioWeather(ctx, name) {

@@ -42,7 +42,7 @@ const WATER_LEVEL_CONFIG = {
 const CELESTIAL_ORBIT = {
   // Display orbit behind the taller landscape; lighting still uses sunDir/moonDir.
   radius: 8.5,
-  center: [0, 4.7, -9.5],
+  center: [0, 5, -9.5],
   yaw: -0.55,
 };
 function rotateCelestialDirection(r) {

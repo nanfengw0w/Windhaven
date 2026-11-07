@@ -129,6 +129,8 @@
   "props/cabin-and-yard.js",
   "props/material.js",
   "life/birds.js",
+  "life/migration-goose-geometry.js",
+  "life/migration-geese.js",
   "life/leaves.js",
   "life/tree-fruit-motion.js",
   "life/tree-fruit-material.js",

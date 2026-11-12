@@ -24501,15 +24501,6 @@ void main() {
   });
 }
 {
-  const LANTERN_PAPER_LIGHT = `
-  float paper = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722));
-  float wick = exp(-4.0 * abs(vPaperHeight - 0.24));
-  vec3 amber = paper * vec3(1.0, 0.57, 0.24);
-  float paperTransmission = 0.22 + (0.47 + 0.16 * wick) * vLanternFlame;
-  outgoingLight = mix(outgoingLight, amber, 0.62) * paperTransmission;
-  outgoingLight += vec3(0.39, 0.133, 0.031) * wick * vLanternFlame
-    * smoothstep(0.08, 0.6, paper);
-`;
   function sampleLanternFlame(time, phase) {
     const rate = 1.55 + 0.23 * Math.sin(phase);
     const breath = 0.5 + 0.5 * Math.sin(time * rate + phase);
@@ -24519,35 +24510,40 @@ void main() {
 }
 {
   const MODEL_URL = new URL("../../assets/sky-lantern/aholo-kongming.glb", import.meta.url);
+  const LANTERN_GLOW_INTENSITY = 0.38;
+  const LANTERN_GLOW_COLOR = 0xffe2c0;
   function createLanternMaterial(source) {
-    const material = new Ry.MeshBasicMaterial({
+    const material = new Ry.MeshStandardMaterial({
       color: source.color,
       map: source.map,
+      emissiveMap: source.map,
+      emissive: new Ry.Color(LANTERN_GLOW_COLOR),
+      emissiveIntensity: LANTERN_GLOW_INTENSITY,
       alphaMap: source.alphaMap,
       alphaTest: source.alphaTest,
       side: source.side,
       vertexColors: source.vertexColors,
+      roughness: 1,
+      metalness: 0,
       transparent: true,
-      depthWrite: false,
-      forceSinglePass: true
+      depthWrite: false
     });
     material.onBeforeCompile = shader => {
       shader.vertexShader = shader.vertexShader.replace("#include <common>", `#include <common>
         attribute float aLanternOpacity;
         attribute float aLanternFlame;
         varying float vLanternOpacity;
-        varying float vLanternFlame;
-        varying float vPaperHeight;`).replace("#include <begin_vertex>", `#include <begin_vertex>
+        varying float vLanternFlame;`).replace("#include <begin_vertex>", `#include <begin_vertex>
         vLanternOpacity = aLanternOpacity;
-        vLanternFlame = aLanternFlame;
-        vPaperHeight = position.y + 0.5;`);
+        vLanternFlame = aLanternFlame;`);
       shader.fragmentShader = shader.fragmentShader.replace("#include <common>", `#include <common>
         varying float vLanternOpacity;
-        varying float vLanternFlame;
-        varying float vPaperHeight;`).replace("#include <opaque_fragment>", `${LANTERN_PAPER_LIGHT}
-        diffuseColor.a *= vLanternOpacity;
+        varying float vLanternFlame;`).replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        totalEmissiveRadiance *= vLanternOpacity
+          * mix(0.85, 1.0, clamp(vLanternFlame, 0.0, 1.0));`).replace("#include <opaque_fragment>", `diffuseColor.a *= vLanternOpacity;
         #include <opaque_fragment>`);
     };
+    material.customProgramCacheKey = () => "sky-lantern-window-glow-v1";
     return material;
   }
   function instanceLanternModel(scene, opacity, flame) {

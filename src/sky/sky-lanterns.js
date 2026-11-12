@@ -8,27 +8,37 @@ import {
   smoothstep,
 } from "../core/math.js";
 import { CharacterGLTFLoader } from "../character/gltf-loader.js";
-import { LANTERN_PAPER_LIGHT, sampleLanternFlame } from "./lantern-light.js";
+import { sampleLanternFlame } from "./lantern-light.js";
 
 const MODEL_URL = new URL(
   "../../assets/sky-lantern/aholo-kongming.glb",
   import.meta.url,
 );
+// Same emissive-atlas window-glow language as the imported buildings, but
+// deliberately much dimmer: these are large, close paper props, not windows.
+const LANTERN_GLOW_INTENSITY = 0.38;
+const LANTERN_GLOW_COLOR = 0xffe2c0;
 
 function createLanternMaterial(source) {
-  const material = new Ry.MeshBasicMaterial({
+  // Use the same emissive-atlas treatment as the imported buildings' window
+  // glow, but much dimmer and tinted like paper. The base texture doubles as
+  // the glow atlas, so dark seams and the frame stay dark while the paper
+  // carries the light.
+  const material = new Ry.MeshStandardMaterial({
     color: source.color,
     map: source.map,
+    emissiveMap: source.map,
+    emissive: new Ry.Color(LANTERN_GLOW_COLOR),
+    emissiveIntensity: LANTERN_GLOW_INTENSITY,
     alphaMap: source.alphaMap,
     alphaTest: source.alphaTest,
     side: source.side,
     vertexColors: source.vertexColors,
+    roughness: 1,
+    metalness: 0,
     transparent: true,
     depthWrite: false,
-    forceSinglePass: true,
   });
-  // Light the paper from the base and keep the texture's dark seams. The
-  // lanterns are self-lit props and do not cast light into the valley.
   material.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -37,31 +47,34 @@ function createLanternMaterial(source) {
         attribute float aLanternOpacity;
         attribute float aLanternFlame;
         varying float vLanternOpacity;
-        varying float vLanternFlame;
-        varying float vPaperHeight;`,
+        varying float vLanternFlame;`,
       )
       .replace(
         "#include <begin_vertex>",
         `#include <begin_vertex>
         vLanternOpacity = aLanternOpacity;
-        vLanternFlame = aLanternFlame;
-        vPaperHeight = position.y + 0.5;`,
+        vLanternFlame = aLanternFlame;`,
       );
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <common>",
         `#include <common>
         varying float vLanternOpacity;
-        varying float vLanternFlame;
-        varying float vPaperHeight;`,
+        varying float vLanternFlame;`,
+      )
+      .replace(
+        "#include <emissivemap_fragment>",
+        `#include <emissivemap_fragment>
+        totalEmissiveRadiance *= vLanternOpacity
+          * mix(0.85, 1.0, clamp(vLanternFlame, 0.0, 1.0));`,
       )
       .replace(
         "#include <opaque_fragment>",
-        `${LANTERN_PAPER_LIGHT}
-        diffuseColor.a *= vLanternOpacity;
+        `diffuseColor.a *= vLanternOpacity;
         #include <opaque_fragment>`,
       );
   };
+  material.customProgramCacheKey = () => "sky-lantern-window-glow-v1";
   return material;
 }
 

@@ -8,6 +8,7 @@ const WEATHER_PRESET_BUTTONS = [
   { name: "snow", label: "冬日飘雪", icon: "flake" },
   { name: "meteor", label: "流星雨", icon: "meteor" },
   { name: "migration", label: "秋暮雁阵", icon: "migration" },
+  { name: "lanterns", label: "孔明灯", icon: "lanterns" },
 ];
 
 class WeatherPresets {

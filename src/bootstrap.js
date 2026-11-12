@@ -51,6 +51,7 @@ import { CloudSystem } from "./clouds/system.js";
 import { PrecipitationSystem } from "./precipitation/system.js";
 import { FogSystem } from "./fog/system.js";
 import { HudSystem } from "./hud/system.js";
+import { AholoCreate } from "./generation/aholo-create.js";
 import { CameraInspector } from "./hud/camera-inspector.js";
 import { CharacterSystem } from "./character/system.js";
 import { AudioController } from "./audio/controller.js";
@@ -83,6 +84,7 @@ const MODULE_REGISTRY = [
   ["fog", FogSystem],
   ["backdrop", BackdropSystem],
   ["hud", HudSystem],
+  ["aholo", AholoCreate],
   ["mountainRuins", MountainRuins],
   ["character", CharacterSystem],
 ];

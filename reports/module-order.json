@@ -1,5 +1,6 @@
 [
   "vendor/three-runtime.js",
+  "vendor/transform-controls.js",
   "core/config.js",
   "core/events.js",
   "core/quality.js",
@@ -115,6 +116,9 @@
   "sky/stars-and-meteors.js",
   "sky/rainbow.js",
   "sky/aurora.js",
+  "character/gltf-loader.js",
+  "sky/lantern-light.js",
+  "sky/sky-lanterns.js",
   "sky/sky-system.js",
   "props/geometry.js",
   "props/cabin-dimensions.js",
@@ -210,7 +214,6 @@
   "layout/exploration-layout.js",
   "simulation/water-surface.js",
   "simulation/exploration-navigation.js",
-  "character/gltf-loader.js",
   "character/model.js",
   "character/animation.js",
   "character/drag.js",
@@ -218,5 +221,8 @@
   "core/exploration.js",
   "core/photo-mode.js",
   "core/camera-views.js",
+  "generation/valley-saves.js",
+  "generation/model-thumbnails.js",
+  "generation/aholo-create.js",
   "bootstrap.js"
 ]

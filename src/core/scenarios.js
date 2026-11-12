@@ -21,6 +21,7 @@ const FEATURED_WEATHER_SCENARIOS = [
   "snow",
   "meteor",
   "migration",
+  "lanterns",
 ];
 const SCENARIOS = {
   calm(r) {
@@ -260,6 +261,13 @@ const SCENARIOS = {
       size: 0.82,
       water: 0.24,
     });
+  },
+  lanterns(ctx) {
+    const { world } = ctx;
+    world.season = 1;
+    world.timeOfDay = 0.96;
+    world.tempOffset = 0;
+    getCloudModule(ctx)?.clear?.();
   },
 };
 function extendScenarioWeather(ctx, name) {

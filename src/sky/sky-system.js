@@ -9,6 +9,7 @@ import { SkyAtmosphere } from "./atmosphere.js";
 import { StarsAndMeteors } from "./stars-and-meteors.js";
 import { RainbowEffect } from "./rainbow.js";
 import { AuroraEffect } from "./aurora.js";
+import { SkyLanterns } from "./sky-lanterns.js";
 const wrapTimeOfDay = (r) => ((r % 1) + 1) % 1;
 class SkySystem {
   constructor(t) {
@@ -21,6 +22,7 @@ class SkySystem {
       (this.atmosphere = new SkyAtmosphere(t, this.group)),
       (this.stars = new StarsAndMeteors(t, this.group)),
       (this.aurora = new AuroraEffect(t, this.group)),
+      (this.lanterns = new SkyLanterns(t, this.group)),
       (this.rainbowFx = new RainbowEffect(t, this.group)),
       (this.grabbing = null),
       (this.sunVisibility = 0),
@@ -127,6 +129,7 @@ class SkySystem {
       this.atmosphere.update(t),
       this.stars.update(t),
       this.aurora.update(t, e),
+      this.lanterns.update(t),
       this.ctx.input.hover?.handler?.name !== "sky" &&
         (this.orbs.sun.hovered = this.orbs.moon.hovered = !1));
   }

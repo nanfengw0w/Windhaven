@@ -16,7 +16,7 @@ bootstrap 建立共享上下文 `ctx`，其中包括场景、相机、渲染器�
 audio → sky → terrain → water → vegetation → landscapeVegetation
 → willows → alpineTown → farm → woodworkingYard → hikingTrail
 → life → treeFruit → clouds → precipitation → fog → backdrop
-→ hud → mountainRuins → character
+→ hud → aholo → mountainRuins → character
 ```
 
 这是生命周期顺序，不是 ES 模块导入图。模块构造、`update` 和 `beforeRender` 的错误分别记录，出错模块被禁用，其他模块继续运行。初始天气、URL 气候参数和水位确定后，人物再初始化安全落脚点，随后创建探索、拍照及镜头协调器。
@@ -63,6 +63,8 @@ HUD / 指针 / 键盘
 | `src/sky/`、`clouds/`、`precipitation/`、`fog/` | 日月、天空、云与降水、雾场                               |
 | `src/backdrop/`                                 | 随镜头和天气变化的背景球及光晕                           |
 | `src/hud/`                                      | 工具栏、天气、季节、时间、设置、镜头及模式面板           |
+| `src/generation/`                               | Aholo Lux3D 造物台、GLB 归一化、放置与天气材质补丁       |
+| `server/`                                        | Aholo API 代理、任务轮询、生成资产缓存与生产静态服务     |
 | `src/audio/`                                    | 程序合成的环境声音和交互音效                             |
 | `src/dev/`                                      | 开发环境中的地形、模型和柳树检查入口                     |
 | `src/geometry/`、`src/vendor/`                  | 几何辅助与冻结的第三方依赖                               |

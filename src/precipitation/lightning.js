@@ -722,6 +722,19 @@ class LightningSystem {
         f = h + 0.25 - 0.35 * c;
       f > o && ((o = f), e.set(l.x, h, l.z));
     }
+    // Aholo-generated shrines act as lightning rods: tall enough to attract
+    // strikes and close enough to the cloud's target column.
+    for (const landmark of i.aholoLandmarks || []) {
+      if (landmark.role !== "shrine") continue;
+      const c = Math.hypot(landmark.x - t.x, landmark.z - t.z);
+      if (c > 1.8) continue;
+      const h =
+        (landmark.y ?? i.terrain.height(landmark.x, landmark.z)) +
+        (landmark.height ?? 0.8) +
+        0.12;
+      const f = h - 0.35 * c;
+      f > o && ((o = f), e.set(landmark.x, h, landmark.z));
+    }
     return (
       (e.x = Math.max(
         -LANDSCAPE_BOUNDS.halfW + 0.2,

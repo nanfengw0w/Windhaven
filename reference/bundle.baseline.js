@@ -4222,6 +4222,7 @@ void main() {
 	}
 
 }`;class rT{constructor(){this.texture=null,this.mesh=null,this.depthNear=0,this.depthFar=0;}init(t,e){if(this.texture===null){const i=new ThreeExternalTexture(t.texture);(t.depthNear!==e.depthNear||t.depthFar!==e.depthFar)&&(this.depthNear=t.depthNear,this.depthFar=t.depthFar),this.texture=i;}}getMesh(t){if(this.texture!==null&&this.mesh===null){const e=t.cameras[0].viewport,i=new ThreeShaderMaterial({vertexShader:nT,fragmentShader:oT,uniforms:{depthColor:{value:this.texture},depthWidth:{value:e.z},depthHeight:{value:e.w}}});this.mesh=new ThreeMesh(new ThreePlaneGeometry(20,20),i);}return this.mesh;}reset(){this.texture=null,this.mesh=null;}getDepthTexture(){return this.texture;}}class aT extends ThreeEventDispatcher{constructor(t,e){super();const i=this;let s=null,n=1,o=null,a="local-floor",l=1,c=null,h=null,f=null,u=null,d=null,p=null;const v=typeof XRWebGLBinding<"u",g=new rT(),x={},m=e.getContextAttributes();let w=null,y=null;const _=[],M=[],A=new ThreeVector2();let b=null,S=null;const E=new ThreePerspectiveCamera();E.viewport=new ThreeVector4();const T=new ThreePerspectiveCamera();T.viewport=new ThreeVector4();const R=[E,T],z=new ThreeArrayCamera();let L=null,k=null;this.cameraAutoUpdate=!0,this.enabled=!1,this.isPresenting=!1,this.getController=function(J){let nt=_[J];return nt===void 0&&(nt=new ThreeWebXRController(),_[J]=nt),nt.getTargetRaySpace();},this.getControllerGrip=function(J){let nt=_[J];return nt===void 0&&(nt=new ThreeWebXRController(),_[J]=nt),nt.getGripSpace();},this.getHand=function(J){let nt=_[J];return nt===void 0&&(nt=new ThreeWebXRController(),_[J]=nt),nt.getHandSpace();};function U(J){const nt=M.indexOf(J.inputSource);if(nt===-1)return;const mt=_[nt];mt!==void 0&&(mt.update(J.inputSource,J.frame,c||o),mt.dispatchEvent({type:J.type,data:J.inputSource}));}function F(){s.removeEventListener("select",U),s.removeEventListener("selectstart",U),s.removeEventListener("selectend",U),s.removeEventListener("squeeze",U),s.removeEventListener("squeezestart",U),s.removeEventListener("squeezeend",U),s.removeEventListener("end",F),s.removeEventListener("inputsourceschange",G);for(let J=0;J<_.length;J++){const nt=M[J];nt!==null&&(M[J]=null,_[J].disconnect(nt));}L=null,k=null,g.reset();for(const J in x)delete x[J];if(t.setRenderTarget(w),d=null,u=null,f=null,s=null,y=null,Zt.stop(),i.isPresenting=!1,t.setPixelRatio(b),t.setSize(A.width,A.height,!1),S!==null){const J=S.camera;J.fov=S.fov,J.zoom=S.zoom,J.updateProjectionMatrix(),S=null;}i.dispatchEvent({type:"sessionend"});}this.setFramebufferScaleFactor=function(J){n=J,i.isPresenting===!0&&Threewarn("WebXRManager: Cannot change framebuffer scale while presenting.");},this.setReferenceSpaceType=function(J){a=J,i.isPresenting===!0&&Threewarn("WebXRManager: Cannot change reference space type while presenting.");},this.getReferenceSpace=function(){return c||o;},this.setReferenceSpace=function(J){c=J;},this.getBaseLayer=function(){return u!==null?u:d;},this.getBinding=function(){return f===null&&v&&(f=new XRWebGLBinding(s,e)),f;},this.getFrame=function(){return p;},this.getSession=function(){return s;},this.setSession=async function(J){if(s=J,s!==null){if(w=t.getRenderTarget(),s.addEventListener("select",U),s.addEventListener("selectstart",U),s.addEventListener("selectend",U),s.addEventListener("squeeze",U),s.addEventListener("squeezestart",U),s.addEventListener("squeezeend",U),s.addEventListener("end",F),s.addEventListener("inputsourceschange",G),m.xrCompatible!==!0&&(await e.makeXRCompatible()),b=t.getPixelRatio(),t.getSize(A),v&&"createProjectionLayer"in XRWebGLBinding.prototype){let mt=null,Y=null,xt=null;m.depth&&(xt=m.stencil?e.DEPTH24_STENCIL8:e.DEPTH_COMPONENT24,mt=m.stencil?ThreeDepthStencilFormat:ThreeDepthFormat,Y=m.stencil?ThreeUnsignedInt248Type:ThreeUnsignedIntType);const yt={colorFormat:e.RGBA8,depthFormat:xt,scaleFactor:n};f=this.getBinding(),u=f.createProjectionLayer(yt),s.updateRenderState({layers:[u]}),t.setPixelRatio(1),t.setSize(u.textureWidth,u.textureHeight,!1),y=new ThreeWebGLRenderTarget(u.textureWidth,u.textureHeight,{format:ThreeRGBAFormat,type:ThreeUnsignedByteType,depthTexture:new ThreeDepthTexture(u.textureWidth,u.textureHeight,Y,void 0,void 0,void 0,void 0,void 0,void 0,mt),stencilBuffer:m.stencil,colorSpace:t.outputColorSpace,samples:m.antialias?4:0,resolveDepthBuffer:u.ignoreDepthValues===!1,resolveStencilBuffer:u.ignoreDepthValues===!1,storeMultisampledDepthBuffer:u.ignoreDepthValues===!1,storeMultisampledStencilBuffer:u.ignoreDepthValues===!1});}else{const mt={antialias:m.antialias,alpha:!0,depth:m.depth,stencil:m.stencil,framebufferScaleFactor:n};d=new XRWebGLLayer(s,e,mt),s.updateRenderState({baseLayer:d}),t.setPixelRatio(1),t.setSize(d.framebufferWidth,d.framebufferHeight,!1),y=new ThreeWebGLRenderTarget(d.framebufferWidth,d.framebufferHeight,{format:ThreeRGBAFormat,type:ThreeUnsignedByteType,colorSpace:t.outputColorSpace,stencilBuffer:m.stencil,resolveDepthBuffer:d.ignoreDepthValues===!1,resolveStencilBuffer:d.ignoreDepthValues===!1,storeMultisampledDepthBuffer:d.ignoreDepthValues===!1,storeMultisampledStencilBuffer:d.ignoreDepthValues===!1});}y.isXRRenderTarget=!0,this.setFoveation(l),c=null,o=await s.requestReferenceSpace(a),Zt.setContext(s),Zt.start(),i.isPresenting=!0,i.dispatchEvent({type:"sessionstart"});}},this.getEnvironmentBlendMode=function(){if(s!==null)return s.environmentBlendMode;},this.getDepthTexture=function(){return g.getDepthTexture();};function G(J){for(let nt=0;nt<J.removed.length;nt++){const mt=J.removed[nt],Y=M.indexOf(mt);Y>=0&&(M[Y]=null,_[Y].disconnect(mt));}for(let nt=0;nt<J.added.length;nt++){const mt=J.added[nt];let Y=M.indexOf(mt);if(Y===-1){for(let yt=0;yt<_.length;yt++)if(yt>=M.length){M.push(mt),Y=yt;break;}else if(M[yt]===null){M[yt]=mt,Y=yt;break;}if(Y===-1)break;}const xt=_[Y];xt&&xt.connect(mt);}}const B=new ThreeVector3(),q=new ThreeVector3();function X(J,nt,mt){B.setFromMatrixPosition(nt.matrixWorld),q.setFromMatrixPosition(mt.matrixWorld);const Y=B.distanceTo(q),xt=nt.projectionMatrix.elements,yt=mt.projectionMatrix.elements,fe=xt[14]/(xt[10]-1),et=xt[14]/(xt[10]+1),ut=(xt[9]+1)/xt[5],dt=(xt[9]-1)/xt[5],ft=(xt[8]-1)/xt[0],wt=(yt[8]+1)/yt[0],Wt=fe*ft,Ht=fe*wt,qt=Y/(-ft+wt),ce=qt*-ft;if(nt.matrixWorld.decompose(J.position,J.quaternion,J.scale),J.translateX(ce),J.translateZ(qt),J.matrixWorld.compose(J.position,J.quaternion,J.scale),J.matrixWorldInverse.copy(J.matrixWorld).invert(),xt[10]===-1)J.projectionMatrix.copy(nt.projectionMatrix),J.projectionMatrixInverse.copy(nt.projectionMatrixInverse);else{const O=fe+qt,Ae=et+qt,de=Wt-ce,D=Ht+(Y-ce),P=ut*et/Ae*O,W=dt*et/Ae*O;J.projectionMatrix.makePerspective(de,D,P,W,O,Ae),J.projectionMatrixInverse.copy(J.projectionMatrix).invert();}}function vt(J,nt){nt===null?J.matrixWorld.copy(J.matrix):J.matrixWorld.multiplyMatrices(nt.matrixWorld,J.matrix),J.matrixWorldInverse.copy(J.matrixWorld).invert();}this.updateCamera=function(J){if(s===null)return;let nt=J.near,mt=J.far;g.texture!==null&&(g.depthNear>0&&(nt=g.depthNear),g.depthFar>0&&(mt=g.depthFar)),z.near=T.near=E.near=nt,z.far=T.far=E.far=mt,(L!==z.near||k!==z.far)&&(s.updateRenderState({depthNear:z.near,depthFar:z.far}),L=z.near,k=z.far),z.layers.mask=J.layers.mask|6,E.layers.mask=z.layers.mask&-5,T.layers.mask=z.layers.mask&-3;const Y=J.parent,xt=z.cameras;vt(z,Y);for(let yt=0;yt<xt.length;yt++)vt(xt[yt],Y);xt.length===2?X(z,E,T):z.projectionMatrix.copy(E.projectionMatrix),S===null&&J.isPerspectiveCamera&&(S={camera:J,fov:J.fov,zoom:J.zoom}),gt(J,z,Y);};function gt(J,nt,mt){mt===null?J.matrix.copy(nt.matrixWorld):(J.matrix.copy(mt.matrixWorld),J.matrix.invert(),J.matrix.multiply(nt.matrixWorld)),J.matrix.decompose(J.position,J.quaternion,J.scale),J.updateMatrixWorld(!0),J.projectionMatrix.copy(nt.projectionMatrix),J.projectionMatrixInverse.copy(nt.projectionMatrixInverse),J.isPerspectiveCamera&&(J.fov=Ta*2*Math.atan(1/J.projectionMatrix.elements[5]),J.zoom=1);}this.getCamera=function(){return z;},this.getFoveation=function(){if(!(u===null&&d===null))return l;},this.setFoveation=function(J){l=J,u!==null&&(u.fixedFoveation=J),d!==null&&d.fixedFoveation!==void 0&&(d.fixedFoveation=J);},this.hasDepthSensing=function(){return g.texture!==null;},this.getDepthSensingMesh=function(){return g.getMesh(z);},this.getCameraTexture=function(J){return x[J];};let Qt=null;function te(J,nt){if(h=nt.getViewerPose(c||o),p=nt,h!==null){const mt=h.views;d!==null&&(t.setRenderTargetFramebuffer(y,d.framebuffer),t.setRenderTarget(y));let Y=!1;mt.length!==z.cameras.length&&(z.cameras.length=0,Y=!0);for(let et=0;et<mt.length;et++){const ut=mt[et];let dt=null;if(d!==null)dt=d.getViewport(ut);else{const wt=f.getViewSubImage(u,ut);dt=wt.viewport,et===0&&(t.setRenderTargetTextures(y,wt.colorTexture,wt.depthStencilTexture),t.setRenderTarget(y));}let ft=R[et];ft===void 0&&(ft=new ThreePerspectiveCamera(),ft.layers.enable(et),ft.viewport=new ThreeVector4(),R[et]=ft),ft.matrix.fromArray(ut.transform.matrix),ft.matrix.decompose(ft.position,ft.quaternion,ft.scale),ft.projectionMatrix.fromArray(ut.projectionMatrix),ft.projectionMatrixInverse.copy(ft.projectionMatrix).invert(),ft.viewport.set(dt.x,dt.y,dt.width,dt.height),et===0&&(z.matrix.copy(ft.matrix),z.matrix.decompose(z.position,z.quaternion,z.scale)),Y===!0&&z.cameras.push(ft);}const xt=s.enabledFeatures;if(xt&&xt.includes("depth-sensing")&&s.depthUsage=="gpu-optimized"&&v){f=i.getBinding();const et=f.getDepthInformation(mt[0]);et&&et.isValid&&et.texture&&g.init(et,s.renderState);}if(xt&&xt.includes("camera-access")&&v){t.state.unbindTexture(),f=i.getBinding();for(let et=0;et<mt.length;et++){const ut=mt[et].camera;if(ut){let dt=x[ut];dt||(dt=new ThreeExternalTexture(),x[ut]=dt);const ft=f.getCameraImage(ut);dt.sourceTexture=ft;}}}}for(let mt=0;mt<_.length;mt++){const Y=M[mt],xt=_[mt];Y!==null&&xt!==void 0&&xt.update(Y,nt,c||o);}Qt&&Qt(J,nt),nt.detectedPlanes&&i.dispatchEvent({type:"planesdetected",data:nt}),p=null;}const Zt=new wy();Zt.setAnimationLoop(te),this.setAnimationLoop=function(J){Qt=J;},this.dispose=function(){};}}const lT=new ThreeMatrix4();const Ey=new ThreeMatrix3();Ey.set(-1,0,0,0,1,0,0,0,1);function cT(r,t){function e(g,x){g.matrixAutoUpdate===!0&&g.updateMatrix(),x.value.copy(g.matrix);}function i(g,x){x.color.getRGB(g.fogColor.value,Xx(r)),x.isFog?(g.fogNear.value=x.near,g.fogFar.value=x.far):x.isFogExp2&&(g.fogDensity.value=x.density);}function s(g,x,m,w,y){x.isNodeMaterial?x.uniformsNeedUpdate=!1:x.isMeshBasicMaterial?n(g,x):x.isMeshLambertMaterial?(n(g,x),x.envMap&&(g.envMapIntensity.value=x.envMapIntensity)):x.isMeshToonMaterial?(n(g,x),f(g,x)):x.isMeshPhongMaterial?(n(g,x),h(g,x),x.envMap&&(g.envMapIntensity.value=x.envMapIntensity)):x.isMeshStandardMaterial?(n(g,x),u(g,x),x.isMeshPhysicalMaterial&&d(g,x,y)):x.isMeshMatcapMaterial?(n(g,x),p(g,x)):x.isMeshDepthMaterial?n(g,x):x.isMeshDistanceMaterial?(n(g,x),v(g,x)):x.isMeshNormalMaterial?n(g,x):x.isLineBasicMaterial?(o(g,x),x.isLineDashedMaterial&&a(g,x)):x.isPointsMaterial?l(g,x,m,w):x.isSpriteMaterial?c(g,x):x.isShadowMaterial?(g.color.value.copy(x.color),g.opacity.value=x.opacity):x.isShaderMaterial&&(x.uniformsNeedUpdate=!1);}function n(g,x){g.opacity.value=x.opacity,x.color&&g.diffuse.value.copy(x.color),x.emissive&&g.emissive.value.copy(x.emissive).multiplyScalar(x.emissiveIntensity),x.map&&(g.map.value=x.map,e(x.map,g.mapTransform)),x.alphaMap&&(g.alphaMap.value=x.alphaMap,e(x.alphaMap,g.alphaMapTransform)),x.bumpMap&&(g.bumpMap.value=x.bumpMap,e(x.bumpMap,g.bumpMapTransform),g.bumpScale.value=x.bumpScale,x.side===ThreeBackSide&&(g.bumpScale.value*=-1)),x.normalMap&&(g.normalMap.value=x.normalMap,e(x.normalMap,g.normalMapTransform),g.normalScale.value.copy(x.normalScale),x.side===ThreeBackSide&&g.normalScale.value.negate()),x.displacementMap&&(g.displacementMap.value=x.displacementMap,e(x.displacementMap,g.displacementMapTransform),g.displacementScale.value=x.displacementScale,g.displacementBias.value=x.displacementBias),x.emissiveMap&&(g.emissiveMap.value=x.emissiveMap,e(x.emissiveMap,g.emissiveMapTransform)),x.specularMap&&(g.specularMap.value=x.specularMap,e(x.specularMap,g.specularMapTransform)),x.alphaTest>0&&(g.alphaTest.value=x.alphaTest);const m=t.get(x),w=m.envMap,y=m.envMapRotation;w&&(g.envMap.value=w,g.envMapRotation.value.setFromMatrix4(lT.makeRotationFromEuler(y)).transpose(),w.isCubeTexture&&w.isRenderTargetTexture===!1&&g.envMapRotation.value.premultiply(Ey),g.reflectivity.value=x.reflectivity,g.ior.value=x.ior,g.refractionRatio.value=x.refractionRatio),x.lightMap&&(g.lightMap.value=x.lightMap,g.lightMapIntensity.value=x.lightMapIntensity,e(x.lightMap,g.lightMapTransform)),x.aoMap&&(g.aoMap.value=x.aoMap,g.aoMapIntensity.value=x.aoMapIntensity,e(x.aoMap,g.aoMapTransform));}function o(g,x){g.diffuse.value.copy(x.color),g.opacity.value=x.opacity,x.map&&(g.map.value=x.map,e(x.map,g.mapTransform));}function a(g,x){g.dashSize.value=x.dashSize,g.totalSize.value=x.dashSize+x.gapSize,g.scale.value=x.scale;}function l(g,x,m,w){g.diffuse.value.copy(x.color),g.opacity.value=x.opacity,g.size.value=x.size*m,g.scale.value=w*.5,x.map&&(g.map.value=x.map,e(x.map,g.uvTransform)),x.alphaMap&&(g.alphaMap.value=x.alphaMap,e(x.alphaMap,g.alphaMapTransform)),x.alphaTest>0&&(g.alphaTest.value=x.alphaTest);}function c(g,x){g.diffuse.value.copy(x.color),g.opacity.value=x.opacity,g.rotation.value=x.rotation,x.map&&(g.map.value=x.map,e(x.map,g.mapTransform)),x.alphaMap&&(g.alphaMap.value=x.alphaMap,e(x.alphaMap,g.alphaMapTransform)),x.alphaTest>0&&(g.alphaTest.value=x.alphaTest);}function h(g,x){g.specular.value.copy(x.specular),g.shininess.value=Math.max(x.shininess,1e-4);}function f(g,x){x.gradientMap&&(g.gradientMap.value=x.gradientMap);}function u(g,x){g.metalness.value=x.metalness,x.metalnessMap&&(g.metalnessMap.value=x.metalnessMap,e(x.metalnessMap,g.metalnessMapTransform)),g.roughness.value=x.roughness,x.roughnessMap&&(g.roughnessMap.value=x.roughnessMap,e(x.roughnessMap,g.roughnessMapTransform)),x.envMap&&(g.envMapIntensity.value=x.envMapIntensity);}function d(g,x,m){g.ior.value=x.ior,x.sheen>0&&(g.sheenColor.value.copy(x.sheenColor).multiplyScalar(x.sheen),g.sheenRoughness.value=x.sheenRoughness,x.sheenColorMap&&(g.sheenColorMap.value=x.sheenColorMap,e(x.sheenColorMap,g.sheenColorMapTransform)),x.sheenRoughnessMap&&(g.sheenRoughnessMap.value=x.sheenRoughnessMap,e(x.sheenRoughnessMap,g.sheenRoughnessMapTransform))),x.clearcoat>0&&(g.clearcoat.value=x.clearcoat,g.clearcoatRoughness.value=x.clearcoatRoughness,x.clearcoatMap&&(g.clearcoatMap.value=x.clearcoatMap,e(x.clearcoatMap,g.clearcoatMapTransform)),x.clearcoatRoughnessMap&&(g.clearcoatRoughnessMap.value=x.clearcoatRoughnessMap,e(x.clearcoatRoughnessMap,g.clearcoatRoughnessMapTransform)),x.clearcoatNormalMap&&(g.clearcoatNormalMap.value=x.clearcoatNormalMap,e(x.clearcoatNormalMap,g.clearcoatNormalMapTransform),g.clearcoatNormalScale.value.copy(x.clearcoatNormalScale),x.side===ThreeBackSide&&g.clearcoatNormalScale.value.negate())),x.dispersion>0&&(g.dispersion.value=x.dispersion),x.retroreflectivity>0&&(g.retroreflectivity.value=x.retroreflectivity),x.iridescence>0&&(g.iridescence.value=x.iridescence,g.iridescenceIOR.value=x.iridescenceIOR,g.iridescenceThicknessMinimum.value=x.iridescenceThicknessRange[0],g.iridescenceThicknessMaximum.value=x.iridescenceThicknessRange[1],x.iridescenceMap&&(g.iridescenceMap.value=x.iridescenceMap,e(x.iridescenceMap,g.iridescenceMapTransform)),x.iridescenceThicknessMap&&(g.iridescenceThicknessMap.value=x.iridescenceThicknessMap,e(x.iridescenceThicknessMap,g.iridescenceThicknessMapTransform))),x.transmission>0&&(g.transmission.value=x.transmission,g.transmissionSamplerMap.value=m.texture,g.transmissionSamplerSize.value.set(m.width,m.height),x.transmissionMap&&(g.transmissionMap.value=x.transmissionMap,e(x.transmissionMap,g.transmissionMapTransform)),g.thickness.value=x.thickness,x.thicknessMap&&(g.thicknessMap.value=x.thicknessMap,e(x.thicknessMap,g.thicknessMapTransform)),g.attenuationDistance.value=x.attenuationDistance,g.attenuationColor.value.copy(x.attenuationColor)),x.anisotropy>0&&(g.anisotropyVector.value.set(x.anisotropy*Math.cos(x.anisotropyRotation),x.anisotropy*Math.sin(x.anisotropyRotation)),x.anisotropyMap&&(g.anisotropyMap.value=x.anisotropyMap,e(x.anisotropyMap,g.anisotropyMapTransform))),g.specularIntensity.value=x.specularIntensity,g.specularColor.value.copy(x.specularColor),x.specularColorMap&&(g.specularColorMap.value=x.specularColorMap,e(x.specularColorMap,g.specularColorMapTransform)),x.specularIntensityMap&&(g.specularIntensityMap.value=x.specularIntensityMap,e(x.specularIntensityMap,g.specularIntensityMapTransform));}function p(g,x){x.matcap&&(g.matcap.value=x.matcap);}function v(g,x){const m=t.get(x).light;g.referencePosition.value.setFromMatrixPosition(m.matrixWorld),g.nearDistance.value=m.shadow.camera.near,g.farDistance.value=m.shadow.camera.far;}return{refreshFogUniforms:i,refreshMaterialUniforms:s};}function hT(r,t,e,i){let s={},n={},o=[];const a=r.getParameter(r.MAX_UNIFORM_BUFFER_BINDINGS);function l(y,_){const M=_.program;i.uniformBlockBinding(y,M);}function c(y,_){let M=s[y.id];M===void 0&&(g(y),M=h(y),s[y.id]=M,y.addEventListener("dispose",m));const A=_.program;i.updateUBOMapping(y,A);const b=t.render.frame;n[y.id]!==b&&(u(y),n[y.id]=b);}function h(y){const _=f();y.__bindingPointIndex=_;const M=r.createBuffer(),A=y.__size,b=y.usage;return r.bindBuffer(r.UNIFORM_BUFFER,M),r.bufferData(r.UNIFORM_BUFFER,A,b),r.bindBuffer(r.UNIFORM_BUFFER,null),r.bindBufferBase(r.UNIFORM_BUFFER,_,M),M;}function f(){for(let y=0;y<a;y++)if(o.indexOf(y)===-1)return o.push(y),y;return Threeerror("WebGLRenderer: Maximum number of simultaneously usable uniforms groups reached."),0;}function u(y){const _=s[y.id],M=y.uniforms,A=y.__cache;r.bindBuffer(r.UNIFORM_BUFFER,_);for(let b=0,S=M.length;b<S;b++){const E=M[b];if(Array.isArray(E))for(let T=0,R=E.length;T<R;T++)d(E[T],b,T,A);else d(E,b,0,A);}r.bindBuffer(r.UNIFORM_BUFFER,null);}function d(y,_,M,A){if(v(y,_,M,A)===!0){const b=y.__offset,S=y.value;if(Array.isArray(S)){let E=0;for(let T=0;T<S.length;T++){const R=S[T],z=x(R);p(R,y.__data,E),typeof R!="number"&&typeof R!="boolean"&&!R.isMatrix3&&!ArrayBuffer.isView(R)&&(E+=z.storage/Float32Array.BYTES_PER_ELEMENT);}}else p(S,y.__data,0);r.bufferSubData(r.UNIFORM_BUFFER,b,y.__data);}}function p(y,_,M){typeof y=="number"||typeof y=="boolean"?_[0]=y:y.isMatrix3?(_[0]=y.elements[0],_[1]=y.elements[1],_[2]=y.elements[2],_[3]=0,_[4]=y.elements[3],_[5]=y.elements[4],_[6]=y.elements[5],_[7]=0,_[8]=y.elements[6],_[9]=y.elements[7],_[10]=y.elements[8],_[11]=0):ArrayBuffer.isView(y)?_.set(new y.constructor(y.buffer,y.byteOffset,_.length)):y.toArray(_,M);}function v(y,_,M,A){const b=y.value,S=_+"_"+M;if(A[S]===void 0)return typeof b=="number"||typeof b=="boolean"?A[S]=b:ArrayBuffer.isView(b)?A[S]=b.slice():A[S]=b.clone(),!0;{const E=A[S];if(typeof b=="number"||typeof b=="boolean"){if(E!==b)return A[S]=b,!0;}else{if(ArrayBuffer.isView(b))return!0;if(E.equals(b)===!1)return E.copy(b),!0;}}return!1;}function g(y){const _=y.uniforms;let M=0;const A=16;for(let S=0,E=_.length;S<E;S++){const T=Array.isArray(_[S])?_[S]:[_[S]];for(let R=0,z=T.length;R<z;R++){const L=T[R],k=Array.isArray(L.value)?L.value:[L.value];for(let U=0,F=k.length;U<F;U++){const G=k[U],B=x(G),q=M%A,X=q%B.boundary,vt=q+X;M+=X,vt!==0&&A-vt<B.storage&&(M+=A-vt),L.__data=new Float32Array(B.storage/Float32Array.BYTES_PER_ELEMENT),L.__offset=M,M+=B.storage;}}}const b=M%A;return b>0&&(M+=A-b),y.__size=M,y.__cache={},this;}function x(y){const _={boundary:0,storage:0};return typeof y=="number"||typeof y=="boolean"?(_.boundary=4,_.storage=4):y.isVector2?(_.boundary=8,_.storage=8):y.isVector3||y.isColor?(_.boundary=16,_.storage=12):y.isVector4?(_.boundary=16,_.storage=16):y.isMatrix3?(_.boundary=48,_.storage=48):y.isMatrix4?(_.boundary=64,_.storage=64):y.isTexture?Threewarn("WebGLRenderer: Texture samplers can not be part of an uniforms group."):ArrayBuffer.isView(y)?(_.boundary=16,_.storage=y.byteLength):Threewarn("WebGLRenderer: Unsupported uniform value type.",y),_;}function m(y){const _=y.target;_.removeEventListener("dispose",m);const M=o.indexOf(_.__bindingPointIndex);o.splice(M,1),r.deleteBuffer(s[_.id]),delete s[_.id],delete n[_.id];}function w(){for(const y in s)r.deleteBuffer(s[y]);o=[],s={},n={};}return{bind:l,update:c,dispose:w};}const uT=new Uint16Array([12469,15057,12620,14925,13266,14620,13807,14376,14323,13990,14545,13625,14713,13328,14840,12882,14931,12528,14996,12233,15039,11829,15066,11525,15080,11295,15085,10976,15082,10705,15073,10495,13880,14564,13898,14542,13977,14430,14158,14124,14393,13732,14556,13410,14702,12996,14814,12596,14891,12291,14937,11834,14957,11489,14958,11194,14943,10803,14921,10506,14893,10278,14858,9960,14484,14039,14487,14025,14499,13941,14524,13740,14574,13468,14654,13106,14743,12678,14818,12344,14867,11893,14889,11509,14893,11180,14881,10751,14852,10428,14812,10128,14765,9754,14712,9466,14764,13480,14764,13475,14766,13440,14766,13347,14769,13070,14786,12713,14816,12387,14844,11957,14860,11549,14868,11215,14855,10751,14825,10403,14782,10044,14729,9651,14666,9352,14599,9029,14967,12835,14966,12831,14963,12804,14954,12723,14936,12564,14917,12347,14900,11958,14886,11569,14878,11247,14859,10765,14828,10401,14784,10011,14727,9600,14660,9289,14586,8893,14508,8533,15111,12234,15110,12234,15104,12216,15092,12156,15067,12010,15028,11776,14981,11500,14942,11205,14902,10752,14861,10393,14812,9991,14752,9570,14682,9252,14603,8808,14519,8445,14431,8145,15209,11449,15208,11451,15202,11451,15190,11438,15163,11384,15117,11274,15055,10979,14994,10648,14932,10343,14871,9936,14803,9532,14729,9218,14645,8742,14556,8381,14461,8020,14365,7603,15273,10603,15272,10607,15267,10619,15256,10631,15231,10614,15182,10535,15118,10389,15042,10167,14963,9787,14883,9447,14800,9115,14710,8665,14615,8318,14514,7911,14411,7507,14279,7198,15314,9675,15313,9683,15309,9712,15298,9759,15277,9797,15229,9773,15166,9668,15084,9487,14995,9274,14898,8910,14800,8539,14697,8234,14590,7790,14479,7409,14367,7067,14178,6621,15337,8619,15337,8631,15333,8677,15325,8769,15305,8871,15264,8940,15202,8909,15119,8775,15022,8565,14916,8328,14804,8009,14688,7614,14569,7287,14448,6888,14321,6483,14088,6171,15350,7402,15350,7419,15347,7480,15340,7613,15322,7804,15287,7973,15229,8057,15148,8012,15046,7846,14933,7611,14810,7357,14682,7069,14552,6656,14421,6316,14251,5948,14007,5528,15356,5942,15356,5977,15353,6119,15348,6294,15332,6551,15302,6824,15249,7044,15171,7122,15070,7050,14949,6861,14818,6611,14679,6349,14538,6067,14398,5651,14189,5311,13935,4958,15359,4123,15359,4153,15356,4296,15353,4646,15338,5160,15311,5508,15263,5829,15188,6042,15088,6094,14966,6001,14826,5796,14678,5543,14527,5287,14377,4985,14133,4586,13869,4257,15360,1563,15360,1642,15358,2076,15354,2636,15341,3350,15317,4019,15273,4429,15203,4732,15105,4911,14981,4932,14836,4818,14679,4621,14517,4386,14359,4156,14083,3795,13808,3437,15360,122,15360,137,15358,285,15355,636,15344,1274,15322,2177,15281,2765,15215,3223,15120,3451,14995,3569,14846,3567,14681,3466,14511,3305,14344,3121,14037,2800,13753,2467,15360,0,15360,1,15359,21,15355,89,15346,253,15325,479,15287,796,15225,1148,15133,1492,15008,1749,14856,1882,14685,1886,14506,1783,14324,1608,13996,1398,13702,1183]);let bn=null;function fT(){return bn===null&&(bn=new ThreeDataTexture(uT,16,16,ThreeRGFormat,ThreeHalfFloatType),bn.name="DFG_LUT",bn.minFilter=ThreeLinearFilter,bn.magFilter=ThreeLinearFilter,bn.wrapS=ThreeClampToEdgeWrapping,bn.wrapT=ThreeClampToEdgeWrapping,bn.generateMipmaps=!1,bn.needsUpdate=!0),bn;}class ThreeWebGLRenderer{constructor(t={}){const{canvas:e=ThreecreateCanvasElement(),context:i=null,depth:s=!0,stencil:n=!1,alpha:o=!1,antialias:a=!1,premultipliedAlpha:l=!0,preserveDrawingBuffer:c=!1,powerPreference:h="default",failIfMajorPerformanceCaveat:f=!1,reversedDepthBuffer:u=!1,outputBufferType:d=ThreeUnsignedByteType}=t;this.isWebGLRenderer=!0;let p;if(i!==null){if(typeof WebGLRenderingContext<"u"&&i instanceof WebGLRenderingContext)throw new Error("THREE.WebGLRenderer: WebGL 1 is not supported since r163.");p=i.getContextAttributes().alpha;}else p=o;const v=d,g=new Set([ThreeRGBAIntegerFormat,ThreeRGIntegerFormat,ThreeRedIntegerFormat]),x=new Set([ThreeUnsignedByteType,ThreeUnsignedIntType,ThreeUnsignedShortType,ThreeUnsignedInt248Type,ThreeUnsignedShort4444Type,ThreeUnsignedShort5551Type]),m=new Uint32Array(4),w=new Int32Array(4),y=new ThreeVector3();let _=null,M=null;const A=[],b=[];let S=null;this.domElement=e,this.debug={checkShaderErrors:!0,diagnostics:{keywords:!1},onShaderError:null},this.autoClear=!0,this.autoClearColor=!0,this.autoClearDepth=!0,this.autoClearStencil=!0,this.sortObjects=!0,this.clippingPlanes=[],this.localClippingEnabled=!1,this.toneMapping=ThreeNoToneMapping,this.toneMappingExposure=1,this.transmissionResolutionScale=1;const E=this;let T=!1,R=null,z=null,L=null,k=null;this._outputColorSpace=ThreeSRGBColorSpace;let U=0,F=0,G=null,B=-1,q=null;const X=new ThreeVector4(),vt=new ThreeVector4();let gt=null;const Qt=new ThreeColor(0);let te=0,Zt=e.width,J=e.height,nt=1,mt=null,Y=null;const xt=new ThreeVector4(0,0,Zt,J),yt=new ThreeVector4(0,0,Zt,J);let fe=!1;const et=new ThreeFrustum();let ut=!1,dt=!1;const ft=new ThreeMatrix4(),wt=new ThreeVector3(),Wt=new ThreeVector4(),Ht={background:null,fog:null,environment:null,overrideMaterial:null,isScene:!0};let qt=!1;function ce(){return G===null?nt:1;}let O=i;function Ae(I,V){return e.getContext(I,V);}let de,D,P,W,Z,st,_t,bt,ot,lt,Tt,ne,Dt,Et,oe,ue,we,H,Ct,ct,Rt,Ot,pt;try{const I={alpha:!0,depth:s,stencil:n,antialias:a,premultipliedAlpha:l,preserveDrawingBuffer:c,powerPreference:h,failIfMajorPerformanceCaveat:f};if("setAttribute"in e&&e.setAttribute("data-engine",`three.js r${ThreeREVISION}`),e.addEventListener("webglcontextlost",je,!1),e.addEventListener("webglcontextrestored",Oe,!1),e.addEventListener("webglcontextcreationerror",qs,!1),O===null){const V="webgl2";if(O=Ae(V,I),O===null)throw Ae(V)?new Error("THREE.WebGLRenderer: Error creating WebGL context with your selected attributes."):new Error("THREE.WebGLRenderer: Error creating WebGL context.");}re();}catch(I){throw e.removeEventListener("webglcontextlost",je,!1),e.removeEventListener("webglcontextrestored",Oe,!1),e.removeEventListener("webglcontextcreationerror",qs,!1),Threeerror("WebGLRenderer: "+I.message),I;}function re(){de=new d5(O),de.init(),Rt=new ThreeWebGLUtils(O,de),D=new s5(O,de,t,Rt),P=new iT(O,de),D.reversedDepthBuffer&&u&&P.buffers.depth.setReversed(!0),z=O.createFramebuffer(),L=O.createFramebuffer(),k=O.createFramebuffer(),W=new g5(O),Z=new GA(),st=new sT(O,de,P,Z,D,Rt,W),_t=new f5(E),bt=new xM(O),Ot=new e5(O,bt),ot=new p5(O,bt,W,Ot),lt=new x5(O,ot,bt,Ot,W),H=new v5(O,D,st),oe=new n5(Z),Tt=new VA(E,_t,de,D,Ot,oe),ne=new cT(E,Z),Dt=new WA(),Et=new jA(de),we=new t5(E,_t,P,lt,p,l),ue=new eT(E,lt,D),pt=new hT(O,W,D,P),Ct=new i5(O,de,W),ct=new m5(O,de,W),W.programs=Tt.programs,E.capabilities=D,E.extensions=de,E.properties=Z,E.renderLists=Dt,E.shadowMap=ue,E.state=P,E.info=W;}v!==ThreeUnsignedByteType&&(S=new w5(v,e.width,e.height,a,s,n));const ee=new aT(E,O);this.xr=ee,this.getContext=function(){return O;},this.getContextAttributes=function(){return O.getContextAttributes();},this.forceContextLoss=function(){const I=de.get("WEBGL_lose_context");I&&I.loseContext();},this.forceContextRestore=function(){const I=de.get("WEBGL_lose_context");I&&I.restoreContext();},this.getPixelRatio=function(){return nt;},this.setPixelRatio=function(I){I!==void 0&&(nt=I,this.setSize(Zt,J,!1));},this.getSize=function(I){return I.set(Zt,J);},this.setSize=function(I,V,tt=!0){if(ee.isPresenting){Threewarn("WebGLRenderer: Can't change size while VR device is presenting.");return;}Zt=I,J=V,e.width=Math.floor(I*nt),e.height=Math.floor(V*nt),tt===!0&&(e.style.width=I+"px",e.style.height=V+"px"),S!==null&&S.setSize(e.width,e.height),this.setViewport(0,0,I,V);},this.getDrawingBufferSize=function(I){return I.set(Zt*nt,J*nt).floor();},this.setDrawingBufferSize=function(I,V,tt){Zt=I,J=V,nt=tt,e.width=Math.floor(I*tt),e.height=Math.floor(V*tt),this.setViewport(0,0,I,V);},this.setEffects=function(I){if(v===ThreeUnsignedByteType){Threeerror("WebGLRenderer: setEffects() requires outputBufferType set to HalfFloatType or FloatType.");return;}if(I){for(let V=0;V<I.length;V++)if(I[V].isOutputPass===!0){Threewarn("WebGLRenderer: OutputPass is not needed in setEffects(). Tone mapping and color space conversion are applied automatically.");break;}}S.setEffects(I||[]);},this.getCurrentViewport=function(I){return I.copy(X);},this.getViewport=function(I){return I.copy(xt);},this.setViewport=function(I,V,tt,j){I.isVector4?xt.set(I.x,I.y,I.z,I.w):xt.set(I,V,tt,j),P.viewport(X.copy(xt).multiplyScalar(nt).round());},this.getScissor=function(I){return I.copy(yt);},this.setScissor=function(I,V,tt,j){I.isVector4?yt.set(I.x,I.y,I.z,I.w):yt.set(I,V,tt,j),P.scissor(vt.copy(yt).multiplyScalar(nt).round());},this.getScissorTest=function(){return fe;},this.setScissorTest=function(I){P.setScissorTest(fe=I);},this.setOpaqueSort=function(I){mt=I;},this.setTransparentSort=function(I){Y=I;},this.getClearColor=function(I){return I.copy(we.getClearColor());},this.setClearColor=function(){we.setClearColor(...arguments);},this.getClearAlpha=function(){return we.getClearAlpha();},this.setClearAlpha=function(){we.setClearAlpha(...arguments);},this.clear=function(I=!0,V=!0,tt=!0){let j=0;if(I){let K=!1;if(G!==null){const Nt=G.texture.format;K=g.has(Nt);}if(K){const Nt=G.texture.type,Yt=x.has(Nt),Ft=we.getClearColor(),Kt=we.getClearAlpha(),ie=Ft.r,Se=Ft.g,Ee=Ft.b;Yt?(m[0]=ie,m[1]=Se,m[2]=Ee,m[3]=Kt,O.clearBufferuiv(O.COLOR,0,m)):(w[0]=ie,w[1]=Se,w[2]=Ee,w[3]=Kt,O.clearBufferiv(O.COLOR,0,w));}else j|=O.COLOR_BUFFER_BIT;}V&&(j|=O.DEPTH_BUFFER_BIT,this.state.buffers.depth.setMask(!0)),tt&&(j|=O.STENCIL_BUFFER_BIT,this.state.buffers.stencil.setMask(4294967295)),j!==0&&O.clear(j);},this.clearColor=function(){this.clear(!0,!1,!1);},this.clearDepth=function(){this.clear(!1,!0,!1);},this.clearStencil=function(){this.clear(!1,!1,!0);},this.setNodesHandler=function(I){I.setRenderer(this),R=I;},this.dispose=function(){e.removeEventListener("webglcontextlost",je,!1),e.removeEventListener("webglcontextrestored",Oe,!1),e.removeEventListener("webglcontextcreationerror",qs,!1),we.dispose(),Dt.dispose(),Et.dispose(),Z.dispose(),_t.dispose(),lt.dispose(),Ot.dispose(),pt.dispose(),Tt.dispose(),ee.dispose(),ee.removeEventListener("sessionstart",Wp),ee.removeEventListener("sessionend",qp),Oo.stop();};function je(I){I.preventDefault(),Threelog("WebGLRenderer: Context Lost."),T=!0;}function Oe(){Threelog("WebGLRenderer: Context Restored."),T=!1;const I=W.autoReset,V=ue.enabled,tt=ue.autoUpdate,j=ue.needsUpdate,K=ue.type;re(),W.autoReset=I,ue.enabled=V,ue.autoUpdate=tt,ue.needsUpdate=j,ue.type=K;}function qs(I){Threeerror("WebGLRenderer: A WebGL context could not be created. Reason: ",I.statusMessage);}function yn(I){const V=I.target;V.removeEventListener("dispose",yn),pw(V);}function pw(I){mw(I),Z.remove(I);}function mw(I){const V=Z.get(I).programs;V!==void 0&&(V.forEach(function(tt){Tt.releaseProgram(tt);}),I.isShaderMaterial&&Tt.releaseShaderCache(I));}this.renderBufferDirect=function(I,V,tt,j,K,Nt){V===null&&(V=Ht);const Yt=K.isMesh&&K.matrixWorld.determinantAffine()<0,Ft=xw(I,V,tt,j,K);P.setMaterial(j,Yt);let Kt=tt.index,ie=1;if(j.wireframe===!0){if(Kt=ot.getWireframeAttribute(tt),Kt===void 0)return;ie=2;}const Se=tt.drawRange,Ee=tt.attributes.position;let Jt=Se.start*ie,Be=(Se.start+Se.count)*ie;Nt!==null&&(Jt=Math.max(Jt,Nt.start*ie),Be=Math.min(Be,(Nt.start+Nt.count)*ie)),Kt!==null?(Jt=Math.max(Jt,0),Be=Math.min(Be,Kt.count)):Ee!=null&&(Jt=Math.max(Jt,0),Be=Math.min(Be,Ee.count));const vi=Be-Jt;if(vi<0||vi===1/0)return;Ot.setup(K,j,Ft,tt,Kt);let ti,Ze=Ct;if(Kt!==null&&(ti=bt.get(Kt),Ze=ct,Ze.setIndex(ti)),K.isMesh)j.wireframe===!0?(P.setLineWidth(j.wireframeLinewidth*ce()),Ze.setMode(O.LINES)):Ze.setMode(O.TRIANGLES);else if(K.isLine){let qi=j.linewidth;qi===void 0&&(qi=1),P.setLineWidth(qi*ce()),K.isLineSegments?Ze.setMode(O.LINES):K.isLineLoop?Ze.setMode(O.LINE_LOOP):Ze.setMode(O.LINE_STRIP);}else K.isPoints?Ze.setMode(O.POINTS):K.isSprite&&Ze.setMode(O.TRIANGLES);if(K.isBatchedMesh){if(de.get("WEBGL_multi_draw"))Ze.renderMultiDraw(K._multiDrawStarts,K._multiDrawCounts,K._multiDrawCount);else{const qi=K._multiDrawStarts,Xt=K._multiDrawCounts,ts=K._multiDrawCount,Pe=Kt?bt.get(Kt).bytesPerElement:1,Ls=Z.get(j).currentProgram.getUniforms();for(let wn=0;wn<ts;wn++)Ls.setValue(O,"_gl_DrawID",wn),Ze.render(qi[wn]/Pe,Xt[wn]);}}else if(K.isInstancedMesh)Ze.renderInstances(Jt,vi,K.count);else if(tt.isInstancedBufferGeometry){const qi=tt._maxInstanceCount!==void 0?tt._maxInstanceCount:1/0,Xt=Math.min(tt.instanceCount,qi);Ze.renderInstances(Jt,vi,Xt);}else Ze.render(Jt,vi);};function Hp(I,V,tt,j){R!==null&&I.isNodeMaterial&&R.setObject(j,I),ut===!0&&oe.setState(I,tt,!1),I.transparent===!0&&I.side===ThreeDoubleSide&&I.forceSinglePass===!1?(I.side=ThreeBackSide,I.needsUpdate=!0,yc(I,V,j),I.side=ThreeFrontSide,I.needsUpdate=!0,yc(I,V,j),I.side=ThreeDoubleSide):yc(I,V,j);}this.compile=function(I,V,tt=null){tt===null&&(tt=I),R!==null&&R.renderStart(I,V,tt),M=Et.get(tt),M.init(V),b.push(M),tt.traverseVisible(function(K){K.isLight&&K.layers.test(V.layers)&&(M.pushLight(K),K.castShadow&&M.pushShadow(K));}),I!==tt&&I.traverseVisible(function(K){K.isLight&&K.layers.test(V.layers)&&(M.pushLight(K),K.castShadow&&M.pushShadow(K));}),M.setupLights(),R!==null&&R.updateLights(M.state.lightsArray),dt=this.localClippingEnabled,ut=oe.init(this.clippingPlanes,dt),ut===!0&&oe.setGlobalState(this.clippingPlanes,V),R!==null&&ue.render(M.state.shadowsArray,tt,V);const j=new Set();return I.traverse(function(K){if(!(K.isMesh||K.isPoints||K.isLine||K.isSprite))return;const Nt=K.material;if(Nt)if(Array.isArray(Nt))for(let Yt=0;Yt<Nt.length;Yt++){const Ft=Nt[Yt];Hp(Ft,tt,V,K),j.add(Ft);}else Hp(Nt,tt,V,K),j.add(Nt);}),M=b.pop(),R!==null&&R.renderEnd(),j;},this.compileAsync=function(I,V,tt=null){const j=this.compile(I,V,tt);return new Promise(K=>{function Nt(){if(j.forEach(function(Yt){const Kt=Z.get(Yt).currentProgram;(Kt===void 0||Kt.isReady())&&j.delete(Yt);}),j.size===0){K(I);return;}setTimeout(Nt,10);}de.get("KHR_parallel_shader_compile")!==null?Nt():setTimeout(Nt,10);});};let Fu=null;function gw(I){Fu&&Fu(I);}function Wp(){Oo.stop();}function qp(){Oo.start();}const Oo=new wy();Oo.setAnimationLoop(gw),typeof self<"u"&&Oo.setContext(self),this.setAnimationLoop=function(I){Fu=I,ee.setAnimationLoop(I),I===null?Oo.stop():Oo.start();},ee.addEventListener("sessionstart",Wp),ee.addEventListener("sessionend",qp),this.render=function(I,V){if(V!==void 0&&V.isCamera!==!0){Threeerror("WebGLRenderer.render: camera is not an instance of THREE.Camera.");return;}if(T===!0)return;R!==null&&R.renderStart(I,V);const tt=ee.enabled===!0&&ee.isPresenting===!0,j=S!==null&&(G===null||tt)&&S.begin(E,G);if(I.matrixWorldAutoUpdate===!0&&I.updateMatrixWorld(),V.parent===null&&V.matrixWorldAutoUpdate===!0&&V.updateMatrixWorld(),ee.enabled===!0&&ee.isPresenting===!0&&(S===null||S.isCompositing()===!1)&&(ee.cameraAutoUpdate===!0&&ee.updateCamera(V),V=ee.getCamera()),I.isScene===!0&&I.onBeforeRender(E,I,V,G),M=Et.get(I,b.length),M.init(V),M.state.textureUnits=st.getTextureUnits(),b.push(M),ft.multiplyMatrices(V.projectionMatrix,V.matrixWorldInverse),et.setFromProjectionMatrix(ft,ThreeWebGLCoordinateSystem,V.reversedDepth),dt=this.localClippingEnabled,ut=oe.init(this.clippingPlanes,dt),_=Dt.get(I,A.length),_.init(),A.push(_),ee.enabled===!0&&ee.isPresenting===!0){const Yt=E.xr.getDepthSensingMesh();Yt!==null&&Nu(Yt,V,-1/0,E.sortObjects);}Nu(I,V,0,E.sortObjects),_.finish(),R!==null&&R.updateLights(M.state.lightsArray),E.sortObjects===!0&&_.sort(mt,Y),qt=ee.enabled===!1||ee.isPresenting===!1||ee.hasDepthSensing()===!1,qt&&we.addToRenderList(_,I),this.info.render.frame++,this.info.autoReset===!0&&this.info.reset(),ut===!0&&oe.beginShadows();const K=M.state.shadowsArray;if(ue.render(K,I,V),ut===!0&&oe.endShadows(),(j&&S.hasRenderPass())===!1){const Yt=_.opaque,Ft=_.transmissive;if(M.setupLights(),V.isArrayCamera){const Kt=V.cameras;if(Ft.length>0)for(let ie=0,Se=Kt.length;ie<Se;ie++){const Ee=Kt[ie];Yp(Yt,Ft,I,Ee);}qt&&we.render(I);for(let ie=0,Se=Kt.length;ie<Se;ie++){const Ee=Kt[ie];Xp(_,I,Ee,Ee.viewport);}}else Ft.length>0&&Yp(Yt,Ft,I,V),qt&&we.render(I),Xp(_,I,V);}G!==null&&F===0&&(st.updateMultisampleRenderTarget(G),st.updateRenderTargetMipmap(G)),j&&S.end(E),I.isScene===!0&&I.onAfterRender(E,I,V),Ot.resetDefaultState(),B=-1,q=null,b.pop(),b.length>0?(M=b[b.length-1],st.setTextureUnits(M.state.textureUnits),ut===!0&&oe.setGlobalState(E.clippingPlanes,M.state.camera)):M=null,A.pop(),A.length>0?_=A[A.length-1]:_=null,R!==null&&R.renderEnd();};function Nu(I,V,tt,j){if(I.visible===!1)return;if(I.layers.test(V.layers)){if(I.isGroup)tt=I.renderOrder;else if(I.isLOD)I.autoUpdate===!0&&I.update(V);else if(I.isLightProbeGrid)M.pushLightProbeGrid(I);else if(I.isLight)M.pushLight(I),I.castShadow&&M.pushShadow(I);else if(I.isSprite){if(!I.frustumCulled||I.intersectsFrustum(et)){j&&Wt.setFromMatrixPosition(I.matrixWorld).applyMatrix4(ft);const Yt=lt.update(I),Ft=I.material;Ft.visible&&_.push(I,Yt,Ft,tt,Wt.z,null,V);}}else if((I.isMesh||I.isLine||I.isPoints)&&(!I.frustumCulled||I.intersectsFrustum(et))){const Yt=lt.update(I),Ft=I.material;if(j&&(I.boundingSphere!==void 0?(I.boundingSphere===null&&I.computeBoundingSphere(),Wt.copy(I.boundingSphere.center)):(Yt.boundingSphere===null&&Yt.computeBoundingSphere(),Wt.copy(Yt.boundingSphere.center)),Wt.applyMatrix4(I.matrixWorld).applyMatrix4(ft)),Array.isArray(Ft)){const Kt=Yt.groups;for(let ie=0,Se=Kt.length;ie<Se;ie++){const Ee=Kt[ie],Jt=Ft[Ee.materialIndex];Jt&&Jt.visible&&_.push(I,Yt,Jt,tt,Wt.z,Ee,V);}}else Ft.visible&&_.push(I,Yt,Ft,tt,Wt.z,null,V);}}const Nt=I.children;for(let Yt=0,Ft=Nt.length;Yt<Ft;Yt++)Nu(Nt[Yt],V,tt,j);}function Xp(I,V,tt,j){const{opaque:K,transmissive:Nt,transparent:Yt}=I;M.setupLightsView(tt),ut===!0&&oe.setGlobalState(E.clippingPlanes,tt),j&&P.viewport(X.copy(j)),K.length>0&&xc(K,V,tt),Nt.length>0&&xc(Nt,V,tt),Yt.length>0&&xc(Yt,V,tt),P.buffers.depth.setTest(!0),P.buffers.depth.setMask(!0),P.buffers.color.setMask(!0),P.setPolygonOffset(!1);}function Yp(I,V,tt,j){if((tt.isScene===!0?tt.overrideMaterial:null)!==null)return;if(M.state.transmissionRenderTarget[j.id]===void 0){const Jt=de.has("EXT_color_buffer_half_float")||de.has("EXT_color_buffer_float");M.state.transmissionRenderTarget[j.id]=new ThreeWebGLRenderTarget(1,1,{generateMipmaps:!0,type:Jt?ThreeHalfFloatType:ThreeUnsignedByteType,minFilter:ThreeLinearMipmapLinearFilter,samples:Math.max(4,D.samples),stencilBuffer:n,resolveDepthBuffer:!1,resolveStencilBuffer:!1,storeMultisampledDepthBuffer:!1,storeMultisampledStencilBuffer:!1,colorSpace:ThreeColorManagement.workingColorSpace});}const Nt=M.state.transmissionRenderTarget[j.id],Yt=j.viewport||X;Nt.setSize(Yt.z*E.transmissionResolutionScale,Yt.w*E.transmissionResolutionScale);const Ft=E.getRenderTarget(),Kt=E.getActiveCubeFace(),ie=E.getActiveMipmapLevel();E.setRenderTarget(Nt),E.getClearColor(Qt),te=E.getClearAlpha(),te<1&&E.setClearColor(16777215,.5),E.clear(),qt&&we.render(tt);const Se=E.toneMapping;E.toneMapping=ThreeNoToneMapping;const Ee=j.viewport;if(j.viewport!==void 0&&(j.viewport=void 0),M.setupLightsView(j),ut===!0&&oe.setGlobalState(E.clippingPlanes,j),xc(I,tt,j),st.updateMultisampleRenderTarget(Nt),st.updateRenderTargetMipmap(Nt),de.has("WEBGL_multisampled_render_to_texture")===!1){let Jt=!1;for(let Be=0,vi=V.length;Be<vi;Be++){const ti=V[Be],{object:Ze,geometry:qi,material:Xt,group:ts}=ti;if(Xt.side===ThreeDoubleSide&&Ze.layers.test(j.layers)){const Pe=Xt.side;Xt.side=ThreeBackSide,Xt.needsUpdate=!0,$p(Ze,tt,j,qi,Xt,ts),Xt.side=Pe,Xt.needsUpdate=!0,Jt=!0;}}Jt===!0&&(st.updateMultisampleRenderTarget(Nt),st.updateRenderTargetMipmap(Nt));}E.setRenderTarget(Ft,Kt,ie),E.setClearColor(Qt,te),Ee!==void 0&&(j.viewport=Ee),E.toneMapping=Se;}function xc(I,V,tt){const j=V.isScene===!0?V.overrideMaterial:null;for(let K=0,Nt=I.length;K<Nt;K++){const Yt=I[K],{object:Ft,geometry:Kt,group:ie}=Yt;let Se=Yt.material;Se.allowOverride===!0&&j!==null&&(Se=j),Ft.layers.test(tt.layers)&&$p(Ft,V,tt,Kt,Se,ie);}}function $p(I,V,tt,j,K,Nt){R!==null&&K.isNodeMaterial&&R.setObject(I,K),I.onBeforeRender(E,V,tt,j,K,Nt),I.modelViewMatrix.multiplyMatrices(tt.matrixWorldInverse,I.matrixWorld),I.normalMatrix.getNormalMatrix(I.modelViewMatrix),K.onBeforeRender(E,V,tt,j,I,Nt),K.transparent===!0&&K.side===ThreeDoubleSide&&K.forceSinglePass===!1?(K.side=ThreeBackSide,K.needsUpdate=!0,E.renderBufferDirect(tt,V,j,K,I,Nt),K.side=ThreeFrontSide,K.needsUpdate=!0,E.renderBufferDirect(tt,V,j,K,I,Nt),K.side=ThreeDoubleSide):E.renderBufferDirect(tt,V,j,K,I,Nt),I.onAfterRender(E,V,tt,j,K,Nt);}function yc(I,V,tt){V.isScene!==!0&&(V=Ht);const j=Z.get(I),K=M.state.lights,Nt=M.state.shadowsArray,Yt=K.state.version,Ft=Tt.getParameters(I,K.state,Nt,V,tt,M.state.lightProbeGridArray),Kt=Tt.getProgramCacheKey(Ft);let ie=j.programs;j.environment=I.isMeshStandardMaterial||I.isMeshLambertMaterial||I.isMeshPhongMaterial?V.environment:null,j.fog=V.fog;const Se=I.isMeshStandardMaterial||I.isMeshLambertMaterial&&!I.envMap||I.isMeshPhongMaterial&&!I.envMap;j.envMap=_t.get(I.envMap||j.environment,Se),j.envMapRotation=j.environment!==null&&I.envMap===null?V.environmentRotation:I.envMapRotation,ie===void 0&&(I.addEventListener("dispose",yn),ie=new Map(),j.programs=ie);let Ee=ie.get(Kt);if(Ee!==void 0){if(j.currentProgram===Ee&&j.lightsStateVersion===Yt)return jp(I,Ft),Ee;}else Ft.uniforms=Tt.getUniforms(I),R!==null&&I.isNodeMaterial&&R.build(I,tt,Ft),I.onBeforeCompile(Ft,E),Ee=Tt.acquireProgram(Ft,Kt),ie.set(Kt,Ee),j.uniforms=Ft.uniforms;const Jt=j.uniforms;return(!I.isShaderMaterial&&!I.isRawShaderMaterial||I.clipping===!0)&&(Jt.clippingPlanes=oe.uniform),jp(I,Ft),j.needsLights=ww(I),j.lightsStateVersion=Yt,j.needsLights&&(Jt.ambientLightColor.value=K.state.ambient,Jt.lightProbe.value=K.state.probe,Jt.sunLights.value=K.state.sun,Jt.sunLightShadows.value=K.state.sunShadow,Jt.directionalLights.value=K.state.directional,Jt.directionalLightShadows.value=K.state.directionalShadow,Jt.spotLights.value=K.state.spot,Jt.spotLightShadows.value=K.state.spotShadow,Jt.rectAreaLights.value=K.state.rectArea,Jt.ltc_1.value=K.state.rectAreaLTC1,Jt.ltc_2.value=K.state.rectAreaLTC2,Jt.pointLights.value=K.state.point,Jt.pointLightShadows.value=K.state.pointShadow,Jt.hemisphereLights.value=K.state.hemi,Jt.sunShadowMatrix.value=K.state.sunShadowMatrix,Jt.sunShadowCascade.value=K.state.sunShadowCascade,Jt.directionalShadowMatrix.value=K.state.directionalShadowMatrix,Jt.spotLightMatrix.value=K.state.spotLightMatrix,Jt.spotLightMap.value=K.state.spotLightMap,Jt.pointShadowMatrix.value=K.state.pointShadowMatrix),j.lightProbeGrid=M.state.lightProbeGridArray.length>0,j.currentProgram=Ee,j.uniformsList=null,Ee;}function Zp(I){if(I.uniformsList===null){const V=I.currentProgram.getUniforms();I.uniformsList=Vh.seqWithValue(V.seq,I.uniforms);}return I.uniformsList;}function jp(I,V){const tt=Z.get(I);tt.outputColorSpace=V.outputColorSpace,tt.batching=V.batching,tt.batchingColor=V.batchingColor,tt.instancing=V.instancing,tt.instancingColor=V.instancingColor,tt.instancingMorph=V.instancingMorph,tt.skinning=V.skinning,tt.morphTargets=V.morphTargets,tt.morphNormals=V.morphNormals,tt.morphColors=V.morphColors,tt.morphTargetsCount=V.morphTargetsCount,tt.numClippingPlanes=V.numClippingPlanes,tt.numIntersection=V.numClipIntersection,tt.vertexAlphas=V.vertexAlphas,tt.vertexTangents=V.vertexTangents,tt.toneMapping=V.toneMapping;}function vw(I,V){if(I.length===0)return null;if(I.length===1)return I[0].texture!==null?I[0]:null;y.setFromMatrixPosition(V.matrixWorld);for(let tt=0,j=I.length;tt<j;tt++){const K=I[tt];if(K.texture!==null&&K.boundingBox.containsPoint(y))return K;}return null;}function xw(I,V,tt,j,K){V.isScene!==!0&&(V=Ht),st.resetTextureUnits();const Nt=V.fog,Yt=j.isMeshStandardMaterial||j.isMeshLambertMaterial||j.isMeshPhongMaterial?V.environment:null,Ft=G===null?E.outputColorSpace:G.isXRRenderTarget===!0?G.texture.colorSpace:ThreeColorManagement.workingColorSpace,Kt=j.isMeshStandardMaterial||j.isMeshLambertMaterial&&!j.envMap||j.isMeshPhongMaterial&&!j.envMap,ie=_t.get(j.envMap||Yt,Kt),Se=j.vertexColors===!0&&!!tt.attributes.color&&tt.attributes.color.itemSize===4,Ee=!!tt.attributes.tangent&&(!!j.normalMap||j.anisotropy>0),Jt=!!tt.morphAttributes.position,Be=!!tt.morphAttributes.normal,vi=!!tt.morphAttributes.color;let ti=ThreeNoToneMapping;j.toneMapped&&(G===null||G.isXRRenderTarget===!0)&&(ti=E.toneMapping);const Ze=tt.morphAttributes.position||tt.morphAttributes.normal||tt.morphAttributes.color,qi=Ze!==void 0?Ze.length:0,Xt=Z.get(j),ts=M.state.lights;if(ut===!0&&(dt===!0||I!==q)){const Ke=I===q&&j.id===B;oe.setState(j,I,Ke);}let Pe=!1;j.version===Xt.__version?(Xt.needsLights&&Xt.lightsStateVersion!==ts.state.version||Xt.outputColorSpace!==Ft||K.isBatchedMesh&&Xt.batching===!1||!K.isBatchedMesh&&Xt.batching===!0||K.isBatchedMesh&&Xt.batchingColor===!0&&K._colorsTexture===null||K.isBatchedMesh&&Xt.batchingColor===!1&&K._colorsTexture!==null||K.isInstancedMesh&&Xt.instancing===!1||!K.isInstancedMesh&&Xt.instancing===!0||K.isSkinnedMesh&&Xt.skinning===!1||!K.isSkinnedMesh&&Xt.skinning===!0||K.isInstancedMesh&&Xt.instancingColor===!0&&K.instanceColor===null||K.isInstancedMesh&&Xt.instancingColor===!1&&K.instanceColor!==null||K.isInstancedMesh&&Xt.instancingMorph===!0&&K.morphTexture===null||K.isInstancedMesh&&Xt.instancingMorph===!1&&K.morphTexture!==null||Xt.envMap!==ie||j.fog===!0&&Xt.fog!==Nt||Xt.numClippingPlanes!==void 0&&(Xt.numClippingPlanes!==oe.numPlanes||Xt.numIntersection!==oe.numIntersection)||Xt.vertexAlphas!==Se||Xt.vertexTangents!==Ee||Xt.morphTargets!==Jt||Xt.morphNormals!==Be||Xt.morphColors!==vi||Xt.toneMapping!==ti||Xt.morphTargetsCount!==qi||!!Xt.lightProbeGrid!=M.state.lightProbeGridArray.length>0)&&(Pe=!0):(Pe=!0,Xt.__version=j.version);let Ls=Xt.currentProgram;Pe===!0&&(Ls=yc(j,V,K),R&&j.isNodeMaterial&&R.onUpdateProgram(j,Ls,Xt));let wn=!1,ho=!1,Lr=!1;const Ye=Ls.getUniforms(),pi=Xt.uniforms;if(P.useProgram(Ls.program)&&(wn=!0,ho=!0,Lr=!0),j.id!==B&&(B=j.id,ho=!0),Xt.needsLights){const Ke=vw(M.state.lightProbeGridArray,K);Xt.lightProbeGrid!==Ke&&(Xt.lightProbeGrid=Ke,ho=!0);}if(wn||q!==I){P.buffers.depth.getReversed()&&I.reversedDepth!==!0&&(I._reversedDepth=!0,I.updateProjectionMatrix()),Ye.setValue(O,"projectionMatrix",I.projectionMatrix),Ye.setValue(O,"viewMatrix",I.matrixWorldInverse);const fo=Ye.map.cameraPosition;fo!==void 0&&fo.setValue(O,wt.setFromMatrixPosition(I.matrixWorld)),D.logarithmicDepthBuffer&&Ye.setValue(O,"logDepthBufFC",2/(Math.log(I.far+1)/Math.LN2)),(j.isMeshPhongMaterial||j.isMeshToonMaterial||j.isMeshLambertMaterial||j.isMeshBasicMaterial||j.isMeshStandardMaterial||j.isShaderMaterial)&&Ye.setValue(O,"isOrthographic",I.isOrthographicCamera===!0),q!==I&&(q=I,ho=!0,Lr=!0);}if(Xt.needsLights&&(ts.state.sunShadowMap.length>0&&Ye.setValue(O,"sunShadowMap",ts.state.sunShadowMap,st),ts.state.directionalShadowMap.length>0&&Ye.setValue(O,"directionalShadowMap",ts.state.directionalShadowMap,st),ts.state.spotShadowMap.length>0&&Ye.setValue(O,"spotShadowMap",ts.state.spotShadowMap,st),ts.state.pointShadowMap.length>0&&Ye.setValue(O,"pointShadowMap",ts.state.pointShadowMap,st)),K.isSkinnedMesh){Ye.setOptional(O,K,"bindMatrix"),Ye.setOptional(O,K,"bindMatrixInverse");const Ke=K.skeleton;Ke&&(Ke.boneTexture===null&&Ke.computeBoneTexture(),Ye.setValue(O,"boneTexture",Ke.boneTexture,st));}K.isBatchedMesh&&(Ye.setOptional(O,K,"batchingTexture"),Ye.setValue(O,"batchingTexture",K._matricesTexture,st),Ye.setOptional(O,K,"batchingIdTexture"),Ye.setValue(O,"batchingIdTexture",K._indirectTexture,st),Ye.setOptional(O,K,"batchingColorTexture"),K._colorsTexture!==null&&Ye.setValue(O,"batchingColorTexture",K._colorsTexture,st));const uo=tt.morphAttributes;if((uo.position!==void 0||uo.normal!==void 0||uo.color!==void 0)&&H.update(K,tt,Ls),(ho||Xt.receiveShadow!==K.receiveShadow)&&(Xt.receiveShadow=K.receiveShadow,Ye.setValue(O,"receiveShadow",K.receiveShadow)),(j.isMeshStandardMaterial||j.isMeshLambertMaterial||j.isMeshPhongMaterial)&&j.envMap===null&&V.environment!==null&&(pi.envMapIntensity.value=V.environmentIntensity),pi.dfgLUT!==void 0&&(pi.dfgLUT.value=fT()),ho){if(Ye.setValue(O,"toneMappingExposure",E.toneMappingExposure),Xt.needsLights&&yw(pi,Lr),Nt&&j.fog===!0&&ne.refreshFogUniforms(pi,Nt),ne.refreshMaterialUniforms(pi,j,nt,J,M.state.transmissionRenderTarget[I.id]),Xt.needsLights&&Xt.lightProbeGrid){const Ke=Xt.lightProbeGrid;pi.probesSH.value=Ke.texture,pi.probesMin.value.copy(Ke.boundingBox.min),pi.probesMax.value.copy(Ke.boundingBox.max),pi.probesResolution.value.copy(Ke.resolution);}Vh.upload(O,Zp(Xt),pi,st);}if(j.isShaderMaterial&&j.uniformsNeedUpdate===!0&&(Vh.upload(O,Zp(Xt),pi,st),j.uniformsNeedUpdate=!1),j.isSpriteMaterial&&Ye.setValue(O,"center",K.center),Ye.setValue(O,"modelViewMatrix",K.modelViewMatrix),Ye.setValue(O,"normalMatrix",K.normalMatrix),Ye.setValue(O,"modelMatrix",K.matrixWorld),j.uniformsGroups!==void 0){const Ke=j.uniformsGroups;for(let fo=0,Ir=Ke.length;fo<Ir;fo++){const Jp=Ke[fo];pt.update(Jp,Ls),pt.bind(Jp,Ls);}}return Ls;}function yw(I,V){I.ambientLightColor.needsUpdate=V,I.lightProbe.needsUpdate=V,I.sunLights.needsUpdate=V,I.sunLightShadows.needsUpdate=V,I.directionalLights.needsUpdate=V,I.directionalLightShadows.needsUpdate=V,I.pointLights.needsUpdate=V,I.pointLightShadows.needsUpdate=V,I.spotLights.needsUpdate=V,I.spotLightShadows.needsUpdate=V,I.rectAreaLights.needsUpdate=V,I.hemisphereLights.needsUpdate=V;}function ww(I){return I.isMeshLambertMaterial||I.isMeshToonMaterial||I.isMeshPhongMaterial||I.isMeshStandardMaterial||I.isShadowMaterial||I.isShaderMaterial&&I.lights===!0;}this.getActiveCubeFace=function(){return U;},this.getActiveMipmapLevel=function(){return F;},this.getRenderTarget=function(){return G;},this.setRenderTargetTextures=function(I,V,tt){const j=Z.get(I);j.__autoAllocateDepthBuffer=I.resolveDepthBuffer===!1,j.__autoAllocateDepthBuffer===!1&&(j.__useRenderToTexture=!1),Z.get(I.texture).__webglTexture=V,Z.get(I.depthTexture).__webglTexture=j.__autoAllocateDepthBuffer?void 0:tt,j.__hasExternalTextures=!0;},this.setRenderTargetFramebuffer=function(I,V){const tt=Z.get(I);tt.__webglFramebuffer=V,tt.__useDefaultFramebuffer=V===void 0;},this.setRenderTarget=function(I,V=0,tt=0){G=I,U=V,F=tt;let j=null,K=!1,Nt=!1;if(I){const Ft=Z.get(I);if(Ft.__useDefaultFramebuffer!==void 0){P.bindFramebuffer(O.FRAMEBUFFER,Ft.__webglFramebuffer),X.copy(I.viewport),vt.copy(I.scissor),gt=I.scissorTest,P.viewport(X),P.scissor(vt),P.setScissorTest(gt),B=-1;return;}else if(Ft.__webglFramebuffer===void 0)st.setupRenderTarget(I);else if(Ft.__hasExternalTextures)st.rebindTextures(I,Z.get(I.texture).__webglTexture,Z.get(I.depthTexture).__webglTexture);else if(I.depthBuffer){const Se=I.depthTexture;if(Ft.__boundDepthTexture!==Se){if(Se!==null&&Z.has(Se)&&(I.width!==Se.image.width||I.height!==Se.image.height))throw new Error("THREE.WebGLRenderer: Attached DepthTexture is initialized to the incorrect size.");st.setupDepthRenderbuffer(I);}}const Kt=I.texture;(Kt.isData3DTexture||Kt.isDataArrayTexture||Kt.isCompressedArrayTexture)&&(Nt=!0);const ie=Z.get(I).__webglFramebuffer;I.isWebGLCubeRenderTarget?(Array.isArray(ie[V])?j=ie[V][tt]:j=ie[V],K=!0):I.samples>0&&st.useMultisampledRTT(I)===!1?j=Z.get(I).__webglMultisampledFramebuffer:Array.isArray(ie)?j=ie[tt]:j=ie,X.copy(I.viewport),vt.copy(I.scissor),gt=I.scissorTest;}else X.copy(xt).multiplyScalar(nt).floor(),vt.copy(yt).multiplyScalar(nt).floor(),gt=fe;if(tt!==0&&(j=z),P.bindFramebuffer(O.FRAMEBUFFER,j)&&P.drawBuffers(I,j),P.viewport(X),P.scissor(vt),P.setScissorTest(gt),K){const Ft=Z.get(I.texture);O.framebufferTexture2D(O.FRAMEBUFFER,O.COLOR_ATTACHMENT0,O.TEXTURE_CUBE_MAP_POSITIVE_X+V,Ft.__webglTexture,tt);}else if(Nt){const Ft=V;for(let Kt=0;Kt<I.textures.length;Kt++){const ie=Z.get(I.textures[Kt]);O.framebufferTextureLayer(O.FRAMEBUFFER,O.COLOR_ATTACHMENT0+Kt,ie.__webglTexture,tt,Ft);}}else if(I!==null&&tt!==0){const Ft=Z.get(I.texture);O.framebufferTexture2D(O.FRAMEBUFFER,O.COLOR_ATTACHMENT0,O.TEXTURE_2D,Ft.__webglTexture,tt);}B=-1;};function Kp(I){const V=Z.get(I);return(V.__readFormat!==I.format||V.__readType!==I.type)&&(V.__readFormat=I.format,V.__readType=I.type,V.__formatReadable=D.textureFormatReadable(I.format),V.__typeReadable=D.textureTypeReadable(I.type)),V;}this.readRenderTargetPixels=function(I,V,tt,j,K,Nt,Yt,Ft=0){if(!(I&&I.isWebGLRenderTarget)){Threeerror("WebGLRenderer.readRenderTargetPixels: renderTarget is not THREE.WebGLRenderTarget.");return;}let Kt=Z.get(I).__webglFramebuffer;if(I.isWebGLCubeRenderTarget&&Yt!==void 0&&(Kt=Kt[Yt]),Kt){P.bindFramebuffer(O.FRAMEBUFFER,Kt);try{const ie=I.textures[Ft],Se=ie.format,Ee=ie.type;I.textures.length>1&&O.readBuffer(O.COLOR_ATTACHMENT0+Ft);const Jt=Kp(ie);if(Jt.__formatReadable===!1){Threeerror("WebGLRenderer.readRenderTargetPixels: renderTarget is not in RGBA or implementation defined format.");return;}if(Jt.__typeReadable===!1){Threeerror("WebGLRenderer.readRenderTargetPixels: renderTarget is not in UnsignedByteType or implementation defined type.");return;}V>=0&&V<=I.width-j&&tt>=0&&tt<=I.height-K&&O.readPixels(V,tt,j,K,Rt.convert(Se),Rt.convert(Ee),Nt);}finally{const ie=G!==null?Z.get(G).__webglFramebuffer:null;P.bindFramebuffer(O.FRAMEBUFFER,ie);}}},this.readRenderTargetPixelsAsync=async function(I,V,tt,j,K,Nt,Yt,Ft=0){if(!(I&&I.isWebGLRenderTarget))throw new Error("THREE.WebGLRenderer.readRenderTargetPixels: renderTarget is not THREE.WebGLRenderTarget.");let Kt=Z.get(I).__webglFramebuffer;if(I.isWebGLCubeRenderTarget&&Yt!==void 0&&(Kt=Kt[Yt]),Kt)if(V>=0&&V<=I.width-j&&tt>=0&&tt<=I.height-K){P.bindFramebuffer(O.FRAMEBUFFER,Kt);const ie=I.textures[Ft],Se=ie.format,Ee=ie.type;I.textures.length>1&&O.readBuffer(O.COLOR_ATTACHMENT0+Ft);const Jt=Kp(ie);if(Jt.__formatReadable===!1)throw new Error("THREE.WebGLRenderer.readRenderTargetPixelsAsync: renderTarget is not in RGBA or implementation defined format.");if(Jt.__typeReadable===!1)throw new Error("THREE.WebGLRenderer.readRenderTargetPixelsAsync: renderTarget is not in UnsignedByteType or implementation defined type.");const Be=O.createBuffer();O.bindBuffer(O.PIXEL_PACK_BUFFER,Be),O.bufferData(O.PIXEL_PACK_BUFFER,Nt.byteLength,O.STREAM_READ),O.readPixels(V,tt,j,K,Rt.convert(Se),Rt.convert(Ee),0),O.bindBuffer(O.PIXEL_PACK_BUFFER,null);const vi=G!==null?Z.get(G).__webglFramebuffer:null;P.bindFramebuffer(O.FRAMEBUFFER,vi);const ti=O.fenceSync(O.SYNC_GPU_COMMANDS_COMPLETE,0);return O.flush(),await g_(O,ti,4),O.bindBuffer(O.PIXEL_PACK_BUFFER,Be),O.getBufferSubData(O.PIXEL_PACK_BUFFER,0,Nt),O.bindBuffer(O.PIXEL_PACK_BUFFER,null),O.deleteBuffer(Be),O.deleteSync(ti),Nt;}else throw new Error("THREE.WebGLRenderer.readRenderTargetPixelsAsync: requested read bounds are out of range.");},this.copyFramebufferToTexture=function(I,V=null,tt=0){const j=Math.pow(2,-tt),K=Math.floor(I.image.width*j),Nt=Math.floor(I.image.height*j),Yt=V!==null?V.x:0,Ft=V!==null?V.y:0;st.setTexture2D(I,0),O.copyTexSubImage2D(O.TEXTURE_2D,tt,0,0,Yt,Ft,K,Nt),P.unbindTexture();},this.copyTextureToTexture=function(I,V,tt=null,j=null,K=0,Nt=0){let Yt,Ft,Kt,ie,Se,Ee,Jt,Be,vi;const ti=I.isCompressedTexture?I.mipmaps[Nt]:I.image;if(tt!==null)Yt=tt.max.x-tt.min.x,Ft=tt.max.y-tt.min.y,Kt=tt.isBox3?tt.max.z-tt.min.z:1,ie=tt.min.x,Se=tt.min.y,Ee=tt.isBox3?tt.min.z:0;else{const pi=Math.pow(2,-K);Yt=Math.floor(ti.width*pi),Ft=Math.floor(ti.height*pi),I.isDataArrayTexture?Kt=ti.depth:I.isData3DTexture?Kt=Math.floor(ti.depth*pi):Kt=1,ie=0,Se=0,Ee=0;}j!==null?(Jt=j.x,Be=j.y,vi=j.z):(Jt=0,Be=0,vi=0);const Ze=Rt.convert(V.format),qi=Rt.convert(V.type);let Xt;V.isData3DTexture?(st.setTexture3D(V,0),Xt=O.TEXTURE_3D):V.isDataArrayTexture||V.isCompressedArrayTexture?(st.setTexture2DArray(V,0),Xt=O.TEXTURE_2D_ARRAY):(st.setTexture2D(V,0),Xt=O.TEXTURE_2D),P.activeTexture(O.TEXTURE0),P.pixelStorei(O.UNPACK_FLIP_Y_WEBGL,V.flipY),P.pixelStorei(O.UNPACK_PREMULTIPLY_ALPHA_WEBGL,V.premultiplyAlpha),P.pixelStorei(O.UNPACK_ALIGNMENT,V.unpackAlignment);const ts=P.getParameter(O.UNPACK_ROW_LENGTH),Pe=P.getParameter(O.UNPACK_IMAGE_HEIGHT),Ls=P.getParameter(O.UNPACK_SKIP_PIXELS),wn=P.getParameter(O.UNPACK_SKIP_ROWS),ho=P.getParameter(O.UNPACK_SKIP_IMAGES);P.pixelStorei(O.UNPACK_ROW_LENGTH,ti.width),P.pixelStorei(O.UNPACK_IMAGE_HEIGHT,ti.height),P.pixelStorei(O.UNPACK_SKIP_PIXELS,ie),P.pixelStorei(O.UNPACK_SKIP_ROWS,Se),P.pixelStorei(O.UNPACK_SKIP_IMAGES,Ee);const Lr=I.isDataArrayTexture||I.isData3DTexture,Ye=V.isDataArrayTexture||V.isData3DTexture;if(I.isDepthTexture){const pi=Z.get(I),uo=Z.get(V),Ke=Z.get(pi.__renderTarget),fo=Z.get(uo.__renderTarget);P.bindFramebuffer(O.READ_FRAMEBUFFER,Ke.__webglFramebuffer),P.bindFramebuffer(O.DRAW_FRAMEBUFFER,fo.__webglFramebuffer);for(let Ir=0;Ir<Kt;Ir++)Lr&&(O.framebufferTextureLayer(O.READ_FRAMEBUFFER,O.COLOR_ATTACHMENT0,Z.get(I).__webglTexture,K,Ee+Ir),O.framebufferTextureLayer(O.DRAW_FRAMEBUFFER,O.COLOR_ATTACHMENT0,Z.get(V).__webglTexture,Nt,vi+Ir)),O.blitFramebuffer(ie,Se,Yt,Ft,Jt,Be,Yt,Ft,O.DEPTH_BUFFER_BIT,O.NEAREST);P.bindFramebuffer(O.READ_FRAMEBUFFER,null),P.bindFramebuffer(O.DRAW_FRAMEBUFFER,null);}else if(K!==0||I.isRenderTargetTexture||Z.has(I)){const pi=Z.get(I),uo=Z.get(V);P.bindFramebuffer(O.READ_FRAMEBUFFER,L),P.bindFramebuffer(O.DRAW_FRAMEBUFFER,k);for(let Ke=0;Ke<Kt;Ke++)Lr?O.framebufferTextureLayer(O.READ_FRAMEBUFFER,O.COLOR_ATTACHMENT0,pi.__webglTexture,K,Ee+Ke):O.framebufferTexture2D(O.READ_FRAMEBUFFER,O.COLOR_ATTACHMENT0,O.TEXTURE_2D,pi.__webglTexture,K),Ye?O.framebufferTextureLayer(O.DRAW_FRAMEBUFFER,O.COLOR_ATTACHMENT0,uo.__webglTexture,Nt,vi+Ke):O.framebufferTexture2D(O.DRAW_FRAMEBUFFER,O.COLOR_ATTACHMENT0,O.TEXTURE_2D,uo.__webglTexture,Nt),K!==0?O.blitFramebuffer(ie,Se,Yt,Ft,Jt,Be,Yt,Ft,O.COLOR_BUFFER_BIT,O.NEAREST):Ye?O.copyTexSubImage3D(Xt,Nt,Jt,Be,vi+Ke,ie,Se,Yt,Ft):O.copyTexSubImage2D(Xt,Nt,Jt,Be,ie,Se,Yt,Ft);P.bindFramebuffer(O.READ_FRAMEBUFFER,null),P.bindFramebuffer(O.DRAW_FRAMEBUFFER,null);}else Ye?I.isDataTexture||I.isData3DTexture?O.texSubImage3D(Xt,Nt,Jt,Be,vi,Yt,Ft,Kt,Ze,qi,ti.data):V.isCompressedArrayTexture?O.compressedTexSubImage3D(Xt,Nt,Jt,Be,vi,Yt,Ft,Kt,Ze,ti.data):O.texSubImage3D(Xt,Nt,Jt,Be,vi,Yt,Ft,Kt,Ze,qi,ti):I.isDataTexture?O.texSubImage2D(O.TEXTURE_2D,Nt,Jt,Be,Yt,Ft,Ze,qi,ti.data):I.isCompressedTexture?O.compressedTexSubImage2D(O.TEXTURE_2D,Nt,Jt,Be,ti.width,ti.height,Ze,ti.data):O.texSubImage2D(O.TEXTURE_2D,Nt,Jt,Be,Yt,Ft,Ze,qi,ti);P.pixelStorei(O.UNPACK_ROW_LENGTH,ts),P.pixelStorei(O.UNPACK_IMAGE_HEIGHT,Pe),P.pixelStorei(O.UNPACK_SKIP_PIXELS,Ls),P.pixelStorei(O.UNPACK_SKIP_ROWS,wn),P.pixelStorei(O.UNPACK_SKIP_IMAGES,ho),Nt===0&&V.generateMipmaps&&O.generateMipmap(Xt),P.unbindTexture();},this.initRenderTarget=function(I){Z.get(I).__webglFramebuffer===void 0&&st.setupRenderTarget(I);},this.initTexture=function(I){I.isCubeTexture?st.setTextureCube(I,0):I.isData3DTexture?st.setTexture3D(I,0):I.isDataArrayTexture||I.isCompressedArrayTexture?st.setTexture2DArray(I,0):st.setTexture2D(I,0),P.unbindTexture();},this.resetState=function(){U=0,F=0,G=null,P.reset(),Ot.reset();},typeof __THREE_DEVTOOLS__<"u"&&__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent("observe",{detail:this}));}get coordinateSystem(){return ThreeWebGLCoordinateSystem;}get outputColorSpace(){return this._outputColorSpace;}set outputColorSpace(t){this._outputColorSpace=t;const e=this.getContext();e.drawingBufferColorSpace=ThreeColorManagement._getDrawingBufferColorSpace(t),e.unpackColorSpace=ThreeColorManagement._getUnpackColorSpace();}}const Ry=Object.freeze(Object.defineProperty({__proto__:null,ACESFilmicToneMapping:ThreeACESFilmicToneMapping,AddEquation:ThreeAddEquation,AddOperation:ThreeAddOperation,AdditiveAnimationBlendMode:ThreeAdditiveAnimationBlendMode,AdditiveBlending:ThreeAdditiveBlending,AgXToneMapping:ThreeAgXToneMapping,AlphaFormat:ThreeAlphaFormat,AlwaysCompare:ThreeAlwaysCompare,AlwaysDepth:ThreeAlwaysDepth,AlwaysStencilFunc:ThreeAlwaysStencilFunc,AmbientLight:ThreeAmbientLight,AnimationAction:ThreeAnimationAction,AnimationClip:ThreeAnimationClip,AnimationLoader:ThreeAnimationLoader,AnimationMixer:ThreeAnimationMixer,AnimationObjectGroup:ThreeAnimationObjectGroup,AnimationUtils:ThreeAnimationUtils,ArcCurve:ThreeArcCurve,ArrayCamera:ThreeArrayCamera,ArrowHelper:ThreeArrowHelper,AttachedBindMode:ThreeAttachedBindMode,Audio:ThreeAudio,AudioAnalyser:ThreeAudioAnalyser,AudioContext:ThreeAudioContext,AudioListener:ThreeAudioListener,AudioLoader:ThreeAudioLoader,AxesHelper:ThreeAxesHelper,BackSide:ThreeBackSide,BasicDepthPacking:ThreeBasicDepthPacking,BasicShadowMap:ThreeBasicShadowMap,BatchedMesh:ThreeBatchedMesh,BezierInterpolant:ThreeBezierInterpolant,Bone:ThreeBone,BooleanKeyframeTrack:ThreeBooleanKeyframeTrack,Box2:ThreeBox2,Box3:ThreeBox3,Box3Helper:ThreeBox3Helper,BoxGeometry:ThreeBoxGeometry,BoxHelper:ThreeBoxHelper,BufferAttribute:ThreeBufferAttribute,BufferGeometry:ThreeBufferGeometry,BufferGeometryLoader:ThreeBufferGeometryLoader,ByteType:ThreeByteType,Cache:ThreeCache,Camera:ThreeCamera,CameraHelper:ThreeCameraHelper,CanvasTexture:ThreeCanvasTexture,CapsuleGeometry:ThreeCapsuleGeometry,CatmullRomCurve3:ThreeCatmullRomCurve3,CineonToneMapping:ThreeCineonToneMapping,CircleGeometry:ThreeCircleGeometry,ClampToEdgeWrapping:ThreeClampToEdgeWrapping,Clock:ThreeClock,Color:ThreeColor,ColorKeyframeTrack:ThreeColorKeyframeTrack,ColorManagement:ThreeColorManagement,Compatibility:ThreeCompatibility,CompressedArrayTexture:ThreeCompressedArrayTexture,CompressedCubeTexture:ThreeCompressedCubeTexture,CompressedTexture:ThreeCompressedTexture,CompressedTextureLoader:ThreeCompressedTextureLoader,ConeGeometry:ThreeConeGeometry,ConstantAlphaFactor:ThreeConstantAlphaFactor,ConstantColorFactor:ThreeConstantColorFactor,Controls:ThreeControls,CubeCamera:ThreeCubeCamera,CubeDepthTexture:ThreeCubeDepthTexture,CubeReflectionMapping:ThreeCubeReflectionMapping,CubeRefractionMapping:ThreeCubeRefractionMapping,CubeTexture:ThreeCubeTexture,CubeTextureLoader:ThreeCubeTextureLoader,CubeUVReflectionMapping:ThreeCubeUVReflectionMapping,CubicBezierCurve:ThreeCubicBezierCurve,CubicBezierCurve3:ThreeCubicBezierCurve3,CubicInterpolant:ThreeCubicInterpolant,CullFaceBack:ThreeCullFaceBack,CullFaceFront:ThreeCullFaceFront,CullFaceFrontBack:ThreeCullFaceFrontBack,CullFaceNone:ThreeCullFaceNone,Curve:ThreeCurve,CurvePath:ThreeCurvePath,CustomBlending:ThreeCustomBlending,CustomToneMapping:ThreeCustomToneMapping,CylinderGeometry:ThreeCylinderGeometry,Cylindrical:ThreeCylindrical,Data3DTexture:ThreeData3DTexture,DataArrayTexture:ThreeDataArrayTexture,DataTexture:ThreeDataTexture,DataTextureLoader:ThreeDataTextureLoader,DataUtils:ThreeDataUtils,DecrementStencilOp:ThreeDecrementStencilOp,DecrementWrapStencilOp:ThreeDecrementWrapStencilOp,DefaultLoadingManager:ThreeDefaultLoadingManager,DepthFormat:ThreeDepthFormat,DepthStencilFormat:ThreeDepthStencilFormat,DepthTexture:ThreeDepthTexture,DetachedBindMode:ThreeDetachedBindMode,DirectionalLight:ThreeDirectionalLight,DirectionalLightHelper:ThreeDirectionalLightHelper,DiscreteInterpolant:ThreeDiscreteInterpolant,DodecahedronGeometry:ThreeDodecahedronGeometry,DoubleSide:ThreeDoubleSide,DstAlphaFactor:ThreeDstAlphaFactor,DstColorFactor:ThreeDstColorFactor,DynamicCopyUsage:ThreeDynamicCopyUsage,DynamicDrawUsage:ThreeDynamicDrawUsage,DynamicReadUsage:ThreeDynamicReadUsage,EdgesGeometry:ThreeEdgesGeometry,EllipseCurve:ThreeEllipseCurve,EqualCompare:ThreeEqualCompare,EqualDepth:ThreeEqualDepth,EqualStencilFunc:ThreeEqualStencilFunc,EquirectangularReflectionMapping:ThreeEquirectangularReflectionMapping,EquirectangularRefractionMapping:ThreeEquirectangularRefractionMapping,Euler:ThreeEuler,EventDispatcher:ThreeEventDispatcher,ExternalTexture:ThreeExternalTexture,ExtrudeGeometry:ThreeExtrudeGeometry,FileLoader:ThreeFileLoader,Float16BufferAttribute:ThreeFloat16BufferAttribute,Float32BufferAttribute:ThreeFloat32BufferAttribute,FloatType:ThreeFloatType,Fog:ThreeFog,FogExp2:ThreeFogExp2,FramebufferTexture:ThreeFramebufferTexture,FrontSide:ThreeFrontSide,Frustum:ThreeFrustum,FrustumArray:ThreeFrustumArray,GLBufferAttribute:ThreeGLBufferAttribute,GLSL1:ThreeGLSL1,GLSL3:ThreeGLSL3,GreaterCompare:ThreeGreaterCompare,GreaterDepth:ThreeGreaterDepth,GreaterEqualCompare:ThreeGreaterEqualCompare,GreaterEqualDepth:ThreeGreaterEqualDepth,GreaterEqualStencilFunc:ThreeGreaterEqualStencilFunc,GreaterStencilFunc:ThreeGreaterStencilFunc,GridHelper:ThreeGridHelper,Group:ThreeGroup,HTMLTexture:ThreeHTMLTexture,HalfFloatType:ThreeHalfFloatType,HemisphereLight:ThreeHemisphereLight,HemisphereLightHelper:ThreeHemisphereLightHelper,IcosahedronGeometry:ThreeIcosahedronGeometry,ImageBitmapLoader:ThreeImageBitmapLoader,ImageLoader:ThreeImageLoader,ImageUtils:ThreeImageUtils,IncrementStencilOp:ThreeIncrementStencilOp,IncrementWrapStencilOp:ThreeIncrementWrapStencilOp,InstancedBufferAttribute:ThreeInstancedBufferAttribute,InstancedBufferGeometry:ThreeInstancedBufferGeometry,InstancedInterleavedBuffer:ThreeInstancedInterleavedBuffer,InstancedMesh:ThreeInstancedMesh,Int16BufferAttribute:ThreeInt16BufferAttribute,Int32BufferAttribute:ThreeInt32BufferAttribute,Int8BufferAttribute:ThreeInt8BufferAttribute,IntType:ThreeIntType,InterleavedBuffer:ThreeInterleavedBuffer,InterleavedBufferAttribute:ThreeInterleavedBufferAttribute,Interpolant:ThreeInterpolant,InterpolateBezier:ThreeInterpolateBezier,InterpolateDiscrete:ThreeInterpolateDiscrete,InterpolateLinear:ThreeInterpolateLinear,InterpolateSmooth:ThreeInterpolateSmooth,InterpolationSamplingMode:ThreeInterpolationSamplingMode,InterpolationSamplingType:ThreeInterpolationSamplingType,InvertStencilOp:ThreeInvertStencilOp,KeepStencilOp:ThreeKeepStencilOp,KeyframeTrack:ThreeKeyframeTrack,LOD:ThreeLOD,LatheGeometry:ThreeLatheGeometry,Layers:ThreeLayers,LessCompare:ThreeLessCompare,LessDepth:ThreeLessDepth,LessEqualCompare:ThreeLessEqualCompare,LessEqualDepth:ThreeLessEqualDepth,LessEqualStencilFunc:ThreeLessEqualStencilFunc,LessStencilFunc:ThreeLessStencilFunc,Light:ThreeLight,LightProbe:ThreeLightProbe,LightShadow:ThreeLightShadow,Line:ThreeLine,Line3:ThreeLine3,LineBasicMaterial:ThreeLineBasicMaterial,LineCurve:ThreeLineCurve,LineCurve3:ThreeLineCurve3,LineDashedMaterial:ThreeLineDashedMaterial,LineLoop:ThreeLineLoop,LineSegments:ThreeLineSegments,LinearFilter:ThreeLinearFilter,LinearInterpolant:ThreeLinearInterpolant,LinearMipMapLinearFilter:ThreeLinearMipMapLinearFilter,LinearMipMapNearestFilter:ThreeLinearMipMapNearestFilter,LinearMipmapLinearFilter:ThreeLinearMipmapLinearFilter,LinearMipmapNearestFilter:ThreeLinearMipmapNearestFilter,LinearSRGBColorSpace:ThreeLinearSRGBColorSpace,LinearToneMapping:ThreeLinearToneMapping,LinearTransfer:ThreeLinearTransfer,Loader:ThreeLoader,LoaderUtils:ThreeLoaderUtils,LoadingManager:ThreeLoadingManager,LoopOnce:ThreeLoopOnce,LoopPingPong:ThreeLoopPingPong,LoopRepeat:ThreeLoopRepeat,MOUSE:ThreeMOUSE,Material:ThreeMaterial,MaterialBlending:ThreeMaterialBlending,MaterialLoader:ThreeMaterialLoader,MathUtils:ThreeMathUtils,Matrix2:ThreeMatrix2,Matrix3:ThreeMatrix3,Matrix4:ThreeMatrix4,MaxEquation:ThreeMaxEquation,Mesh:ThreeMesh,MeshBasicMaterial:ThreeMeshBasicMaterial,MeshDepthMaterial:ThreeMeshDepthMaterial,MeshDistanceMaterial:ThreeMeshDistanceMaterial,MeshLambertMaterial:ThreeMeshLambertMaterial,MeshMatcapMaterial:ThreeMeshMatcapMaterial,MeshNormalMaterial:ThreeMeshNormalMaterial,MeshPhongMaterial:ThreeMeshPhongMaterial,MeshPhysicalMaterial:ThreeMeshPhysicalMaterial,MeshStandardMaterial:ThreeMeshStandardMaterial,MeshToonMaterial:ThreeMeshToonMaterial,MinEquation:ThreeMinEquation,MirroredRepeatWrapping:ThreeMirroredRepeatWrapping,MixOperation:ThreeMixOperation,MultiplyBlending:ThreeMultiplyBlending,MultiplyOperation:ThreeMultiplyOperation,NearestFilter:ThreeNearestFilter,NearestMipMapLinearFilter:ThreeNearestMipMapLinearFilter,NearestMipMapNearestFilter:ThreeNearestMipMapNearestFilter,NearestMipmapLinearFilter:ThreeNearestMipmapLinearFilter,NearestMipmapNearestFilter:ThreeNearestMipmapNearestFilter,NeutralToneMapping:ThreeNeutralToneMapping,NeverCompare:ThreeNeverCompare,NeverDepth:ThreeNeverDepth,NeverStencilFunc:ThreeNeverStencilFunc,NoBlending:ThreeNoBlending,NoColorSpace:ThreeNoColorSpace,NoNormalPacking:ThreeNoNormalPacking,NoToneMapping:ThreeNoToneMapping,NormalAnimationBlendMode:ThreeNormalAnimationBlendMode,NormalBlending:ThreeNormalBlending,NormalGAPacking:ThreeNormalGAPacking,NormalRGPacking:ThreeNormalRGPacking,NotEqualCompare:ThreeNotEqualCompare,NotEqualDepth:ThreeNotEqualDepth,NotEqualStencilFunc:ThreeNotEqualStencilFunc,NumberKeyframeTrack:ThreeNumberKeyframeTrack,Object3D:ThreeObject3D,ObjectLoader:ThreeObjectLoader,ObjectSpaceNormalMap:ThreeObjectSpaceNormalMap,OctahedronGeometry:ThreeOctahedronGeometry,OneFactor:ThreeOneFactor,OneMinusConstantAlphaFactor:ThreeOneMinusConstantAlphaFactor,OneMinusConstantColorFactor:ThreeOneMinusConstantColorFactor,OneMinusDstAlphaFactor:ThreeOneMinusDstAlphaFactor,OneMinusDstColorFactor:ThreeOneMinusDstColorFactor,OneMinusSrcAlphaFactor:ThreeOneMinusSrcAlphaFactor,OneMinusSrcColorFactor:ThreeOneMinusSrcColorFactor,OrthographicCamera:ThreeOrthographicCamera,PCFShadowMap:ThreePCFShadowMap,PCFSoftShadowMap:ThreePCFSoftShadowMap,PMREMGenerator:ThreePMREMGenerator,Path:ThreePath,PerspectiveCamera:ThreePerspectiveCamera,Plane:ThreePlane,PlaneGeometry:ThreePlaneGeometry,PlaneHelper:ThreePlaneHelper,PointLight:ThreePointLight,PointLightHelper:ThreePointLightHelper,Points:ThreePoints,PointsMaterial:ThreePointsMaterial,PolarGridHelper:ThreePolarGridHelper,PolyhedronGeometry:ThreePolyhedronGeometry,PositionalAudio:ThreePositionalAudio,PropertyBinding:ThreePropertyBinding,PropertyMixer:ThreePropertyMixer,QuadraticBezierCurve:ThreeQuadraticBezierCurve,QuadraticBezierCurve3:ThreeQuadraticBezierCurve3,Quaternion:ThreeQuaternion,QuaternionKeyframeTrack:ThreeQuaternionKeyframeTrack,QuaternionLinearInterpolant:ThreeQuaternionLinearInterpolant,R11_EAC_Format:ThreeR11_EAC_Format,RED_GREEN_RGTC2_Format:ThreeRED_GREEN_RGTC2_Format,RED_RGTC1_Format:ThreeRED_RGTC1_Format,REVISION:ThreeREVISION,RG11_EAC_Format:ThreeRG11_EAC_Format,RGBADepthPacking:ThreeRGBADepthPacking,RGBAFormat:ThreeRGBAFormat,RGBAIntegerFormat:ThreeRGBAIntegerFormat,RGBA_ASTC_10x10_Format:ThreeRGBA_ASTC_10x10_Format,RGBA_ASTC_10x5_Format:ThreeRGBA_ASTC_10x5_Format,RGBA_ASTC_10x6_Format:ThreeRGBA_ASTC_10x6_Format,RGBA_ASTC_10x8_Format:ThreeRGBA_ASTC_10x8_Format,RGBA_ASTC_12x10_Format:ThreeRGBA_ASTC_12x10_Format,RGBA_ASTC_12x12_Format:ThreeRGBA_ASTC_12x12_Format,RGBA_ASTC_4x4_Format:ThreeRGBA_ASTC_4x4_Format,RGBA_ASTC_5x4_Format:ThreeRGBA_ASTC_5x4_Format,RGBA_ASTC_5x5_Format:ThreeRGBA_ASTC_5x5_Format,RGBA_ASTC_6x5_Format:ThreeRGBA_ASTC_6x5_Format,RGBA_ASTC_6x6_Format:ThreeRGBA_ASTC_6x6_Format,RGBA_ASTC_8x5_Format:ThreeRGBA_ASTC_8x5_Format,RGBA_ASTC_8x6_Format:ThreeRGBA_ASTC_8x6_Format,RGBA_ASTC_8x8_Format:ThreeRGBA_ASTC_8x8_Format,RGBA_BPTC_Format:ThreeRGBA_BPTC_Format,RGBA_ETC2_EAC_Format:ThreeRGBA_ETC2_EAC_Format,RGBA_PVRTC_2BPPV1_Format:ThreeRGBA_PVRTC_2BPPV1_Format,RGBA_PVRTC_4BPPV1_Format:ThreeRGBA_PVRTC_4BPPV1_Format,RGBA_S3TC_DXT1_Format:ThreeRGBA_S3TC_DXT1_Format,RGBA_S3TC_DXT3_Format:ThreeRGBA_S3TC_DXT3_Format,RGBA_S3TC_DXT5_Format:ThreeRGBA_S3TC_DXT5_Format,RGBDepthPacking:ThreeRGBDepthPacking,RGBFormat:ThreeRGBFormat,RGBIntegerFormat:ThreeRGBIntegerFormat,RGB_BPTC_SIGNED_Format:ThreeRGB_BPTC_SIGNED_Format,RGB_BPTC_UNSIGNED_Format:ThreeRGB_BPTC_UNSIGNED_Format,RGB_ETC1_Format:ThreeRGB_ETC1_Format,RGB_ETC2_Format:ThreeRGB_ETC2_Format,RGB_PVRTC_2BPPV1_Format:ThreeRGB_PVRTC_2BPPV1_Format,RGB_PVRTC_4BPPV1_Format:ThreeRGB_PVRTC_4BPPV1_Format,RGB_S3TC_DXT1_Format:ThreeRGB_S3TC_DXT1_Format,RGDepthPacking:ThreeRGDepthPacking,RGFormat:ThreeRGFormat,RGIntegerFormat:ThreeRGIntegerFormat,RawShaderMaterial:ThreeRawShaderMaterial,Ray:ThreeRay,Raycaster:ThreeRaycaster,RectAreaLight:ThreeRectAreaLight,RedFormat:ThreeRedFormat,RedIntegerFormat:ThreeRedIntegerFormat,ReinhardToneMapping:ThreeReinhardToneMapping,RenderObjectRefreshType:ThreeRenderObjectRefreshType,RenderTarget:ThreeRenderTarget,RenderTarget3D:ThreeRenderTarget3D,RepeatWrapping:ThreeRepeatWrapping,ReplaceStencilOp:ThreeReplaceStencilOp,ReverseSubtractEquation:ThreeReverseSubtractEquation,RingGeometry:ThreeRingGeometry,SIGNED_R11_EAC_Format:ThreeSIGNED_R11_EAC_Format,SIGNED_RED_GREEN_RGTC2_Format:ThreeSIGNED_RED_GREEN_RGTC2_Format,SIGNED_RED_RGTC1_Format:ThreeSIGNED_RED_RGTC1_Format,SIGNED_RG11_EAC_Format:ThreeSIGNED_RG11_EAC_Format,SRGBColorSpace:ThreeSRGBColorSpace,SRGBTransfer:ThreeSRGBTransfer,Scene:ThreeScene,ShaderChunk:ThreeShaderChunk,ShaderLib:ThreeShaderLib,ShaderMaterial:ThreeShaderMaterial,ShadowMaterial:ThreeShadowMaterial,Shape:ThreeShape,ShapeGeometry:ThreeShapeGeometry,ShapePath:ThreeShapePath,ShapeUtils:ThreeShapeUtils,ShortType:ThreeShortType,Skeleton:ThreeSkeleton,SkeletonHelper:ThreeSkeletonHelper,SkinnedMesh:ThreeSkinnedMesh,Source:ThreeSource,Sphere:ThreeSphere,SphereGeometry:ThreeSphereGeometry,Spherical:ThreeSpherical,SphericalHarmonics3:ThreeSphericalHarmonics3,SplineCurve:ThreeSplineCurve,SpotLight:ThreeSpotLight,SpotLightHelper:ThreeSpotLightHelper,Sprite:ThreeSprite,SpriteMaterial:ThreeSpriteMaterial,SrcAlphaFactor:ThreeSrcAlphaFactor,SrcAlphaSaturateFactor:ThreeSrcAlphaSaturateFactor,SrcColorFactor:ThreeSrcColorFactor,StaticCopyUsage:ThreeStaticCopyUsage,StaticDrawUsage:ThreeStaticDrawUsage,StaticReadUsage:ThreeStaticReadUsage,StereoCamera:ThreeStereoCamera,StreamCopyUsage:ThreeStreamCopyUsage,StreamDrawUsage:ThreeStreamDrawUsage,StreamReadUsage:ThreeStreamReadUsage,StringKeyframeTrack:ThreeStringKeyframeTrack,SubtractEquation:ThreeSubtractEquation,SubtractiveBlending:ThreeSubtractiveBlending,TOUCH:ThreeTOUCH,TangentSpaceNormalMap:ThreeTangentSpaceNormalMap,TetrahedronGeometry:ThreeTetrahedronGeometry,Texture:ThreeTexture,TextureLoader:ThreeTextureLoader,TextureSource:ThreeTextureSource,TextureUtils:ThreeTextureUtils,Timer:ThreeTimer,TimestampQuery:ThreeTimestampQuery,TorusGeometry:ThreeTorusGeometry,TorusKnotGeometry:ThreeTorusKnotGeometry,Triangle:ThreeTriangle,TriangleFanDrawMode:ThreeTriangleFanDrawMode,TriangleStripDrawMode:ThreeTriangleStripDrawMode,TrianglesDrawMode:ThreeTrianglesDrawMode,TubeGeometry:ThreeTubeGeometry,UVMapping:ThreeUVMapping,Uint16BufferAttribute:ThreeUint16BufferAttribute,Uint32BufferAttribute:ThreeUint32BufferAttribute,Uint8BufferAttribute:ThreeUint8BufferAttribute,Uint8ClampedBufferAttribute:ThreeUint8ClampedBufferAttribute,Uniform:ThreeUniform,UniformsGroup:ThreeUniformsGroup,UniformsLib:ThreeUniformsLib,UniformsUtils:ThreeUniformsUtils,UnsignedByteType:ThreeUnsignedByteType,UnsignedInt101111Type:ThreeUnsignedInt101111Type,UnsignedInt248Type:ThreeUnsignedInt248Type,UnsignedInt5999Type:ThreeUnsignedInt5999Type,UnsignedIntType:ThreeUnsignedIntType,UnsignedShort4444Type:ThreeUnsignedShort4444Type,UnsignedShort5551Type:ThreeUnsignedShort5551Type,UnsignedShortType:ThreeUnsignedShortType,VSMShadowMap:ThreeVSMShadowMap,Vector2:ThreeVector2,Vector3:ThreeVector3,Vector4:ThreeVector4,VectorKeyframeTrack:ThreeVectorKeyframeTrack,VideoFrameTexture:ThreeVideoFrameTexture,VideoTexture:ThreeVideoTexture,WebGL3DRenderTarget:ThreeWebGL3DRenderTarget,WebGLArrayRenderTarget:ThreeWebGLArrayRenderTarget,WebGLCoordinateSystem:ThreeWebGLCoordinateSystem,WebGLCubeRenderTarget:ThreeWebGLCubeRenderTarget,WebGLRenderTarget:ThreeWebGLRenderTarget,WebGLRenderer:ThreeWebGLRenderer,WebGLUtils:ThreeWebGLUtils,WebGPUCoordinateSystem:ThreeWebGPUCoordinateSystem,WebXRController:ThreeWebXRController,WireframeGeometry:ThreeWireframeGeometry,WrapAroundEnding:ThreeWrapAroundEnding,ZeroCurvatureEnding:ThreeZeroCurvatureEnding,ZeroFactor:ThreeZeroFactor,ZeroSlopeEnding:ThreeZeroSlopeEnding,ZeroStencilOp:ThreeZeroStencilOp,createCanvasElement:ThreecreateCanvasElement,error:Threeerror,getConsoleFunction:ThreegetConsoleFunction,log:Threelog,setConsoleFunction:ThreesetConsoleFunction,warn:Threewarn,warnOnce:ThreewarnOnce},Symbol.toStringTag,{value:"Module"}));}
+{const{BoxGeometry,BufferGeometry,Controls,CylinderGeometry,DoubleSide,Euler,Float32BufferAttribute,Line,LineBasicMaterial,Matrix4,Mesh,MeshBasicMaterial,Object3D,OctahedronGeometry,PlaneGeometry,Quaternion,Raycaster,SphereGeometry,TorusGeometry,Vector3}=Ry;const _raycaster=new Raycaster();const _tempVector=new Vector3();const _tempVector2=new Vector3();const _tempQuaternion=new Quaternion();const _unit={X:new Vector3(1,0,0),Y:new Vector3(0,1,0),Z:new Vector3(0,0,1)};const _changeEvent={type:'change'};const _mouseDownEvent={type:'mouseDown',mode:null};const _mouseUpEvent={type:'mouseUp',mode:null};const _objectChangeEvent={type:'objectChange'};class TransformControls extends Controls{constructor(camera,domElement=null){super(undefined,domElement);const root=new TransformControlsRoot(this);this._root=root;const gizmo=new TransformControlsGizmo();this._gizmo=gizmo;root.add(gizmo);const plane=new TransformControlsPlane();this._plane=plane;root.add(plane);const scope=this;function defineProperty(propName,defaultValue){let propValue=defaultValue;Object.defineProperty(scope,propName,{get:function(){return propValue!==undefined?propValue:defaultValue;},set:function(value){if(propValue!==value){propValue=value;plane[propName]=value;gizmo[propName]=value;scope.dispatchEvent({type:propName+'-changed',value:value});scope.dispatchEvent(_changeEvent);}}});scope[propName]=defaultValue;plane[propName]=defaultValue;gizmo[propName]=defaultValue;}defineProperty('camera',camera);defineProperty('object',undefined);defineProperty('enabled',true);defineProperty('axis',null);defineProperty('mode','translate');defineProperty('translationSnap',null);defineProperty('rotationSnap',null);defineProperty('scaleSnap',null);defineProperty('space','world');defineProperty('size',1);this.viewport=null;defineProperty('dragging',false);defineProperty('showX',true);defineProperty('showY',true);defineProperty('showZ',true);defineProperty('showXY',true);defineProperty('showYZ',true);defineProperty('showXZ',true);defineProperty('showXYZE',true);defineProperty('showE',true);defineProperty('minX',-Infinity);defineProperty('maxX',Infinity);defineProperty('minY',-Infinity);defineProperty('maxY',Infinity);defineProperty('minZ',-Infinity);defineProperty('maxZ',Infinity);const worldPosition=new Vector3();const worldPositionStart=new Vector3();const worldQuaternion=new Quaternion();const worldQuaternionStart=new Quaternion();const cameraPosition=new Vector3();const cameraQuaternion=new Quaternion();const pointStart=new Vector3();const pointEnd=new Vector3();const rotationAxis=new Vector3();const rotationAngle=0;const eye=new Vector3();defineProperty('worldPosition',worldPosition);defineProperty('worldPositionStart',worldPositionStart);defineProperty('worldQuaternion',worldQuaternion);defineProperty('worldQuaternionStart',worldQuaternionStart);defineProperty('cameraPosition',cameraPosition);defineProperty('cameraQuaternion',cameraQuaternion);defineProperty('pointStart',pointStart);defineProperty('pointEnd',pointEnd);defineProperty('rotationAxis',rotationAxis);defineProperty('rotationAngle',rotationAngle);defineProperty('eye',eye);this._offset=new Vector3();this._startNorm=new Vector3();this._endNorm=new Vector3();this._cameraScale=new Vector3();this._parentPosition=new Vector3();this._parentQuaternion=new Quaternion();this._parentQuaternionInv=new Quaternion();this._parentScale=new Vector3();this._worldScaleStart=new Vector3();this._worldQuaternionInv=new Quaternion();this._worldScale=new Vector3();this._positionStart=new Vector3();this._quaternionStart=new Quaternion();this._scaleStart=new Vector3();this._getPointer=getPointer.bind(this);this._onPointerDown=onPointerDown.bind(this);this._onPointerHover=onPointerHover.bind(this);this._onPointerMove=onPointerMove.bind(this);this._onPointerUp=onPointerUp.bind(this);if(domElement!==null){this.connect(domElement);}}connect(element){super.connect(element);this.domElement.addEventListener('pointerdown',this._onPointerDown);this.domElement.addEventListener('pointermove',this._onPointerHover);this.domElement.addEventListener('pointerup',this._onPointerUp);this.domElement.style.touchAction='none';}disconnect(){this.domElement.removeEventListener('pointerdown',this._onPointerDown);this.domElement.removeEventListener('pointermove',this._onPointerHover);this.domElement.removeEventListener('pointermove',this._onPointerMove);this.domElement.removeEventListener('pointerup',this._onPointerUp);this.domElement.style.touchAction='';}getHelper(){return this._root;}pointerHover(pointer){if(this.object===undefined||this.dragging===true)return;if(pointer!==null)_raycaster.setFromCamera(pointer,this.camera);const intersect=intersectObjectWithRay(this._gizmo.picker[this.mode],_raycaster);if(intersect){this.axis=intersect.object.name;}else{this.axis=null;}}pointerDown(pointer){if(this.object===undefined||this.dragging===true||pointer!=null&&pointer.button!==0)return;if(this.axis!==null){if(pointer!==null)_raycaster.setFromCamera(pointer,this.camera);const planeIntersect=intersectObjectWithRay(this._plane,_raycaster,true);if(planeIntersect){this.object.updateMatrixWorld();this.object.parent.updateMatrixWorld();this._positionStart.copy(this.object.position);this._quaternionStart.copy(this.object.quaternion);this._scaleStart.copy(this.object.scale);this.object.matrixWorld.decompose(this.worldPositionStart,this.worldQuaternionStart,this._worldScaleStart);this.pointStart.copy(planeIntersect.point).sub(this.worldPositionStart);}this.dragging=true;_mouseDownEvent.mode=this.mode;this.dispatchEvent(_mouseDownEvent);}}pointerMove(pointer){const axis=this.axis;const mode=this.mode;const object=this.object;let space=this.space;if(mode==='scale'){space='local';}else if(axis==='E'||axis==='XYZE'||axis==='XYZ'){space='world';}if(object===undefined||axis===null||this.dragging===false||pointer!==null&&pointer.button!==-1)return;if(pointer!==null)_raycaster.setFromCamera(pointer,this.camera);const planeIntersect=intersectObjectWithRay(this._plane,_raycaster,true);if(!planeIntersect)return;this.pointEnd.copy(planeIntersect.point).sub(this.worldPositionStart);if(mode==='translate'){this._offset.copy(this.pointEnd).sub(this.pointStart);if(space==='local'&&axis!=='XYZ'){this._offset.applyQuaternion(this._worldQuaternionInv);}if(axis.indexOf('X')===-1)this._offset.x=0;if(axis.indexOf('Y')===-1)this._offset.y=0;if(axis.indexOf('Z')===-1)this._offset.z=0;if(space==='local'&&axis!=='XYZ'){this._offset.applyQuaternion(this._quaternionStart).divide(this._parentScale);}else{this._offset.applyQuaternion(this._parentQuaternionInv).divide(this._parentScale);}object.position.copy(this._offset).add(this._positionStart);if(this.translationSnap){if(space==='local'){object.position.applyQuaternion(_tempQuaternion.copy(this._quaternionStart).invert());if(axis.search('X')!==-1){object.position.x=Math.round(object.position.x/this.translationSnap)*this.translationSnap;}if(axis.search('Y')!==-1){object.position.y=Math.round(object.position.y/this.translationSnap)*this.translationSnap;}if(axis.search('Z')!==-1){object.position.z=Math.round(object.position.z/this.translationSnap)*this.translationSnap;}object.position.applyQuaternion(this._quaternionStart);}if(space==='world'){object.getWorldPosition(_tempVector);if(axis.search('X')!==-1){_tempVector.x=Math.round(_tempVector.x/this.translationSnap)*this.translationSnap;}if(axis.search('Y')!==-1){_tempVector.y=Math.round(_tempVector.y/this.translationSnap)*this.translationSnap;}if(axis.search('Z')!==-1){_tempVector.z=Math.round(_tempVector.z/this.translationSnap)*this.translationSnap;}object.position.copy(object.parent.worldToLocal(_tempVector));}}object.position.x=Math.max(this.minX,Math.min(this.maxX,object.position.x));object.position.y=Math.max(this.minY,Math.min(this.maxY,object.position.y));object.position.z=Math.max(this.minZ,Math.min(this.maxZ,object.position.z));}else if(mode==='scale'){if(axis.search('XYZ')!==-1){let d=this.pointEnd.length()/this.pointStart.length();if(this.pointEnd.dot(this.pointStart)<0)d*=-1;_tempVector2.set(d,d,d);}else{_tempVector.copy(this.pointStart);_tempVector2.copy(this.pointEnd);_tempVector.applyQuaternion(this._worldQuaternionInv);_tempVector2.applyQuaternion(this._worldQuaternionInv);_tempVector2.divide(_tempVector);if(axis.search('X')===-1){_tempVector2.x=1;}if(axis.search('Y')===-1){_tempVector2.y=1;}if(axis.search('Z')===-1){_tempVector2.z=1;}}object.scale.copy(this._scaleStart).multiply(_tempVector2);if(this.scaleSnap){if(axis.search('X')!==-1){object.scale.x=Math.round(object.scale.x/this.scaleSnap)*this.scaleSnap||this.scaleSnap;}if(axis.search('Y')!==-1){object.scale.y=Math.round(object.scale.y/this.scaleSnap)*this.scaleSnap||this.scaleSnap;}if(axis.search('Z')!==-1){object.scale.z=Math.round(object.scale.z/this.scaleSnap)*this.scaleSnap||this.scaleSnap;}}}else if(mode==='rotate'){this._offset.copy(this.pointEnd).sub(this.pointStart);const ROTATION_SPEED=20/this.worldPosition.distanceTo(_tempVector.setFromMatrixPosition(this.camera.matrixWorld));let _inPlaneRotation=false;if(axis==='XYZE'){this.rotationAxis.copy(this._offset).cross(this.eye).normalize();this.rotationAngle=this._offset.dot(_tempVector.copy(this.rotationAxis).cross(this.eye))*ROTATION_SPEED;}else if(axis==='X'||axis==='Y'||axis==='Z'){this.rotationAxis.copy(_unit[axis]);_tempVector.copy(_unit[axis]);if(space==='local'){_tempVector.applyQuaternion(this.worldQuaternion);}_tempVector.cross(this.eye);if(_tempVector.length()===0){_inPlaneRotation=true;}else{this.rotationAngle=this._offset.dot(_tempVector.normalize())*ROTATION_SPEED;}}if(axis==='E'||_inPlaneRotation){this.rotationAxis.copy(this.eye);this.rotationAngle=this.pointEnd.angleTo(this.pointStart);this._startNorm.copy(this.pointStart).normalize();this._endNorm.copy(this.pointEnd).normalize();this.rotationAngle*=this._endNorm.cross(this._startNorm).dot(this.eye)<0?1:-1;}if(this.rotationSnap)this.rotationAngle=Math.round(this.rotationAngle/this.rotationSnap)*this.rotationSnap;if(space==='local'&&axis!=='E'&&axis!=='XYZE'){object.quaternion.copy(this._quaternionStart);object.quaternion.multiply(_tempQuaternion.setFromAxisAngle(this.rotationAxis,this.rotationAngle)).normalize();}else{this.rotationAxis.applyQuaternion(this._parentQuaternionInv);object.quaternion.copy(_tempQuaternion.setFromAxisAngle(this.rotationAxis,this.rotationAngle));object.quaternion.multiply(this._quaternionStart).normalize();}}this.dispatchEvent(_changeEvent);this.dispatchEvent(_objectChangeEvent);}pointerUp(pointer){if(pointer!==null&&pointer.button!==0)return;if(this.dragging&&this.axis!==null){_mouseUpEvent.mode=this.mode;this.dispatchEvent(_mouseUpEvent);}this.dragging=false;this.axis=null;}dispose(){this.disconnect();this._root.dispose();}attach(object){this.object=object;this._root.visible=true;return this;}detach(){this.object=undefined;this.axis=null;this._root.visible=false;return this;}reset(){if(!this.enabled)return;if(this.dragging){this.object.position.copy(this._positionStart);this.object.quaternion.copy(this._quaternionStart);this.object.scale.copy(this._scaleStart);this.dispatchEvent(_changeEvent);this.dispatchEvent(_objectChangeEvent);this.pointStart.copy(this.pointEnd);}}getRaycaster(){return _raycaster;}getMode(){return this.mode;}setMode(mode){this.mode=mode;}setTranslationSnap(translationSnap){this.translationSnap=translationSnap;}setRotationSnap(rotationSnap){this.rotationSnap=rotationSnap;}setScaleSnap(scaleSnap){this.scaleSnap=scaleSnap;}setSize(size){this.size=size;}setSpace(space){this.space=space;}setColors(xAxis,yAxis,zAxis,active){const materialLib=this._gizmo.materialLib;materialLib.xAxis.color.set(xAxis);materialLib.yAxis.color.set(yAxis);materialLib.zAxis.color.set(zAxis);materialLib.active.color.set(active);materialLib.xAxisTransparent.color.set(xAxis);materialLib.yAxisTransparent.color.set(yAxis);materialLib.zAxisTransparent.color.set(zAxis);materialLib.activeTransparent.color.set(active);if(materialLib.xAxis._color)materialLib.xAxis._color.set(xAxis);if(materialLib.yAxis._color)materialLib.yAxis._color.set(yAxis);if(materialLib.zAxis._color)materialLib.zAxis._color.set(zAxis);if(materialLib.active._color)materialLib.active._color.set(active);if(materialLib.xAxisTransparent._color)materialLib.xAxisTransparent._color.set(xAxis);if(materialLib.yAxisTransparent._color)materialLib.yAxisTransparent._color.set(yAxis);if(materialLib.zAxisTransparent._color)materialLib.zAxisTransparent._color.set(zAxis);if(materialLib.activeTransparent._color)materialLib.activeTransparent._color.set(active);}}function getPointer(event){if(this.domElement.ownerDocument.pointerLockElement){return{x:0,y:0,button:event.button};}else{const rect=this.domElement.getBoundingClientRect();const viewport=this.viewport;let originX,originY,regionWidth,regionHeight;if(viewport!==null){originX=viewport.x;originY=rect.height-viewport.y-viewport.w;regionWidth=viewport.z;regionHeight=viewport.w;}else{originX=0;originY=0;regionWidth=rect.width;regionHeight=rect.height;}return{x:(event.clientX-rect.left-originX)/regionWidth*2-1,y:-(event.clientY-rect.top-originY)/regionHeight*2+1,button:event.button};}}function onPointerHover(event){if(!this.enabled)return;switch(event.pointerType){case'mouse':case'pen':this.pointerHover(this._getPointer(event));break;}}function onPointerDown(event){if(!this.enabled)return;if(!document.pointerLockElement){this.domElement.setPointerCapture(event.pointerId);}this.domElement.addEventListener('pointermove',this._onPointerMove);this.pointerHover(this._getPointer(event));this.pointerDown(this._getPointer(event));}function onPointerMove(event){if(!this.enabled)return;this.pointerMove(this._getPointer(event));}function onPointerUp(event){if(!this.enabled)return;this.domElement.releasePointerCapture(event.pointerId);this.domElement.removeEventListener('pointermove',this._onPointerMove);this.pointerUp(this._getPointer(event));}function intersectObjectWithRay(object,raycaster,includeInvisible){const allIntersections=raycaster.intersectObject(object,true);for(let i=0;i<allIntersections.length;i++){if(allIntersections[i].object.visible||includeInvisible){return allIntersections[i];}}return false;}const _tempEuler=new Euler();const _alignVector=new Vector3(0,1,0);const _zeroVector=new Vector3(0,0,0);const _lookAtMatrix=new Matrix4();const _tempQuaternion2=new Quaternion();const _identityQuaternion=new Quaternion();const _dirVector=new Vector3();const _tempMatrix=new Matrix4();const _unitX=new Vector3(1,0,0);const _unitY=new Vector3(0,1,0);const _unitZ=new Vector3(0,0,1);const _v1=new Vector3();const _v2=new Vector3();const _v3=new Vector3();class TransformControlsRoot extends Object3D{constructor(controls){super();this.isTransformControlsRoot=true;this.controls=controls;this.visible=false;}updateMatrixWorld(force){const controls=this.controls;if(controls.object!==undefined){controls.object.updateMatrixWorld();if(controls.object.parent===null){console.error('TransformControls: The attached 3D object must be a part of the scene graph.');}else{controls.object.parent.matrixWorld.decompose(controls._parentPosition,controls._parentQuaternion,controls._parentScale);}controls.object.matrixWorld.decompose(controls.worldPosition,controls.worldQuaternion,controls._worldScale);controls._parentQuaternionInv.copy(controls._parentQuaternion).invert();controls._worldQuaternionInv.copy(controls.worldQuaternion).invert();}controls.camera.updateMatrixWorld();controls.camera.matrixWorld.decompose(controls.cameraPosition,controls.cameraQuaternion,controls._cameraScale);if(controls.camera.isOrthographicCamera){controls.camera.getWorldDirection(controls.eye).negate();}else{controls.eye.copy(controls.cameraPosition).sub(controls.worldPosition).normalize();}if(this.parent){_tempMatrix.copy(this.parent.matrixWorld).invert();_tempMatrix.decompose(this.position,this.quaternion,this.scale);}super.updateMatrixWorld(force);}dispose(){this.traverse(function(child){if(child.geometry)child.geometry.dispose();if(child.material)child.material.dispose();});}}class TransformControlsGizmo extends Object3D{constructor(){super();this.isTransformControlsGizmo=true;this.type='TransformControlsGizmo';const gizmoMaterial=new MeshBasicMaterial({depthTest:false,depthWrite:false,fog:false,toneMapped:false,transparent:true});const gizmoLineMaterial=new LineBasicMaterial({depthTest:false,depthWrite:false,fog:false,toneMapped:false,transparent:true});const matInvisible=gizmoMaterial.clone();matInvisible.opacity=0.15;const matHelper=gizmoLineMaterial.clone();matHelper.opacity=0.5;const matRed=gizmoMaterial.clone();matRed.color.setHex(0xff0000);const matGreen=gizmoMaterial.clone();matGreen.color.setHex(0x00ff00);const matBlue=gizmoMaterial.clone();matBlue.color.setHex(0x0000ff);const matRedTransparent=gizmoMaterial.clone();matRedTransparent.color.setHex(0xff0000);matRedTransparent.opacity=0.5;const matGreenTransparent=gizmoMaterial.clone();matGreenTransparent.color.setHex(0x00ff00);matGreenTransparent.opacity=0.5;const matBlueTransparent=gizmoMaterial.clone();matBlueTransparent.color.setHex(0x0000ff);matBlueTransparent.opacity=0.5;const matWhiteTransparent=gizmoMaterial.clone();matWhiteTransparent.opacity=0.25;const matYellowTransparent=gizmoMaterial.clone();matYellowTransparent.color.setHex(0xffff00);matYellowTransparent.opacity=0.25;const matYellow=gizmoMaterial.clone();matYellow.color.setHex(0xffff00);const matGray=gizmoMaterial.clone();matGray.color.setHex(0x787878);this.materialLib={xAxis:matRed,yAxis:matGreen,zAxis:matBlue,active:matYellow,xAxisTransparent:matRedTransparent,yAxisTransparent:matGreenTransparent,zAxisTransparent:matBlueTransparent,activeTransparent:matYellowTransparent};const arrowGeometry=new CylinderGeometry(0,0.04,0.1,12);arrowGeometry.translate(0,0.05,0);const scaleHandleGeometry=new BoxGeometry(0.08,0.08,0.08);scaleHandleGeometry.translate(0,0.04,0);const lineGeometry=new BufferGeometry();lineGeometry.setAttribute('position',new Float32BufferAttribute([0,0,0,1,0,0],3));const lineGeometry2=new CylinderGeometry(0.0075,0.0075,0.5,3);lineGeometry2.translate(0,0.25,0);function CircleGeometry(radius,arc){const geometry=new TorusGeometry(radius,0.0075,3,64,arc*Math.PI*2);geometry.rotateY(Math.PI/2);geometry.rotateX(Math.PI/2);return geometry;}function TranslateHelperGeometry(){const geometry=new BufferGeometry();geometry.setAttribute('position',new Float32BufferAttribute([0,0,0,1,1,1],3));return geometry;}const gizmoTranslate={X:[[new Mesh(arrowGeometry,matRed),[0.5,0,0],[0,0,-Math.PI/2]],[new Mesh(arrowGeometry,matRed),[-0.5,0,0],[0,0,Math.PI/2]],[new Mesh(lineGeometry2,matRed),[0,0,0],[0,0,-Math.PI/2]]],Y:[[new Mesh(arrowGeometry,matGreen),[0,0.5,0]],[new Mesh(arrowGeometry,matGreen),[0,-0.5,0],[Math.PI,0,0]],[new Mesh(lineGeometry2,matGreen)]],Z:[[new Mesh(arrowGeometry,matBlue),[0,0,0.5],[Math.PI/2,0,0]],[new Mesh(arrowGeometry,matBlue),[0,0,-0.5],[-Math.PI/2,0,0]],[new Mesh(lineGeometry2,matBlue),null,[Math.PI/2,0,0]]],XYZ:[[new Mesh(new OctahedronGeometry(0.1,0),matWhiteTransparent),[0,0,0]]],XY:[[new Mesh(new BoxGeometry(0.15,0.15,0.01),matBlueTransparent),[0.15,0.15,0]]],YZ:[[new Mesh(new BoxGeometry(0.15,0.15,0.01),matRedTransparent),[0,0.15,0.15],[0,Math.PI/2,0]]],XZ:[[new Mesh(new BoxGeometry(0.15,0.15,0.01),matGreenTransparent),[0.15,0,0.15],[-Math.PI/2,0,0]]]};const pickerTranslate={X:[[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0.3,0,0],[0,0,-Math.PI/2]],[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[-0.3,0,0],[0,0,Math.PI/2]]],Y:[[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0,0.3,0]],[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0,-0.3,0],[0,0,Math.PI]]],Z:[[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0,0,0.3],[Math.PI/2,0,0]],[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0,0,-0.3],[-Math.PI/2,0,0]]],XYZ:[[new Mesh(new OctahedronGeometry(0.2,0),matInvisible)]],XY:[[new Mesh(new BoxGeometry(0.2,0.2,0.01),matInvisible),[0.15,0.15,0]]],YZ:[[new Mesh(new BoxGeometry(0.2,0.2,0.01),matInvisible),[0,0.15,0.15],[0,Math.PI/2,0]]],XZ:[[new Mesh(new BoxGeometry(0.2,0.2,0.01),matInvisible),[0.15,0,0.15],[-Math.PI/2,0,0]]]};const helperTranslate={START:[[new Mesh(new OctahedronGeometry(0.01,2),matHelper),null,null,null,'helper']],END:[[new Mesh(new OctahedronGeometry(0.01,2),matHelper),null,null,null,'helper']],DELTA:[[new Line(TranslateHelperGeometry(),matHelper),null,null,null,'helper']],X:[[new Line(lineGeometry,matHelper),[-1e3,0,0],null,[1e6,1,1],'helper']],Y:[[new Line(lineGeometry,matHelper),[0,-1e3,0],[0,0,Math.PI/2],[1e6,1,1],'helper']],Z:[[new Line(lineGeometry,matHelper),[0,0,-1e3],[0,-Math.PI/2,0],[1e6,1,1],'helper']]};const gizmoRotate={XYZE:[[new Mesh(CircleGeometry(0.5,1),matGray),null,[0,Math.PI/2,0]]],X:[[new Mesh(CircleGeometry(0.5,0.5),matRed)]],Y:[[new Mesh(CircleGeometry(0.5,0.5),matGreen),null,[0,0,-Math.PI/2]]],Z:[[new Mesh(CircleGeometry(0.5,0.5),matBlue),null,[0,Math.PI/2,0]]],E:[[new Mesh(CircleGeometry(0.75,1),matYellowTransparent),null,[0,Math.PI/2,0]]]};const helperRotate={AXIS:[[new Line(lineGeometry,matHelper),[-1e3,0,0],null,[1e6,1,1],'helper']]};const pickerRotate={XYZE:[[new Mesh(new SphereGeometry(0.25,10,8),matInvisible)]],X:[[new Mesh(new TorusGeometry(0.5,0.1,4,24),matInvisible),[0,0,0],[0,-Math.PI/2,-Math.PI/2]]],Y:[[new Mesh(new TorusGeometry(0.5,0.1,4,24),matInvisible),[0,0,0],[Math.PI/2,0,0]]],Z:[[new Mesh(new TorusGeometry(0.5,0.1,4,24),matInvisible),[0,0,0],[0,0,-Math.PI/2]]],E:[[new Mesh(new TorusGeometry(0.75,0.1,2,24),matInvisible)]]};const gizmoScale={X:[[new Mesh(scaleHandleGeometry,matRed),[0.5,0,0],[0,0,-Math.PI/2]],[new Mesh(lineGeometry2,matRed),[0,0,0],[0,0,-Math.PI/2]],[new Mesh(scaleHandleGeometry,matRed),[-0.5,0,0],[0,0,Math.PI/2]]],Y:[[new Mesh(scaleHandleGeometry,matGreen),[0,0.5,0]],[new Mesh(lineGeometry2,matGreen)],[new Mesh(scaleHandleGeometry,matGreen),[0,-0.5,0],[0,0,Math.PI]]],Z:[[new Mesh(scaleHandleGeometry,matBlue),[0,0,0.5],[Math.PI/2,0,0]],[new Mesh(lineGeometry2,matBlue),[0,0,0],[Math.PI/2,0,0]],[new Mesh(scaleHandleGeometry,matBlue),[0,0,-0.5],[-Math.PI/2,0,0]]],XY:[[new Mesh(new BoxGeometry(0.15,0.15,0.01),matBlueTransparent),[0.15,0.15,0]]],YZ:[[new Mesh(new BoxGeometry(0.15,0.15,0.01),matRedTransparent),[0,0.15,0.15],[0,Math.PI/2,0]]],XZ:[[new Mesh(new BoxGeometry(0.15,0.15,0.01),matGreenTransparent),[0.15,0,0.15],[-Math.PI/2,0,0]]],XYZ:[[new Mesh(new BoxGeometry(0.1,0.1,0.1),matWhiteTransparent)]]};const pickerScale={X:[[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0.3,0,0],[0,0,-Math.PI/2]],[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[-0.3,0,0],[0,0,Math.PI/2]]],Y:[[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0,0.3,0]],[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0,-0.3,0],[0,0,Math.PI]]],Z:[[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0,0,0.3],[Math.PI/2,0,0]],[new Mesh(new CylinderGeometry(0.2,0,0.6,4),matInvisible),[0,0,-0.3],[-Math.PI/2,0,0]]],XY:[[new Mesh(new BoxGeometry(0.2,0.2,0.01),matInvisible),[0.15,0.15,0]]],YZ:[[new Mesh(new BoxGeometry(0.2,0.2,0.01),matInvisible),[0,0.15,0.15],[0,Math.PI/2,0]]],XZ:[[new Mesh(new BoxGeometry(0.2,0.2,0.01),matInvisible),[0.15,0,0.15],[-Math.PI/2,0,0]]],XYZ:[[new Mesh(new BoxGeometry(0.2,0.2,0.2),matInvisible),[0,0,0]]]};const helperScale={X:[[new Line(lineGeometry,matHelper),[-1e3,0,0],null,[1e6,1,1],'helper']],Y:[[new Line(lineGeometry,matHelper),[0,-1e3,0],[0,0,Math.PI/2],[1e6,1,1],'helper']],Z:[[new Line(lineGeometry,matHelper),[0,0,-1e3],[0,-Math.PI/2,0],[1e6,1,1],'helper']]};function setupGizmo(gizmoMap){const gizmo=new Object3D();for(const name in gizmoMap){for(let i=gizmoMap[name].length;i--;){const object=gizmoMap[name][i][0].clone();const position=gizmoMap[name][i][1];const rotation=gizmoMap[name][i][2];const scale=gizmoMap[name][i][3];const tag=gizmoMap[name][i][4];object.name=name;object.tag=tag;if(position){object.position.set(position[0],position[1],position[2]);}if(rotation){object.rotation.set(rotation[0],rotation[1],rotation[2]);}if(scale){object.scale.set(scale[0],scale[1],scale[2]);}object.updateMatrix();const tempGeometry=object.geometry.clone();tempGeometry.applyMatrix4(object.matrix);object.geometry=tempGeometry;object.renderOrder=Infinity;object.position.set(0,0,0);object.rotation.set(0,0,0);object.scale.set(1,1,1);gizmo.add(object);}}return gizmo;}this.gizmo={};this.picker={};this.helper={};this.add(this.gizmo['translate']=setupGizmo(gizmoTranslate));this.add(this.gizmo['rotate']=setupGizmo(gizmoRotate));this.add(this.gizmo['scale']=setupGizmo(gizmoScale));this.add(this.picker['translate']=setupGizmo(pickerTranslate));this.add(this.picker['rotate']=setupGizmo(pickerRotate));this.add(this.picker['scale']=setupGizmo(pickerScale));this.add(this.helper['translate']=setupGizmo(helperTranslate));this.add(this.helper['rotate']=setupGizmo(helperRotate));this.add(this.helper['scale']=setupGizmo(helperScale));this.picker['translate'].visible=false;this.picker['rotate'].visible=false;this.picker['scale'].visible=false;}updateMatrixWorld(force){const space=this.mode==='scale'?'local':this.space;const quaternion=space==='local'?this.worldQuaternion:_identityQuaternion;this.gizmo['translate'].visible=this.mode==='translate';this.gizmo['rotate'].visible=this.mode==='rotate';this.gizmo['scale'].visible=this.mode==='scale';this.helper['translate'].visible=this.mode==='translate';this.helper['rotate'].visible=this.mode==='rotate';this.helper['scale'].visible=this.mode==='scale';let handles=[];handles=handles.concat(this.picker[this.mode].children);handles=handles.concat(this.gizmo[this.mode].children);handles=handles.concat(this.helper[this.mode].children);for(let i=0;i<handles.length;i++){const handle=handles[i];handle.visible=true;handle.rotation.set(0,0,0);handle.position.copy(this.worldPosition);let factor;if(this.camera.isOrthographicCamera){factor=(this.camera.top-this.camera.bottom)/this.camera.zoom;}else{factor=this.worldPosition.distanceTo(this.cameraPosition)*Math.min(1.9*Math.tan(Math.PI*this.camera.fov/360)/this.camera.zoom,7);}handle.scale.set(1,1,1).multiplyScalar(factor*this.size/4);if(handle.tag==='helper'){handle.visible=false;if(handle.name==='AXIS'){handle.visible=!!this.axis;if(this.axis==='X'){_tempQuaternion.setFromEuler(_tempEuler.set(0,0,0));handle.quaternion.copy(quaternion).multiply(_tempQuaternion);if(Math.abs(_alignVector.copy(_unitX).applyQuaternion(quaternion).dot(this.eye))>0.9){handle.visible=false;}}if(this.axis==='Y'){_tempQuaternion.setFromEuler(_tempEuler.set(0,0,Math.PI/2));handle.quaternion.copy(quaternion).multiply(_tempQuaternion);if(Math.abs(_alignVector.copy(_unitY).applyQuaternion(quaternion).dot(this.eye))>0.9){handle.visible=false;}}if(this.axis==='Z'){_tempQuaternion.setFromEuler(_tempEuler.set(0,Math.PI/2,0));handle.quaternion.copy(quaternion).multiply(_tempQuaternion);if(Math.abs(_alignVector.copy(_unitZ).applyQuaternion(quaternion).dot(this.eye))>0.9){handle.visible=false;}}if(this.axis==='XYZE'){_tempQuaternion.setFromEuler(_tempEuler.set(0,Math.PI/2,0));_alignVector.copy(this.rotationAxis);handle.quaternion.setFromRotationMatrix(_lookAtMatrix.lookAt(_zeroVector,_alignVector,_unitY));handle.quaternion.multiply(_tempQuaternion);handle.visible=this.dragging;}if(this.axis==='E'){handle.visible=false;}}else if(handle.name==='START'){handle.position.copy(this.worldPositionStart);handle.visible=this.dragging;}else if(handle.name==='END'){handle.position.copy(this.worldPosition);handle.visible=this.dragging;}else if(handle.name==='DELTA'){handle.position.copy(this.worldPositionStart);handle.quaternion.copy(this.worldQuaternionStart);_tempVector.set(1e-10,1e-10,1e-10).add(this.worldPositionStart).sub(this.worldPosition).multiplyScalar(-1);_tempVector.applyQuaternion(this.worldQuaternionStart.clone().invert());handle.scale.copy(_tempVector);handle.visible=this.dragging;}else{handle.quaternion.copy(quaternion);if(this.dragging){handle.position.copy(this.worldPositionStart);}else{handle.position.copy(this.worldPosition);}if(this.axis){handle.visible=this.axis.search(handle.name)!==-1;}}continue;}handle.quaternion.copy(quaternion);if(this.mode==='translate'||this.mode==='scale'){const AXIS_HIDE_THRESHOLD=0.99;const PLANE_HIDE_THRESHOLD=0.2;if(handle.name==='X'){if(Math.abs(_alignVector.copy(_unitX).applyQuaternion(quaternion).dot(this.eye))>AXIS_HIDE_THRESHOLD){handle.scale.set(1e-10,1e-10,1e-10);handle.visible=false;}}if(handle.name==='Y'){if(Math.abs(_alignVector.copy(_unitY).applyQuaternion(quaternion).dot(this.eye))>AXIS_HIDE_THRESHOLD){handle.scale.set(1e-10,1e-10,1e-10);handle.visible=false;}}if(handle.name==='Z'){if(Math.abs(_alignVector.copy(_unitZ).applyQuaternion(quaternion).dot(this.eye))>AXIS_HIDE_THRESHOLD){handle.scale.set(1e-10,1e-10,1e-10);handle.visible=false;}}if(handle.name==='XY'){if(Math.abs(_alignVector.copy(_unitZ).applyQuaternion(quaternion).dot(this.eye))<PLANE_HIDE_THRESHOLD){handle.scale.set(1e-10,1e-10,1e-10);handle.visible=false;}}if(handle.name==='YZ'){if(Math.abs(_alignVector.copy(_unitX).applyQuaternion(quaternion).dot(this.eye))<PLANE_HIDE_THRESHOLD){handle.scale.set(1e-10,1e-10,1e-10);handle.visible=false;}}if(handle.name==='XZ'){if(Math.abs(_alignVector.copy(_unitY).applyQuaternion(quaternion).dot(this.eye))<PLANE_HIDE_THRESHOLD){handle.scale.set(1e-10,1e-10,1e-10);handle.visible=false;}}}else if(this.mode==='rotate'){_tempQuaternion2.copy(quaternion);_alignVector.copy(this.eye).applyQuaternion(_tempQuaternion.copy(quaternion).invert());if(handle.name.search('E')!==-1){handle.quaternion.setFromRotationMatrix(_lookAtMatrix.lookAt(this.eye,_zeroVector,_unitY));}if(handle.name==='X'){_tempQuaternion.setFromAxisAngle(_unitX,Math.atan2(-_alignVector.y,_alignVector.z));_tempQuaternion.multiplyQuaternions(_tempQuaternion2,_tempQuaternion);handle.quaternion.copy(_tempQuaternion);}if(handle.name==='Y'){_tempQuaternion.setFromAxisAngle(_unitY,Math.atan2(_alignVector.x,_alignVector.z));_tempQuaternion.multiplyQuaternions(_tempQuaternion2,_tempQuaternion);handle.quaternion.copy(_tempQuaternion);}if(handle.name==='Z'){_tempQuaternion.setFromAxisAngle(_unitZ,Math.atan2(_alignVector.y,_alignVector.x));_tempQuaternion.multiplyQuaternions(_tempQuaternion2,_tempQuaternion);handle.quaternion.copy(_tempQuaternion);}}handle.visible=handle.visible&&(handle.name.indexOf('X')===-1||this.showX);handle.visible=handle.visible&&(handle.name.indexOf('Y')===-1||this.showY);handle.visible=handle.visible&&(handle.name.indexOf('Z')===-1||this.showZ);handle.visible=handle.visible&&(handle.name.indexOf('E')===-1||this.showX&&this.showY&&this.showZ);handle.visible=handle.visible&&(handle.name.indexOf('XY')===-1||this.showXY);handle.visible=handle.visible&&(handle.name.indexOf('YZ')===-1||this.showYZ);handle.visible=handle.visible&&(handle.name.indexOf('XZ')===-1||this.showXZ);handle.visible=handle.visible&&(handle.name!=='E'||this.showE);handle.visible=handle.visible&&(handle.name!=='XYZE'||this.showXYZE);handle.material._color=handle.material._color||handle.material.color.clone();handle.material._opacity=handle.material._opacity||handle.material.opacity;handle.material.color.copy(handle.material._color);handle.material.opacity=handle.material._opacity;if(this.enabled&&this.axis){if(handle.name===this.axis){handle.material.color.copy(this.materialLib.active.color);handle.material.opacity=1.0;}else if(this.axis.split('').some(function(a){return handle.name===a;})){handle.material.color.copy(this.materialLib.active.color);handle.material.opacity=1.0;}}}super.updateMatrixWorld(force);}}class TransformControlsPlane extends Mesh{constructor(){super(new PlaneGeometry(100000,100000,2,2),new MeshBasicMaterial({visible:false,wireframe:true,side:DoubleSide,transparent:true,opacity:0.1,toneMapped:false}));this.isTransformControlsPlane=true;this.type='TransformControlsPlane';}updateMatrixWorld(force){let space=this.space;this.position.copy(this.worldPosition);if(this.mode==='scale')space='local';_v1.copy(_unitX).applyQuaternion(space==='local'?this.worldQuaternion:_identityQuaternion);_v2.copy(_unitY).applyQuaternion(space==='local'?this.worldQuaternion:_identityQuaternion);_v3.copy(_unitZ).applyQuaternion(space==='local'?this.worldQuaternion:_identityQuaternion);_alignVector.copy(_v2);switch(this.mode){case'translate':case'scale':switch(this.axis){case'X':_alignVector.copy(this.eye).cross(_v1);_dirVector.copy(_v1).cross(_alignVector);break;case'Y':_alignVector.copy(this.eye).cross(_v2);_dirVector.copy(_v2).cross(_alignVector);break;case'Z':_alignVector.copy(this.eye).cross(_v3);_dirVector.copy(_v3).cross(_alignVector);break;case'XY':_dirVector.copy(_v3);break;case'YZ':_dirVector.copy(_v1);break;case'XZ':_alignVector.copy(_v3);_dirVector.copy(_v2);break;case'XYZ':case'E':_dirVector.set(0,0,0);break;}break;case'rotate':default:_dirVector.set(0,0,0);}if(_dirVector.length()===0){this.quaternion.copy(this.cameraQuaternion);}else{_tempMatrix.lookAt(_tempVector.set(0,0,0),_dirVector,_alignVector);this.quaternion.setFromRotationMatrix(_tempMatrix);}super.updateMatrixWorld(force);}}}
 {
   const TERRARIUM_BOUNDS = {
     halfW: 6,
@@ -7456,7 +7457,7 @@ vec3 applyHaze(vec3 col, float d, float heightY) {
       return console.error("[scenario] spawn", e), null;
     }
   }
-  const FEATURED_WEATHER_SCENARIOS = ["calm", "rain", "storm", "snow", "meteor", "migration"];
+  const FEATURED_WEATHER_SCENARIOS = ["calm", "rain", "storm", "snow", "meteor", "migration", "lanterns"];
   const SCENARIOS = {
     calm(r) {
       const {
@@ -7668,6 +7669,15 @@ vec3 applyHaze(vec3 col, float d, float heightY) {
         size: 0.82,
         water: 0.24
       });
+    },
+    lanterns(ctx) {
+      const {
+        world
+      } = ctx;
+      world.season = 1;
+      world.timeOfDay = 0.96;
+      world.tempOffset = 0;
+      getCloudModule(ctx)?.clear?.();
     }
   };
   function extendScenarioWeather(ctx, name) {
@@ -22021,10 +22031,2671 @@ void main() {
   }
 }
 {
+  const CharacterGLTFLoader = (require => {
+    var travelerGLTFLoaderAddon = (() => {
+      var __defProp = Object.defineProperty;
+      var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+      var __getOwnPropNames = Object.getOwnPropertyNames;
+      var __hasOwnProp = Object.prototype.hasOwnProperty;
+      var __require = (x => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+        get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+      }) : x)(function (x) {
+        if (typeof require !== "undefined") return require.apply(this, arguments);
+        throw Error('Dynamic require of "' + x + '" is not supported');
+      });
+      var __export = (target, all) => {
+        for (var name in all) __defProp(target, name, {
+          get: all[name],
+          enumerable: true
+        });
+      };
+      var __copyProps = (to, from, except, desc) => {
+        if (from && typeof from === "object" || typeof from === "function") {
+          for (let key of __getOwnPropNames(from)) if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
+            get: () => from[key],
+            enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+          });
+        }
+        return to;
+      };
+      var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", {
+        value: true
+      }), mod);
+      var GLTFLoader_exports = {};
+      __export(GLTFLoader_exports, {
+        GLTFLoader: () => GLTFLoader
+      });
+      var import_three3 = __require("three");
+      var import_three = __require("three");
+      function toTrianglesDrawMode(geometry, drawMode) {
+        if (drawMode === import_three.TrianglesDrawMode) {
+          console.warn("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Geometry already defined as triangles.");
+          return geometry;
+        }
+        if (drawMode === import_three.TriangleFanDrawMode || drawMode === import_three.TriangleStripDrawMode) {
+          let index = geometry.getIndex();
+          if (index === null) {
+            const indices = [];
+            const position = geometry.getAttribute("position");
+            if (position !== void 0) {
+              for (let i = 0; i < position.count; i++) {
+                indices.push(i);
+              }
+              geometry.setIndex(indices);
+              index = geometry.getIndex();
+            } else {
+              console.error("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Undefined position attribute. Processing not possible.");
+              return geometry;
+            }
+          }
+          const numberOfTriangles = index.count - 2;
+          const newIndices = [];
+          if (drawMode === import_three.TriangleFanDrawMode) {
+            for (let i = 1; i <= numberOfTriangles; i++) {
+              newIndices.push(index.getX(0));
+              newIndices.push(index.getX(i));
+              newIndices.push(index.getX(i + 1));
+            }
+          } else {
+            for (let i = 0; i < numberOfTriangles; i++) {
+              if (i % 2 === 0) {
+                newIndices.push(index.getX(i));
+                newIndices.push(index.getX(i + 1));
+                newIndices.push(index.getX(i + 2));
+              } else {
+                newIndices.push(index.getX(i + 2));
+                newIndices.push(index.getX(i + 1));
+                newIndices.push(index.getX(i));
+              }
+            }
+          }
+          if (newIndices.length / 3 !== numberOfTriangles) {
+            console.error("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Unable to generate correct amount of triangles.");
+          }
+          geometry.setIndex(newIndices);
+          geometry.clearGroups();
+          return geometry;
+        } else {
+          console.error("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Unknown draw mode:", drawMode);
+          return geometry;
+        }
+      }
+      var import_three2 = __require("three");
+      function clone(source) {
+        const sourceLookup = new Map();
+        const cloneLookup = new Map();
+        const clone2 = source.clone();
+        parallelTraverse(source, clone2, function (sourceNode, clonedNode) {
+          sourceLookup.set(clonedNode, sourceNode);
+          cloneLookup.set(sourceNode, clonedNode);
+        });
+        clone2.traverse(function (node) {
+          if (!node.isSkinnedMesh) return;
+          const clonedMesh = node;
+          const sourceMesh = sourceLookup.get(node);
+          const sourceBones = sourceMesh.skeleton.bones;
+          clonedMesh.skeleton = sourceMesh.skeleton.clone();
+          clonedMesh.bindMatrix.copy(sourceMesh.bindMatrix);
+          clonedMesh.skeleton.bones = sourceBones.map(function (bone) {
+            return cloneLookup.get(bone);
+          });
+          clonedMesh.bind(clonedMesh.skeleton, clonedMesh.bindMatrix);
+        });
+        return clone2;
+      }
+      function parallelTraverse(a, b, callback) {
+        callback(a, b);
+        for (let i = 0; i < a.children.length; i++) {
+          parallelTraverse(a.children[i], b.children[i], callback);
+        }
+      }
+      var GLTFLoader = class extends import_three3.Loader {
+        constructor(manager) {
+          super(manager);
+          this.dracoLoader = null;
+          this.ktx2Loader = null;
+          this.meshoptDecoder = null;
+          this.pluginCallbacks = [];
+          this.register(function (parser) {
+            return new GLTFMaterialsClearcoatExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsDispersionExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFTextureBasisUExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFTextureWebPExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFTextureAVIFExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsSheenExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsTransmissionExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsVolumeExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsIorExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsEmissiveStrengthExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsSpecularExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsIridescenceExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsAnisotropyExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMaterialsBumpExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFLightsExtension(parser);
+          });
+          this.register(function (parser) {
+            return new GLTFMeshoptCompression(parser, EXTENSIONS.EXT_MESHOPT_COMPRESSION);
+          });
+          this.register(function (parser) {
+            return new GLTFMeshoptCompression(parser, EXTENSIONS.KHR_MESHOPT_COMPRESSION);
+          });
+          this.register(function (parser) {
+            return new GLTFMeshGpuInstancing(parser);
+          });
+        }
+        load(url, onLoad, onProgress, onError) {
+          const scope = this;
+          let resourcePath;
+          if (this.resourcePath !== "") {
+            resourcePath = this.resourcePath;
+          } else if (this.path !== "") {
+            const relativeUrl = import_three3.LoaderUtils.extractUrlBase(url);
+            resourcePath = import_three3.LoaderUtils.resolveURL(relativeUrl, this.path);
+          } else {
+            resourcePath = import_three3.LoaderUtils.extractUrlBase(url);
+          }
+          this.manager.itemStart(url);
+          const _onError = function (e) {
+            if (onError) {
+              onError(e);
+            } else {
+              console.error(e);
+            }
+            scope.manager.itemError(url);
+            scope.manager.itemEnd(url);
+          };
+          const loader = new import_three3.FileLoader(this.manager);
+          loader.setPath(this.path);
+          loader.setResponseType("arraybuffer");
+          loader.setRequestHeader(this.requestHeader);
+          loader.setWithCredentials(this.withCredentials);
+          loader.load(url, function (data) {
+            try {
+              scope.parse(data, resourcePath, function (gltf) {
+                onLoad(gltf);
+                scope.manager.itemEnd(url);
+              }, _onError);
+            } catch (e) {
+              _onError(e);
+            }
+          }, onProgress, _onError);
+        }
+        setDRACOLoader(dracoLoader) {
+          this.dracoLoader = dracoLoader;
+          return this;
+        }
+        setKTX2Loader(ktx2Loader) {
+          this.ktx2Loader = ktx2Loader;
+          return this;
+        }
+        setMeshoptDecoder(meshoptDecoder) {
+          this.meshoptDecoder = meshoptDecoder;
+          return this;
+        }
+        register(callback) {
+          if (this.pluginCallbacks.indexOf(callback) === -1) {
+            this.pluginCallbacks.push(callback);
+          }
+          return this;
+        }
+        unregister(callback) {
+          if (this.pluginCallbacks.indexOf(callback) !== -1) {
+            this.pluginCallbacks.splice(this.pluginCallbacks.indexOf(callback), 1);
+          }
+          return this;
+        }
+        parse(data, path, onLoad, onError) {
+          let json;
+          const extensions = {};
+          const plugins = {};
+          const textDecoder = new TextDecoder();
+          if (typeof data === "string") {
+            json = JSON.parse(data);
+          } else if (data instanceof ArrayBuffer) {
+            const magic = textDecoder.decode(new Uint8Array(data, 0, 4));
+            if (magic === BINARY_EXTENSION_HEADER_MAGIC) {
+              try {
+                extensions[EXTENSIONS.KHR_BINARY_GLTF] = new GLTFBinaryExtension(data);
+              } catch (error) {
+                if (onError) onError(error);
+                return;
+              }
+              json = JSON.parse(extensions[EXTENSIONS.KHR_BINARY_GLTF].content);
+            } else {
+              json = JSON.parse(textDecoder.decode(data));
+            }
+          } else {
+            json = data;
+          }
+          if (json.asset === void 0 || json.asset.version[0] < 2) {
+            if (onError) onError(new Error("THREE.GLTFLoader: Unsupported asset. glTF versions >=2.0 are supported."));
+            return;
+          }
+          const parser = new GLTFParser(json, {
+            path: path || this.resourcePath || "",
+            crossOrigin: this.crossOrigin,
+            requestHeader: this.requestHeader,
+            manager: this.manager,
+            ktx2Loader: this.ktx2Loader,
+            meshoptDecoder: this.meshoptDecoder
+          });
+          parser.fileLoader.setRequestHeader(this.requestHeader);
+          for (let i = 0; i < this.pluginCallbacks.length; i++) {
+            const plugin = this.pluginCallbacks[i](parser);
+            if (!plugin.name) console.error("THREE.GLTFLoader: Invalid plugin found: missing name");
+            plugins[plugin.name] = plugin;
+            extensions[plugin.name] = true;
+          }
+          if (json.extensionsUsed) {
+            for (let i = 0; i < json.extensionsUsed.length; ++i) {
+              const extensionName = json.extensionsUsed[i];
+              const extensionsRequired = json.extensionsRequired || [];
+              switch (extensionName) {
+                case EXTENSIONS.KHR_MATERIALS_UNLIT:
+                  extensions[extensionName] = new GLTFMaterialsUnlitExtension();
+                  break;
+                case EXTENSIONS.KHR_DRACO_MESH_COMPRESSION:
+                  extensions[extensionName] = new GLTFDracoMeshCompressionExtension(json, this.dracoLoader);
+                  break;
+                case EXTENSIONS.KHR_TEXTURE_TRANSFORM:
+                  extensions[extensionName] = new GLTFTextureTransformExtension();
+                  break;
+                case EXTENSIONS.KHR_MESH_QUANTIZATION:
+                  extensions[extensionName] = new GLTFMeshQuantizationExtension();
+                  break;
+                default:
+                  if (extensionsRequired.indexOf(extensionName) >= 0 && plugins[extensionName] === void 0) {
+                    console.warn('THREE.GLTFLoader: Unknown extension "' + extensionName + '".');
+                  }
+              }
+            }
+          }
+          parser.setExtensions(extensions);
+          parser.setPlugins(plugins);
+          parser.parse(onLoad, onError);
+        }
+        parseAsync(data, path) {
+          const scope = this;
+          return new Promise(function (resolve, reject) {
+            scope.parse(data, path, resolve, reject);
+          });
+        }
+      };
+      function GLTFRegistry() {
+        let objects = {};
+        return {
+          get: function (key) {
+            return objects[key];
+          },
+          add: function (key, object) {
+            objects[key] = object;
+          },
+          remove: function (key) {
+            delete objects[key];
+          },
+          removeAll: function () {
+            objects = {};
+          }
+        };
+      }
+      function getMaterialExtension(parser, materialIndex, extensionName) {
+        const materialDef = parser.json.materials[materialIndex];
+        if (materialDef.extensions && materialDef.extensions[extensionName]) {
+          return materialDef.extensions[extensionName];
+        }
+        return null;
+      }
+      var EXTENSIONS = {
+        KHR_BINARY_GLTF: "KHR_binary_glTF",
+        KHR_DRACO_MESH_COMPRESSION: "KHR_draco_mesh_compression",
+        KHR_LIGHTS_PUNCTUAL: "KHR_lights_punctual",
+        KHR_MATERIALS_CLEARCOAT: "KHR_materials_clearcoat",
+        KHR_MATERIALS_DISPERSION: "KHR_materials_dispersion",
+        KHR_MATERIALS_IOR: "KHR_materials_ior",
+        KHR_MATERIALS_SHEEN: "KHR_materials_sheen",
+        KHR_MATERIALS_SPECULAR: "KHR_materials_specular",
+        KHR_MATERIALS_TRANSMISSION: "KHR_materials_transmission",
+        KHR_MATERIALS_IRIDESCENCE: "KHR_materials_iridescence",
+        KHR_MATERIALS_ANISOTROPY: "KHR_materials_anisotropy",
+        KHR_MATERIALS_UNLIT: "KHR_materials_unlit",
+        KHR_MATERIALS_VOLUME: "KHR_materials_volume",
+        KHR_TEXTURE_BASISU: "KHR_texture_basisu",
+        KHR_TEXTURE_TRANSFORM: "KHR_texture_transform",
+        KHR_MESH_QUANTIZATION: "KHR_mesh_quantization",
+        KHR_MATERIALS_EMISSIVE_STRENGTH: "KHR_materials_emissive_strength",
+        EXT_MATERIALS_BUMP: "EXT_materials_bump",
+        EXT_TEXTURE_WEBP: "EXT_texture_webp",
+        EXT_TEXTURE_AVIF: "EXT_texture_avif",
+        EXT_MESHOPT_COMPRESSION: "EXT_meshopt_compression",
+        KHR_MESHOPT_COMPRESSION: "KHR_meshopt_compression",
+        EXT_MESH_GPU_INSTANCING: "EXT_mesh_gpu_instancing"
+      };
+      var GLTFLightsExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_LIGHTS_PUNCTUAL;
+          this.cache = {
+            refs: {},
+            uses: {}
+          };
+        }
+        _markDefs() {
+          const parser = this.parser;
+          const nodeDefs = this.parser.json.nodes || [];
+          for (let nodeIndex = 0, nodeLength = nodeDefs.length; nodeIndex < nodeLength; nodeIndex++) {
+            const nodeDef = nodeDefs[nodeIndex];
+            if (nodeDef.extensions && nodeDef.extensions[this.name] && nodeDef.extensions[this.name].light !== void 0) {
+              parser._addNodeRef(this.cache, nodeDef.extensions[this.name].light);
+            }
+          }
+        }
+        _loadLight(lightIndex) {
+          const parser = this.parser;
+          const cacheKey = "light:" + lightIndex;
+          let dependency = parser.cache.get(cacheKey);
+          if (dependency) return dependency;
+          const json = parser.json;
+          const extensions = json.extensions && json.extensions[this.name] || {};
+          const lightDefs = extensions.lights || [];
+          const lightDef = lightDefs[lightIndex];
+          let lightNode;
+          const color = new import_three3.Color(16777215);
+          if (lightDef.color !== void 0) color.setRGB(lightDef.color[0], lightDef.color[1], lightDef.color[2], import_three3.LinearSRGBColorSpace);
+          const range = lightDef.range !== void 0 ? lightDef.range : 0;
+          switch (lightDef.type) {
+            case "directional":
+              lightNode = new import_three3.DirectionalLight(color);
+              lightNode.target.position.set(0, 0, -1);
+              lightNode.add(lightNode.target);
+              break;
+            case "point":
+              lightNode = new import_three3.PointLight(color);
+              lightNode.distance = range;
+              break;
+            case "spot":
+              lightNode = new import_three3.SpotLight(color);
+              lightNode.distance = range;
+              lightDef.spot = lightDef.spot || {};
+              lightDef.spot.innerConeAngle = lightDef.spot.innerConeAngle !== void 0 ? lightDef.spot.innerConeAngle : 0;
+              lightDef.spot.outerConeAngle = lightDef.spot.outerConeAngle !== void 0 ? lightDef.spot.outerConeAngle : Math.PI / 4;
+              lightNode.angle = lightDef.spot.outerConeAngle;
+              lightNode.penumbra = 1 - lightDef.spot.innerConeAngle / lightDef.spot.outerConeAngle;
+              lightNode.target.position.set(0, 0, -1);
+              lightNode.add(lightNode.target);
+              break;
+            default:
+              throw new Error("THREE.GLTFLoader: Unexpected light type: " + lightDef.type);
+          }
+          lightNode.position.set(0, 0, 0);
+          assignExtrasToUserData(lightNode, lightDef);
+          if (lightDef.intensity !== void 0) lightNode.intensity = lightDef.intensity;
+          lightNode.name = parser.createUniqueName(lightDef.name || "light_" + lightIndex);
+          dependency = Promise.resolve(lightNode);
+          parser.cache.add(cacheKey, dependency);
+          return dependency;
+        }
+        getDependency(type, index) {
+          if (type !== "light") return;
+          return this._loadLight(index);
+        }
+        createNodeAttachment(nodeIndex) {
+          const self2 = this;
+          const parser = this.parser;
+          const json = parser.json;
+          const nodeDef = json.nodes[nodeIndex];
+          const lightDef = nodeDef.extensions && nodeDef.extensions[this.name] || {};
+          const lightIndex = lightDef.light;
+          if (lightIndex === void 0) return null;
+          return this._loadLight(lightIndex).then(function (light) {
+            return parser._getNodeRef(self2.cache, lightIndex, light);
+          });
+        }
+      };
+      var GLTFMaterialsUnlitExtension = class {
+        constructor() {
+          this.name = EXTENSIONS.KHR_MATERIALS_UNLIT;
+        }
+        getMaterialType() {
+          return import_three3.MeshBasicMaterial;
+        }
+        extendParams(materialParams, materialDef, parser) {
+          const pending = [];
+          materialParams.color = new import_three3.Color(1, 1, 1);
+          materialParams.opacity = 1;
+          const metallicRoughness = materialDef.pbrMetallicRoughness;
+          if (metallicRoughness) {
+            if (Array.isArray(metallicRoughness.baseColorFactor)) {
+              const array = metallicRoughness.baseColorFactor;
+              materialParams.color.setRGB(array[0], array[1], array[2], import_three3.LinearSRGBColorSpace);
+              materialParams.opacity = array[3];
+            }
+            if (metallicRoughness.baseColorTexture !== void 0) {
+              pending.push(parser.assignTexture(materialParams, "map", metallicRoughness.baseColorTexture, import_three3.SRGBColorSpace));
+            }
+          }
+          return Promise.all(pending);
+        }
+      };
+      var GLTFMaterialsEmissiveStrengthExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_EMISSIVE_STRENGTH;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          if (extension.emissiveStrength !== void 0) {
+            materialParams.emissiveIntensity = extension.emissiveStrength;
+          }
+          return Promise.resolve();
+        }
+      };
+      var GLTFMaterialsClearcoatExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_CLEARCOAT;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          const pending = [];
+          if (extension.clearcoatFactor !== void 0) {
+            materialParams.clearcoat = extension.clearcoatFactor;
+          }
+          if (extension.clearcoatTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "clearcoatMap", extension.clearcoatTexture));
+          }
+          if (extension.clearcoatRoughnessFactor !== void 0) {
+            materialParams.clearcoatRoughness = extension.clearcoatRoughnessFactor;
+          }
+          if (extension.clearcoatRoughnessTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "clearcoatRoughnessMap", extension.clearcoatRoughnessTexture));
+          }
+          if (extension.clearcoatNormalTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "clearcoatNormalMap", extension.clearcoatNormalTexture));
+            if (extension.clearcoatNormalTexture.scale !== void 0) {
+              const scale = extension.clearcoatNormalTexture.scale;
+              materialParams.clearcoatNormalScale = new import_three3.Vector2(scale, scale);
+            }
+          }
+          return Promise.all(pending);
+        }
+      };
+      var GLTFMaterialsDispersionExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_DISPERSION;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          materialParams.dispersion = extension.dispersion !== void 0 ? extension.dispersion : 0;
+          return Promise.resolve();
+        }
+      };
+      var GLTFMaterialsIridescenceExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_IRIDESCENCE;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          const pending = [];
+          if (extension.iridescenceFactor !== void 0) {
+            materialParams.iridescence = extension.iridescenceFactor;
+          }
+          if (extension.iridescenceTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "iridescenceMap", extension.iridescenceTexture));
+          }
+          if (extension.iridescenceIor !== void 0) {
+            materialParams.iridescenceIOR = extension.iridescenceIor;
+          }
+          if (materialParams.iridescenceThicknessRange === void 0) {
+            materialParams.iridescenceThicknessRange = [100, 400];
+          }
+          if (extension.iridescenceThicknessMinimum !== void 0) {
+            materialParams.iridescenceThicknessRange[0] = extension.iridescenceThicknessMinimum;
+          }
+          if (extension.iridescenceThicknessMaximum !== void 0) {
+            materialParams.iridescenceThicknessRange[1] = extension.iridescenceThicknessMaximum;
+          }
+          if (extension.iridescenceThicknessTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "iridescenceThicknessMap", extension.iridescenceThicknessTexture));
+          }
+          return Promise.all(pending);
+        }
+      };
+      var GLTFMaterialsSheenExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_SHEEN;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          const pending = [];
+          materialParams.sheenColor = new import_three3.Color(0, 0, 0);
+          materialParams.sheenRoughness = 0;
+          materialParams.sheen = 1;
+          if (extension.sheenColorFactor !== void 0) {
+            const colorFactor = extension.sheenColorFactor;
+            materialParams.sheenColor.setRGB(colorFactor[0], colorFactor[1], colorFactor[2], import_three3.LinearSRGBColorSpace);
+          }
+          if (extension.sheenRoughnessFactor !== void 0) {
+            materialParams.sheenRoughness = extension.sheenRoughnessFactor;
+          }
+          if (extension.sheenColorTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "sheenColorMap", extension.sheenColorTexture, import_three3.SRGBColorSpace));
+          }
+          if (extension.sheenRoughnessTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "sheenRoughnessMap", extension.sheenRoughnessTexture));
+          }
+          return Promise.all(pending);
+        }
+      };
+      var GLTFMaterialsTransmissionExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_TRANSMISSION;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          const pending = [];
+          if (extension.transmissionFactor !== void 0) {
+            materialParams.transmission = extension.transmissionFactor;
+          }
+          if (extension.transmissionTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "transmissionMap", extension.transmissionTexture));
+          }
+          return Promise.all(pending);
+        }
+      };
+      var GLTFMaterialsVolumeExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_VOLUME;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          const pending = [];
+          materialParams.thickness = extension.thicknessFactor !== void 0 ? extension.thicknessFactor : 0;
+          if (extension.thicknessTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "thicknessMap", extension.thicknessTexture));
+          }
+          materialParams.attenuationDistance = extension.attenuationDistance || Infinity;
+          const colorArray = extension.attenuationColor || [1, 1, 1];
+          materialParams.attenuationColor = new import_three3.Color().setRGB(colorArray[0], colorArray[1], colorArray[2], import_three3.LinearSRGBColorSpace);
+          return Promise.all(pending);
+        }
+      };
+      var GLTFMaterialsIorExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_IOR;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          materialParams.ior = extension.ior !== void 0 ? extension.ior : 1.5;
+          if (materialParams.ior === 0) materialParams.ior = 1e3;
+          return Promise.resolve();
+        }
+      };
+      var GLTFMaterialsSpecularExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_SPECULAR;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          const pending = [];
+          materialParams.specularIntensity = extension.specularFactor !== void 0 ? extension.specularFactor : 1;
+          if (extension.specularTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "specularIntensityMap", extension.specularTexture));
+          }
+          const colorArray = extension.specularColorFactor || [1, 1, 1];
+          materialParams.specularColor = new import_three3.Color().setRGB(colorArray[0], colorArray[1], colorArray[2], import_three3.LinearSRGBColorSpace);
+          if (extension.specularColorTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "specularColorMap", extension.specularColorTexture, import_three3.SRGBColorSpace));
+          }
+          return Promise.all(pending);
+        }
+      };
+      var GLTFMaterialsBumpExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.EXT_MATERIALS_BUMP;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          const pending = [];
+          materialParams.bumpScale = extension.bumpFactor !== void 0 ? extension.bumpFactor : 1;
+          if (extension.bumpTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "bumpMap", extension.bumpTexture));
+          }
+          return Promise.all(pending);
+        }
+      };
+      var GLTFMaterialsAnisotropyExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_MATERIALS_ANISOTROPY;
+        }
+        getMaterialType(materialIndex) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
+        }
+        extendMaterialParams(materialIndex, materialParams) {
+          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
+          if (extension === null) return Promise.resolve();
+          const pending = [];
+          if (extension.anisotropyStrength !== void 0) {
+            materialParams.anisotropy = extension.anisotropyStrength;
+          }
+          if (extension.anisotropyRotation !== void 0) {
+            materialParams.anisotropyRotation = extension.anisotropyRotation;
+          }
+          if (extension.anisotropyTexture !== void 0) {
+            pending.push(this.parser.assignTexture(materialParams, "anisotropyMap", extension.anisotropyTexture));
+          }
+          return Promise.all(pending);
+        }
+      };
+      var GLTFTextureBasisUExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.KHR_TEXTURE_BASISU;
+        }
+        loadTexture(textureIndex) {
+          const parser = this.parser;
+          const json = parser.json;
+          const textureDef = json.textures[textureIndex];
+          if (!textureDef.extensions || !textureDef.extensions[this.name]) {
+            return null;
+          }
+          const extension = textureDef.extensions[this.name];
+          const loader = parser.options.ktx2Loader;
+          if (!loader) {
+            if (json.extensionsRequired && json.extensionsRequired.indexOf(this.name) >= 0) {
+              throw new Error("THREE.GLTFLoader: setKTX2Loader must be called before loading KTX2 textures");
+            } else {
+              return null;
+            }
+          }
+          return parser.loadTextureImage(textureIndex, extension.source, loader);
+        }
+      };
+      var GLTFTextureWebPExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.EXT_TEXTURE_WEBP;
+        }
+        loadTexture(textureIndex) {
+          const name = this.name;
+          const parser = this.parser;
+          const json = parser.json;
+          const textureDef = json.textures[textureIndex];
+          if (!textureDef.extensions || !textureDef.extensions[name]) {
+            return null;
+          }
+          const extension = textureDef.extensions[name];
+          const source = json.images[extension.source];
+          let loader = parser.textureLoader;
+          if (source.uri) {
+            const handler = parser.options.manager.getHandler(source.uri);
+            if (handler !== null) loader = handler;
+          }
+          return parser.loadTextureImage(textureIndex, extension.source, loader);
+        }
+      };
+      var GLTFTextureAVIFExtension = class {
+        constructor(parser) {
+          this.parser = parser;
+          this.name = EXTENSIONS.EXT_TEXTURE_AVIF;
+        }
+        loadTexture(textureIndex) {
+          const name = this.name;
+          const parser = this.parser;
+          const json = parser.json;
+          const textureDef = json.textures[textureIndex];
+          if (!textureDef.extensions || !textureDef.extensions[name]) {
+            return null;
+          }
+          const extension = textureDef.extensions[name];
+          const source = json.images[extension.source];
+          let loader = parser.textureLoader;
+          if (source.uri) {
+            const handler = parser.options.manager.getHandler(source.uri);
+            if (handler !== null) loader = handler;
+          }
+          return parser.loadTextureImage(textureIndex, extension.source, loader);
+        }
+      };
+      var GLTFMeshoptCompression = class {
+        constructor(parser, name) {
+          this.name = name;
+          this.parser = parser;
+        }
+        loadBufferView(index) {
+          const json = this.parser.json;
+          const bufferView = json.bufferViews[index];
+          if (bufferView.extensions && bufferView.extensions[this.name]) {
+            const extensionDef = bufferView.extensions[this.name];
+            const buffer = this.parser.getDependency("buffer", extensionDef.buffer);
+            const decoder = this.parser.options.meshoptDecoder;
+            if (!decoder || !decoder.supported) {
+              if (json.extensionsRequired && json.extensionsRequired.indexOf(this.name) >= 0) {
+                throw new Error("THREE.GLTFLoader: setMeshoptDecoder must be called before loading compressed files");
+              } else {
+                return null;
+              }
+            }
+            return buffer.then(function (res) {
+              const byteOffset = extensionDef.byteOffset || 0;
+              const byteLength = extensionDef.byteLength || 0;
+              const count = extensionDef.count;
+              const stride = extensionDef.byteStride;
+              const source = new Uint8Array(res, byteOffset, byteLength);
+              if (decoder.decodeGltfBufferAsync) {
+                return decoder.decodeGltfBufferAsync(count, stride, source, extensionDef.mode, extensionDef.filter).then(function (res2) {
+                  return res2.buffer;
+                });
+              } else {
+                return decoder.ready.then(function () {
+                  const result = new ArrayBuffer(count * stride);
+                  decoder.decodeGltfBuffer(new Uint8Array(result), count, stride, source, extensionDef.mode, extensionDef.filter);
+                  return result;
+                });
+              }
+            });
+          } else {
+            return null;
+          }
+        }
+      };
+      var GLTFMeshGpuInstancing = class {
+        constructor(parser) {
+          this.name = EXTENSIONS.EXT_MESH_GPU_INSTANCING;
+          this.parser = parser;
+        }
+        createNodeMesh(nodeIndex) {
+          const json = this.parser.json;
+          const nodeDef = json.nodes[nodeIndex];
+          if (!nodeDef.extensions || !nodeDef.extensions[this.name] || nodeDef.mesh === void 0) {
+            return null;
+          }
+          const meshDef = json.meshes[nodeDef.mesh];
+          for (const primitive of meshDef.primitives) {
+            if (primitive.mode !== WEBGL_CONSTANTS.TRIANGLES && primitive.mode !== WEBGL_CONSTANTS.TRIANGLE_STRIP && primitive.mode !== WEBGL_CONSTANTS.TRIANGLE_FAN && primitive.mode !== void 0) {
+              return null;
+            }
+          }
+          const extensionDef = nodeDef.extensions[this.name];
+          const attributesDef = extensionDef.attributes;
+          const pending = [];
+          const attributes = {};
+          for (const key in attributesDef) {
+            pending.push(this.parser.getDependency("accessor", attributesDef[key]).then(accessor => {
+              attributes[key] = accessor;
+              return attributes[key];
+            }));
+          }
+          if (pending.length < 1) {
+            return null;
+          }
+          pending.push(this.parser.createNodeMesh(nodeIndex));
+          return Promise.all(pending).then(results => {
+            const nodeObject = results.pop();
+            const meshes = nodeObject.isGroup ? nodeObject.children : [nodeObject];
+            const count = results[0].count;
+            const instancedMeshes = [];
+            for (const mesh of meshes) {
+              const m = new import_three3.Matrix4();
+              const p = new import_three3.Vector3();
+              const q = new import_three3.Quaternion();
+              const s = new import_three3.Vector3(1, 1, 1);
+              const instancedMesh = new import_three3.InstancedMesh(mesh.geometry, mesh.material, count);
+              for (let i = 0; i < count; i++) {
+                if (attributes.TRANSLATION) {
+                  p.fromBufferAttribute(attributes.TRANSLATION, i);
+                }
+                if (attributes.ROTATION) {
+                  q.fromBufferAttribute(attributes.ROTATION, i);
+                }
+                if (attributes.SCALE) {
+                  s.fromBufferAttribute(attributes.SCALE, i);
+                }
+                instancedMesh.setMatrixAt(i, m.compose(p, q, s));
+              }
+              let instanceGeometry = null;
+              for (const attributeName in attributes) {
+                if (attributeName === "_COLOR_0") {
+                  const attr = attributes[attributeName];
+                  instancedMesh.instanceColor = new import_three3.InstancedBufferAttribute(attr.array, attr.itemSize, attr.normalized);
+                } else if (attributeName !== "TRANSLATION" && attributeName !== "ROTATION" && attributeName !== "SCALE") {
+                  if (instanceGeometry === null) {
+                    const source = instancedMesh.geometry;
+                    instanceGeometry = new import_three3.BufferGeometry();
+                    instanceGeometry.name = source.name;
+                    for (const name in source.attributes) instanceGeometry.setAttribute(name, source.attributes[name]);
+                    for (const name in source.morphAttributes) instanceGeometry.morphAttributes[name] = source.morphAttributes[name];
+                    if (source.index !== null) instanceGeometry.setIndex(source.index);
+                    instanceGeometry.morphTargetsRelative = source.morphTargetsRelative;
+                    for (const group of source.groups) instanceGeometry.addGroup(group.start, group.count, group.materialIndex);
+                    if (source.boundingBox !== null) instanceGeometry.boundingBox = source.boundingBox.clone();
+                    if (source.boundingSphere !== null) instanceGeometry.boundingSphere = source.boundingSphere.clone();
+                    instanceGeometry.drawRange.start = source.drawRange.start;
+                    instanceGeometry.drawRange.count = source.drawRange.count;
+                    instanceGeometry.userData = Object.assign({}, source.userData);
+                    instancedMesh.geometry = instanceGeometry;
+                  }
+                  const attr = attributes[attributeName];
+                  instanceGeometry.setAttribute(attributeName, new import_three3.InstancedBufferAttribute(attr.array, attr.itemSize, attr.normalized));
+                }
+              }
+              import_three3.Object3D.prototype.copy.call(instancedMesh, mesh);
+              this.parser.assignFinalMaterial(instancedMesh);
+              instancedMeshes.push(instancedMesh);
+            }
+            if (nodeObject.isGroup) {
+              nodeObject.clear();
+              nodeObject.add(...instancedMeshes);
+              return nodeObject;
+            }
+            return instancedMeshes[0];
+          });
+        }
+      };
+      var BINARY_EXTENSION_HEADER_MAGIC = "glTF";
+      var BINARY_EXTENSION_HEADER_LENGTH = 12;
+      var BINARY_EXTENSION_CHUNK_TYPES = {
+        JSON: 1313821514,
+        BIN: 5130562
+      };
+      var GLTFBinaryExtension = class {
+        constructor(data) {
+          this.name = EXTENSIONS.KHR_BINARY_GLTF;
+          this.content = null;
+          this.body = null;
+          const headerView = new DataView(data, 0, BINARY_EXTENSION_HEADER_LENGTH);
+          const textDecoder = new TextDecoder();
+          this.header = {
+            magic: textDecoder.decode(new Uint8Array(data.slice(0, 4))),
+            version: headerView.getUint32(4, true),
+            length: headerView.getUint32(8, true)
+          };
+          if (this.header.magic !== BINARY_EXTENSION_HEADER_MAGIC) {
+            throw new Error("THREE.GLTFLoader: Unsupported glTF-Binary header.");
+          } else if (this.header.version < 2) {
+            throw new Error("THREE.GLTFLoader: Legacy binary file detected.");
+          }
+          const chunkContentsLength = this.header.length - BINARY_EXTENSION_HEADER_LENGTH;
+          const chunkView = new DataView(data, BINARY_EXTENSION_HEADER_LENGTH);
+          let chunkIndex = 0;
+          while (chunkIndex < chunkContentsLength) {
+            const chunkLength = chunkView.getUint32(chunkIndex, true);
+            chunkIndex += 4;
+            const chunkType = chunkView.getUint32(chunkIndex, true);
+            chunkIndex += 4;
+            if (chunkType === BINARY_EXTENSION_CHUNK_TYPES.JSON) {
+              const contentArray = new Uint8Array(data, BINARY_EXTENSION_HEADER_LENGTH + chunkIndex, chunkLength);
+              this.content = textDecoder.decode(contentArray);
+            } else if (chunkType === BINARY_EXTENSION_CHUNK_TYPES.BIN) {
+              const byteOffset = BINARY_EXTENSION_HEADER_LENGTH + chunkIndex;
+              this.body = data.slice(byteOffset, byteOffset + chunkLength);
+            }
+            chunkIndex += chunkLength;
+          }
+          if (this.content === null) {
+            throw new Error("THREE.GLTFLoader: JSON content not found.");
+          }
+        }
+      };
+      var GLTFDracoMeshCompressionExtension = class {
+        constructor(json, dracoLoader) {
+          if (!dracoLoader) {
+            throw new Error("THREE.GLTFLoader: No DRACOLoader instance provided.");
+          }
+          this.name = EXTENSIONS.KHR_DRACO_MESH_COMPRESSION;
+          this.json = json;
+          this.dracoLoader = dracoLoader;
+          this.dracoLoader.preload();
+        }
+        decodePrimitive(primitive, parser) {
+          const json = this.json;
+          const dracoLoader = this.dracoLoader;
+          const bufferViewIndex = primitive.extensions[this.name].bufferView;
+          const gltfAttributeMap = primitive.extensions[this.name].attributes;
+          const threeAttributeMap = {};
+          const attributeNormalizedMap = {};
+          const attributeTypeMap = {};
+          for (const attributeName in gltfAttributeMap) {
+            const threeAttributeName = ATTRIBUTES[attributeName] || attributeName.toLowerCase();
+            threeAttributeMap[threeAttributeName] = gltfAttributeMap[attributeName];
+          }
+          for (const attributeName in primitive.attributes) {
+            const threeAttributeName = ATTRIBUTES[attributeName] || attributeName.toLowerCase();
+            if (gltfAttributeMap[attributeName] !== void 0) {
+              const accessorDef = json.accessors[primitive.attributes[attributeName]];
+              const componentType = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
+              attributeTypeMap[threeAttributeName] = componentType.name;
+              attributeNormalizedMap[threeAttributeName] = accessorDef.normalized === true;
+            }
+          }
+          return parser.getDependency("bufferView", bufferViewIndex).then(function (bufferView) {
+            return new Promise(function (resolve, reject) {
+              dracoLoader.decodeDracoFile(bufferView, function (geometry) {
+                for (const attributeName in geometry.attributes) {
+                  const attribute = geometry.attributes[attributeName];
+                  const normalized = attributeNormalizedMap[attributeName];
+                  if (normalized !== void 0) attribute.normalized = normalized;
+                }
+                resolve(geometry);
+              }, threeAttributeMap, attributeTypeMap, import_three3.LinearSRGBColorSpace, reject);
+            });
+          });
+        }
+      };
+      var GLTFTextureTransformExtension = class {
+        constructor() {
+          this.name = EXTENSIONS.KHR_TEXTURE_TRANSFORM;
+        }
+        extendTexture(texture, transform) {
+          if ((transform.texCoord === void 0 || transform.texCoord === texture.channel) && transform.offset === void 0 && transform.rotation === void 0 && transform.scale === void 0) {
+            return texture;
+          }
+          texture = texture.clone();
+          if (transform.texCoord !== void 0) {
+            texture.channel = transform.texCoord;
+          }
+          if (transform.offset !== void 0) {
+            texture.offset.fromArray(transform.offset);
+          }
+          if (transform.rotation !== void 0) {
+            texture.rotation = transform.rotation;
+          }
+          if (transform.scale !== void 0) {
+            texture.repeat.fromArray(transform.scale);
+          }
+          if (transform.rotation !== void 0) {
+            const c = Math.cos(texture.rotation);
+            const s = Math.sin(texture.rotation);
+            texture.matrix.set(texture.repeat.x * c, texture.repeat.y * s, texture.offset.x, -texture.repeat.x * s, texture.repeat.y * c, texture.offset.y, 0, 0, 1);
+            texture.matrixAutoUpdate = false;
+          }
+          texture.needsUpdate = true;
+          return texture;
+        }
+      };
+      var GLTFMeshQuantizationExtension = class {
+        constructor() {
+          this.name = EXTENSIONS.KHR_MESH_QUANTIZATION;
+        }
+      };
+      var GLTFCubicSplineInterpolant = class extends import_three3.Interpolant {
+        constructor(parameterPositions, sampleValues, sampleSize, resultBuffer) {
+          super(parameterPositions, sampleValues, sampleSize, resultBuffer);
+        }
+        copySampleValue_(index) {
+          const result = this.resultBuffer,
+            values = this.sampleValues,
+            valueSize = this.valueSize,
+            offset = index * valueSize * 3 + valueSize;
+          for (let i = 0; i !== valueSize; i++) {
+            result[i] = values[offset + i];
+          }
+          return result;
+        }
+        interpolate_(i1, t0, t, t1) {
+          const result = this.resultBuffer;
+          const values = this.sampleValues;
+          const stride = this.valueSize;
+          const stride2 = stride * 2;
+          const stride3 = stride * 3;
+          const td = t1 - t0;
+          const p = (t - t0) / td;
+          const pp = p * p;
+          const ppp = pp * p;
+          const offset1 = i1 * stride3;
+          const offset0 = offset1 - stride3;
+          const s2 = -2 * ppp + 3 * pp;
+          const s3 = ppp - pp;
+          const s0 = 1 - s2;
+          const s1 = s3 - pp + p;
+          for (let i = 0; i !== stride; i++) {
+            const p0 = values[offset0 + i + stride];
+            const m0 = values[offset0 + i + stride2] * td;
+            const p1 = values[offset1 + i + stride];
+            const m1 = values[offset1 + i] * td;
+            result[i] = s0 * p0 + s1 * m0 + s2 * p1 + s3 * m1;
+          }
+          return result;
+        }
+      };
+      var _quaternion = new import_three3.Quaternion();
+      var GLTFCubicSplineQuaternionInterpolant = class extends GLTFCubicSplineInterpolant {
+        interpolate_(i1, t0, t, t1) {
+          const result = super.interpolate_(i1, t0, t, t1);
+          _quaternion.fromArray(result).normalize().toArray(result);
+          return result;
+        }
+      };
+      var WEBGL_CONSTANTS = {
+        FLOAT: 5126,
+        FLOAT_MAT3: 35675,
+        FLOAT_MAT4: 35676,
+        FLOAT_VEC2: 35664,
+        FLOAT_VEC3: 35665,
+        FLOAT_VEC4: 35666,
+        LINEAR: 9729,
+        REPEAT: 10497,
+        SAMPLER_2D: 35678,
+        POINTS: 0,
+        LINES: 1,
+        LINE_LOOP: 2,
+        LINE_STRIP: 3,
+        TRIANGLES: 4,
+        TRIANGLE_STRIP: 5,
+        TRIANGLE_FAN: 6,
+        UNSIGNED_BYTE: 5121,
+        UNSIGNED_SHORT: 5123
+      };
+      var WEBGL_COMPONENT_TYPES = {
+        5120: Int8Array,
+        5121: Uint8Array,
+        5122: Int16Array,
+        5123: Uint16Array,
+        5125: Uint32Array,
+        5126: Float32Array
+      };
+      var WEBGL_FILTERS = {
+        9728: import_three3.NearestFilter,
+        9729: import_three3.LinearFilter,
+        9984: import_three3.NearestMipmapNearestFilter,
+        9985: import_three3.LinearMipmapNearestFilter,
+        9986: import_three3.NearestMipmapLinearFilter,
+        9987: import_three3.LinearMipmapLinearFilter
+      };
+      var WEBGL_WRAPPINGS = {
+        33071: import_three3.ClampToEdgeWrapping,
+        33648: import_three3.MirroredRepeatWrapping,
+        10497: import_three3.RepeatWrapping
+      };
+      var WEBGL_TYPE_SIZES = {
+        SCALAR: 1,
+        VEC2: 2,
+        VEC3: 3,
+        VEC4: 4,
+        MAT2: 4,
+        MAT3: 9,
+        MAT4: 16
+      };
+      var ATTRIBUTES = {
+        POSITION: "position",
+        NORMAL: "normal",
+        TANGENT: "tangent",
+        TEXCOORD_0: "uv",
+        TEXCOORD_1: "uv1",
+        TEXCOORD_2: "uv2",
+        TEXCOORD_3: "uv3",
+        COLOR_0: "color",
+        WEIGHTS_0: "skinWeight",
+        JOINTS_0: "skinIndex"
+      };
+      var PATH_PROPERTIES = {
+        scale: "scale",
+        translation: "position",
+        rotation: "quaternion",
+        weights: "morphTargetInfluences"
+      };
+      var INTERPOLATION = {
+        CUBICSPLINE: void 0,
+        LINEAR: import_three3.InterpolateLinear,
+        STEP: import_three3.InterpolateDiscrete
+      };
+      var ALPHA_MODES = {
+        OPAQUE: "OPAQUE",
+        MASK: "MASK",
+        BLEND: "BLEND"
+      };
+      function createDefaultMaterial(cache) {
+        if (cache["DefaultMaterial"] === void 0) {
+          cache["DefaultMaterial"] = new import_three3.MeshStandardMaterial({
+            color: 16777215,
+            emissive: 0,
+            metalness: 1,
+            roughness: 1,
+            transparent: false,
+            depthTest: true,
+            side: import_three3.FrontSide
+          });
+        }
+        return cache["DefaultMaterial"];
+      }
+      function addUnknownExtensionsToUserData(knownExtensions, object, objectDef) {
+        for (const name in objectDef.extensions) {
+          if (knownExtensions[name] === void 0) {
+            object.userData.gltfExtensions = object.userData.gltfExtensions || {};
+            object.userData.gltfExtensions[name] = objectDef.extensions[name];
+          }
+        }
+      }
+      function assignExtrasToUserData(object, gltfDef) {
+        if (gltfDef.extras !== void 0) {
+          if (typeof gltfDef.extras === "object") {
+            Object.assign(object.userData, gltfDef.extras);
+          } else {
+            console.warn("THREE.GLTFLoader: Ignoring primitive type .extras, " + gltfDef.extras);
+          }
+        }
+      }
+      function addMorphTargets(geometry, targets, parser) {
+        let hasMorphPosition = false;
+        let hasMorphNormal = false;
+        let hasMorphColor = false;
+        for (let i = 0, il = targets.length; i < il; i++) {
+          const target = targets[i];
+          if (target.POSITION !== void 0) hasMorphPosition = true;
+          if (target.NORMAL !== void 0) hasMorphNormal = true;
+          if (target.COLOR_0 !== void 0) hasMorphColor = true;
+          if (hasMorphPosition && hasMorphNormal && hasMorphColor) break;
+        }
+        if (!hasMorphPosition && !hasMorphNormal && !hasMorphColor) return Promise.resolve(geometry);
+        const pendingPositionAccessors = [];
+        const pendingNormalAccessors = [];
+        const pendingColorAccessors = [];
+        for (let i = 0, il = targets.length; i < il; i++) {
+          const target = targets[i];
+          if (hasMorphPosition) {
+            const pendingAccessor = target.POSITION !== void 0 ? parser.getDependency("accessor", target.POSITION) : geometry.attributes.position;
+            pendingPositionAccessors.push(pendingAccessor);
+          }
+          if (hasMorphNormal) {
+            const pendingAccessor = target.NORMAL !== void 0 ? parser.getDependency("accessor", target.NORMAL) : geometry.attributes.normal;
+            pendingNormalAccessors.push(pendingAccessor);
+          }
+          if (hasMorphColor) {
+            const pendingAccessor = target.COLOR_0 !== void 0 ? parser.getDependency("accessor", target.COLOR_0) : geometry.attributes.color;
+            pendingColorAccessors.push(pendingAccessor);
+          }
+        }
+        return Promise.all([Promise.all(pendingPositionAccessors), Promise.all(pendingNormalAccessors), Promise.all(pendingColorAccessors)]).then(function (accessors) {
+          const morphPositions = accessors[0];
+          const morphNormals = accessors[1];
+          const morphColors = accessors[2];
+          if (hasMorphPosition) geometry.morphAttributes.position = morphPositions;
+          if (hasMorphNormal) geometry.morphAttributes.normal = morphNormals;
+          if (hasMorphColor) geometry.morphAttributes.color = morphColors;
+          geometry.morphTargetsRelative = true;
+          return geometry;
+        });
+      }
+      function updateMorphTargets(mesh, meshDef) {
+        mesh.updateMorphTargets();
+        if (meshDef.weights !== void 0) {
+          for (let i = 0, il = meshDef.weights.length; i < il; i++) {
+            mesh.morphTargetInfluences[i] = meshDef.weights[i];
+          }
+        }
+        if (meshDef.extras && Array.isArray(meshDef.extras.targetNames)) {
+          const targetNames = meshDef.extras.targetNames;
+          if (mesh.morphTargetInfluences.length === targetNames.length) {
+            mesh.morphTargetDictionary = {};
+            for (let i = 0, il = targetNames.length; i < il; i++) {
+              mesh.morphTargetDictionary[targetNames[i]] = i;
+            }
+          } else {
+            console.warn("THREE.GLTFLoader: Invalid extras.targetNames length. Ignoring names.");
+          }
+        }
+      }
+      function createPrimitiveKey(primitiveDef) {
+        let geometryKey;
+        const dracoExtension = primitiveDef.extensions && primitiveDef.extensions[EXTENSIONS.KHR_DRACO_MESH_COMPRESSION];
+        if (dracoExtension) {
+          geometryKey = "draco:" + dracoExtension.bufferView + ":" + dracoExtension.indices + ":" + createAttributesKey(dracoExtension.attributes);
+        } else {
+          geometryKey = primitiveDef.indices + ":" + createAttributesKey(primitiveDef.attributes) + ":" + primitiveDef.mode;
+        }
+        if (primitiveDef.targets !== void 0) {
+          for (let i = 0, il = primitiveDef.targets.length; i < il; i++) {
+            geometryKey += ":" + createAttributesKey(primitiveDef.targets[i]);
+          }
+        }
+        return geometryKey;
+      }
+      function createAttributesKey(attributes) {
+        let attributesKey = "";
+        const keys = Object.keys(attributes).sort();
+        for (let i = 0, il = keys.length; i < il; i++) {
+          attributesKey += keys[i] + ":" + attributes[keys[i]] + ";";
+        }
+        return attributesKey;
+      }
+      function getNormalizedComponentScale(constructor) {
+        switch (constructor) {
+          case Int8Array:
+            return 1 / 127;
+          case Uint8Array:
+            return 1 / 255;
+          case Int16Array:
+            return 1 / 32767;
+          case Uint16Array:
+            return 1 / 65535;
+          default:
+            throw new Error("THREE.GLTFLoader: Unsupported normalized accessor component type.");
+        }
+      }
+      function getImageURIMimeType(uri) {
+        if (uri.search(/\.jpe?g($|\?)/i) > 0 || uri.search(/^data\:image\/jpeg/) === 0) return "image/jpeg";
+        if (uri.search(/\.webp($|\?)/i) > 0 || uri.search(/^data\:image\/webp/) === 0) return "image/webp";
+        if (uri.search(/\.ktx2($|\?)/i) > 0 || uri.search(/^data\:image\/ktx2/) === 0) return "image/ktx2";
+        return "image/png";
+      }
+      var _identityMatrix = new import_three3.Matrix4();
+      var GLTFParser = class {
+        constructor(json = {}, options = {}) {
+          this.json = json;
+          this.extensions = {};
+          this.plugins = {};
+          this.options = options;
+          this.cache = new GLTFRegistry();
+          this.associations = new Map();
+          this.primitiveCache = {};
+          this.nodeCache = {};
+          this.meshCache = {
+            refs: {},
+            uses: {}
+          };
+          this.cameraCache = {
+            refs: {},
+            uses: {}
+          };
+          this.lightCache = {
+            refs: {},
+            uses: {}
+          };
+          this.sourceCache = {};
+          this.textureCache = {};
+          this.nodeNamesUsed = {};
+          let isSafari = false;
+          let safariVersion = -1;
+          let isFirefox = false;
+          let firefoxVersion = -1;
+          if (typeof navigator !== "undefined" && typeof navigator.userAgent !== "undefined") {
+            const userAgent = navigator.userAgent;
+            isSafari = /^((?!chrome|android).)*safari/i.test(userAgent) === true;
+            const safariMatch = userAgent.match(/Version\/(\d+)/);
+            safariVersion = isSafari && safariMatch ? parseInt(safariMatch[1], 10) : -1;
+            isFirefox = userAgent.indexOf("Firefox") > -1;
+            firefoxVersion = isFirefox ? userAgent.match(/Firefox\/([0-9]+)\./)[1] : -1;
+          }
+          if (typeof createImageBitmap === "undefined" || isSafari && safariVersion < 17 || isFirefox && firefoxVersion < 98) {
+            this.textureLoader = new import_three3.TextureLoader(this.options.manager);
+          } else {
+            this.textureLoader = new import_three3.ImageBitmapLoader(this.options.manager);
+          }
+          this.textureLoader.setCrossOrigin(this.options.crossOrigin);
+          this.textureLoader.setRequestHeader(this.options.requestHeader);
+          this.fileLoader = new import_three3.FileLoader(this.options.manager);
+          this.fileLoader.setResponseType("arraybuffer");
+          if (this.options.crossOrigin === "use-credentials") {
+            this.fileLoader.setWithCredentials(true);
+          }
+        }
+        setExtensions(extensions) {
+          this.extensions = extensions;
+        }
+        setPlugins(plugins) {
+          this.plugins = plugins;
+        }
+        parse(onLoad, onError) {
+          const parser = this;
+          const json = this.json;
+          const extensions = this.extensions;
+          this.cache.removeAll();
+          this.nodeCache = {};
+          this._invokeAll(function (ext) {
+            return ext._markDefs && ext._markDefs();
+          });
+          Promise.all(this._invokeAll(function (ext) {
+            return ext.beforeRoot && ext.beforeRoot();
+          })).then(function () {
+            return Promise.all([parser.getDependencies("scene"), parser.getDependencies("animation"), parser.getDependencies("camera")]);
+          }).then(function (dependencies) {
+            const result = {
+              scene: dependencies[0][json.scene || 0],
+              scenes: dependencies[0],
+              animations: dependencies[1],
+              cameras: dependencies[2],
+              asset: json.asset,
+              parser,
+              userData: {}
+            };
+            addUnknownExtensionsToUserData(extensions, result, json);
+            assignExtrasToUserData(result, json);
+            return Promise.all(parser._invokeAll(function (ext) {
+              return ext.afterRoot && ext.afterRoot(result);
+            })).then(function () {
+              for (const scene of result.scenes) {
+                scene.updateMatrixWorld();
+              }
+              onLoad(result);
+            });
+          }).catch(onError);
+        }
+        _markDefs() {
+          const nodeDefs = this.json.nodes || [];
+          const skinDefs = this.json.skins || [];
+          const meshDefs = this.json.meshes || [];
+          for (let skinIndex = 0, skinLength = skinDefs.length; skinIndex < skinLength; skinIndex++) {
+            const joints = skinDefs[skinIndex].joints;
+            for (let i = 0, il = joints.length; i < il; i++) {
+              nodeDefs[joints[i]].isBone = true;
+            }
+          }
+          for (let nodeIndex = 0, nodeLength = nodeDefs.length; nodeIndex < nodeLength; nodeIndex++) {
+            const nodeDef = nodeDefs[nodeIndex];
+            if (nodeDef.mesh !== void 0) {
+              this._addNodeRef(this.meshCache, nodeDef.mesh);
+              if (nodeDef.skin !== void 0) {
+                meshDefs[nodeDef.mesh].isSkinnedMesh = true;
+              }
+            }
+            if (nodeDef.camera !== void 0) {
+              this._addNodeRef(this.cameraCache, nodeDef.camera);
+            }
+          }
+        }
+        _addNodeRef(cache, index) {
+          if (index === void 0) return;
+          if (cache.refs[index] === void 0) {
+            cache.refs[index] = cache.uses[index] = 0;
+          }
+          cache.refs[index]++;
+        }
+        _getNodeRef(cache, index, object) {
+          if (cache.refs[index] <= 1) return object;
+          const ref = object.clone();
+          const updateMappings = (original, clone2) => {
+            const mappings = this.associations.get(original);
+            if (mappings != null) {
+              this.associations.set(clone2, mappings);
+            }
+            for (const [i, child] of original.children.entries()) {
+              updateMappings(child, clone2.children[i]);
+            }
+          };
+          updateMappings(object, ref);
+          ref.name += "_instance_" + cache.uses[index]++;
+          return ref;
+        }
+        _invokeOne(func) {
+          const extensions = Object.values(this.plugins);
+          extensions.push(this);
+          for (let i = 0; i < extensions.length; i++) {
+            const result = func(extensions[i]);
+            if (result) return result;
+          }
+          return null;
+        }
+        _invokeAll(func) {
+          const extensions = Object.values(this.plugins);
+          extensions.unshift(this);
+          const pending = [];
+          for (let i = 0; i < extensions.length; i++) {
+            const result = func(extensions[i]);
+            if (result) pending.push(result);
+          }
+          return pending;
+        }
+        getDependency(type, index) {
+          const cacheKey = type + ":" + index;
+          let dependency = this.cache.get(cacheKey);
+          if (!dependency) {
+            switch (type) {
+              case "scene":
+                dependency = this.loadScene(index);
+                break;
+              case "node":
+                dependency = this._invokeOne(function (ext) {
+                  return ext.loadNode && ext.loadNode(index);
+                });
+                break;
+              case "mesh":
+                dependency = this._invokeOne(function (ext) {
+                  return ext.loadMesh && ext.loadMesh(index);
+                });
+                break;
+              case "accessor":
+                dependency = this.loadAccessor(index);
+                break;
+              case "bufferView":
+                dependency = this._invokeOne(function (ext) {
+                  return ext.loadBufferView && ext.loadBufferView(index);
+                });
+                break;
+              case "buffer":
+                dependency = this.loadBuffer(index);
+                break;
+              case "material":
+                dependency = this._invokeOne(function (ext) {
+                  return ext.loadMaterial && ext.loadMaterial(index);
+                });
+                break;
+              case "texture":
+                dependency = this._invokeOne(function (ext) {
+                  return ext.loadTexture && ext.loadTexture(index);
+                });
+                break;
+              case "skin":
+                dependency = this.loadSkin(index);
+                break;
+              case "animation":
+                dependency = this._invokeOne(function (ext) {
+                  return ext.loadAnimation && ext.loadAnimation(index);
+                });
+                break;
+              case "camera":
+                dependency = this.loadCamera(index);
+                break;
+              default:
+                dependency = this._invokeOne(function (ext) {
+                  return ext != this && ext.getDependency && ext.getDependency(type, index);
+                });
+                if (!dependency) {
+                  throw new Error("Unknown type: " + type);
+                }
+                break;
+            }
+            this.cache.add(cacheKey, dependency);
+          }
+          return dependency;
+        }
+        getDependencies(type) {
+          let dependencies = this.cache.get(type);
+          if (!dependencies) {
+            const parser = this;
+            const defs = this.json[type + (type === "mesh" ? "es" : "s")] || [];
+            dependencies = Promise.all(defs.map(function (def, index) {
+              return parser.getDependency(type, index);
+            }));
+            this.cache.add(type, dependencies);
+          }
+          return dependencies;
+        }
+        loadBuffer(bufferIndex) {
+          const bufferDef = this.json.buffers[bufferIndex];
+          const loader = this.fileLoader;
+          if (bufferDef.type && bufferDef.type !== "arraybuffer") {
+            throw new Error("THREE.GLTFLoader: " + bufferDef.type + " buffer type is not supported.");
+          }
+          if (bufferDef.uri === void 0 && bufferIndex === 0) {
+            return Promise.resolve(this.extensions[EXTENSIONS.KHR_BINARY_GLTF].body);
+          }
+          const options = this.options;
+          return new Promise(function (resolve, reject) {
+            loader.load(import_three3.LoaderUtils.resolveURL(bufferDef.uri, options.path), resolve, void 0, function () {
+              reject(new Error('THREE.GLTFLoader: Failed to load buffer "' + bufferDef.uri + '".'));
+            });
+          });
+        }
+        loadBufferView(bufferViewIndex) {
+          const bufferViewDef = this.json.bufferViews[bufferViewIndex];
+          return this.getDependency("buffer", bufferViewDef.buffer).then(function (buffer) {
+            const byteLength = bufferViewDef.byteLength || 0;
+            const byteOffset = bufferViewDef.byteOffset || 0;
+            return buffer.slice(byteOffset, byteOffset + byteLength);
+          });
+        }
+        loadAccessor(accessorIndex) {
+          const parser = this;
+          const json = this.json;
+          const accessorDef = this.json.accessors[accessorIndex];
+          if (accessorDef.bufferView === void 0 && accessorDef.sparse === void 0) {
+            const itemSize = WEBGL_TYPE_SIZES[accessorDef.type];
+            const TypedArray = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
+            const normalized = accessorDef.normalized === true;
+            const array = new TypedArray(accessorDef.count * itemSize);
+            return Promise.resolve(new import_three3.BufferAttribute(array, itemSize, normalized));
+          }
+          const pendingBufferViews = [];
+          if (accessorDef.bufferView !== void 0) {
+            pendingBufferViews.push(this.getDependency("bufferView", accessorDef.bufferView));
+          } else {
+            pendingBufferViews.push(null);
+          }
+          if (accessorDef.sparse !== void 0) {
+            pendingBufferViews.push(this.getDependency("bufferView", accessorDef.sparse.indices.bufferView));
+            pendingBufferViews.push(this.getDependency("bufferView", accessorDef.sparse.values.bufferView));
+          }
+          return Promise.all(pendingBufferViews).then(function (bufferViews) {
+            const bufferView = bufferViews[0];
+            const itemSize = WEBGL_TYPE_SIZES[accessorDef.type];
+            const TypedArray = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
+            const elementBytes = TypedArray.BYTES_PER_ELEMENT;
+            const itemBytes = elementBytes * itemSize;
+            const byteOffset = accessorDef.byteOffset || 0;
+            const byteStride = accessorDef.bufferView !== void 0 ? json.bufferViews[accessorDef.bufferView].byteStride : void 0;
+            const normalized = accessorDef.normalized === true;
+            let array, bufferAttribute;
+            if (byteStride && byteStride !== itemBytes) {
+              const ibSlice = Math.floor(byteOffset / byteStride);
+              const ibCacheKey = "InterleavedBuffer:" + accessorDef.bufferView + ":" + accessorDef.componentType + ":" + ibSlice + ":" + accessorDef.count;
+              let ib = parser.cache.get(ibCacheKey);
+              if (!ib) {
+                array = new TypedArray(bufferView, ibSlice * byteStride, accessorDef.count * byteStride / elementBytes);
+                ib = new import_three3.InterleavedBuffer(array, byteStride / elementBytes);
+                parser.cache.add(ibCacheKey, ib);
+              }
+              bufferAttribute = new import_three3.InterleavedBufferAttribute(ib, itemSize, byteOffset % byteStride / elementBytes, normalized);
+            } else {
+              if (bufferView === null) {
+                array = new TypedArray(accessorDef.count * itemSize);
+              } else {
+                array = new TypedArray(bufferView, byteOffset, accessorDef.count * itemSize);
+              }
+              bufferAttribute = new import_three3.BufferAttribute(array, itemSize, normalized);
+            }
+            if (accessorDef.sparse !== void 0) {
+              const itemSizeIndices = WEBGL_TYPE_SIZES.SCALAR;
+              const TypedArrayIndices = WEBGL_COMPONENT_TYPES[accessorDef.sparse.indices.componentType];
+              const byteOffsetIndices = accessorDef.sparse.indices.byteOffset || 0;
+              const byteOffsetValues = accessorDef.sparse.values.byteOffset || 0;
+              const sparseIndices = new TypedArrayIndices(bufferViews[1], byteOffsetIndices, accessorDef.sparse.count * itemSizeIndices);
+              const sparseValues = new TypedArray(bufferViews[2], byteOffsetValues, accessorDef.sparse.count * itemSize);
+              if (bufferView !== null) {
+                bufferAttribute = new import_three3.BufferAttribute(bufferAttribute.array.slice(), bufferAttribute.itemSize, bufferAttribute.normalized);
+              }
+              bufferAttribute.normalized = false;
+              for (let i = 0, il = sparseIndices.length; i < il; i++) {
+                const index = sparseIndices[i];
+                bufferAttribute.setX(index, sparseValues[i * itemSize]);
+                if (itemSize >= 2) bufferAttribute.setY(index, sparseValues[i * itemSize + 1]);
+                if (itemSize >= 3) bufferAttribute.setZ(index, sparseValues[i * itemSize + 2]);
+                if (itemSize >= 4) bufferAttribute.setW(index, sparseValues[i * itemSize + 3]);
+                if (itemSize >= 5) throw new Error("THREE.GLTFLoader: Unsupported itemSize in sparse BufferAttribute.");
+              }
+              bufferAttribute.normalized = normalized;
+            }
+            return bufferAttribute;
+          });
+        }
+        loadTexture(textureIndex) {
+          const json = this.json;
+          const options = this.options;
+          const textureDef = json.textures[textureIndex];
+          const sourceIndex = textureDef.source;
+          const sourceDef = json.images[sourceIndex];
+          let loader = this.textureLoader;
+          if (sourceDef.uri) {
+            const handler = options.manager.getHandler(sourceDef.uri);
+            if (handler !== null) loader = handler;
+          }
+          return this.loadTextureImage(textureIndex, sourceIndex, loader);
+        }
+        loadTextureImage(textureIndex, sourceIndex, loader) {
+          const parser = this;
+          const json = this.json;
+          const textureDef = json.textures[textureIndex];
+          const sourceDef = json.images[sourceIndex];
+          const cacheKey = (sourceDef.uri || sourceDef.bufferView) + ":" + textureDef.sampler;
+          if (this.textureCache[cacheKey]) {
+            return this.textureCache[cacheKey];
+          }
+          const promise = this.loadImageSource(sourceIndex, loader).then(function (texture) {
+            texture.flipY = false;
+            texture.name = textureDef.name || sourceDef.name || "";
+            if (texture.name === "" && typeof sourceDef.uri === "string" && sourceDef.uri.startsWith("data:image/") === false) {
+              texture.name = sourceDef.uri;
+            }
+            const samplers = json.samplers || {};
+            const sampler = samplers[textureDef.sampler] || {};
+            texture.magFilter = WEBGL_FILTERS[sampler.magFilter] || import_three3.LinearFilter;
+            texture.minFilter = WEBGL_FILTERS[sampler.minFilter] || import_three3.LinearMipmapLinearFilter;
+            texture.wrapS = WEBGL_WRAPPINGS[sampler.wrapS] || import_three3.RepeatWrapping;
+            texture.wrapT = WEBGL_WRAPPINGS[sampler.wrapT] || import_three3.RepeatWrapping;
+            texture.generateMipmaps = !texture.isCompressedTexture && texture.minFilter !== import_three3.NearestFilter && texture.minFilter !== import_three3.LinearFilter;
+            parser.associations.set(texture, {
+              textures: textureIndex
+            });
+            return texture;
+          }).catch(function () {
+            return null;
+          });
+          this.textureCache[cacheKey] = promise;
+          return promise;
+        }
+        loadImageSource(sourceIndex, loader) {
+          const parser = this;
+          const json = this.json;
+          const options = this.options;
+          if (this.sourceCache[sourceIndex] !== void 0) {
+            return this.sourceCache[sourceIndex].then(texture => texture.clone());
+          }
+          const sourceDef = json.images[sourceIndex];
+          const URL = self.URL || self.webkitURL;
+          let sourceURI = sourceDef.uri || "";
+          let isObjectURL = false;
+          if (sourceDef.bufferView !== void 0) {
+            sourceURI = parser.getDependency("bufferView", sourceDef.bufferView).then(function (bufferView) {
+              isObjectURL = true;
+              const blob = new Blob([bufferView], {
+                type: sourceDef.mimeType
+              });
+              sourceURI = URL.createObjectURL(blob);
+              return sourceURI;
+            });
+          } else if (sourceDef.uri === void 0) {
+            throw new Error("THREE.GLTFLoader: Image " + sourceIndex + " is missing URI and bufferView");
+          }
+          const promise = Promise.resolve(sourceURI).then(function (sourceURI2) {
+            return new Promise(function (resolve, reject) {
+              let onLoad = resolve;
+              if (loader.isImageBitmapLoader === true) {
+                onLoad = function (imageBitmap) {
+                  const texture = new import_three3.Texture(imageBitmap);
+                  texture.needsUpdate = true;
+                  resolve(texture);
+                };
+              }
+              loader.load(import_three3.LoaderUtils.resolveURL(sourceURI2, options.path), onLoad, void 0, reject);
+            });
+          }).then(function (texture) {
+            if (isObjectURL === true) {
+              URL.revokeObjectURL(sourceURI);
+            }
+            assignExtrasToUserData(texture, sourceDef);
+            texture.userData.mimeType = sourceDef.mimeType || getImageURIMimeType(sourceDef.uri);
+            return texture;
+          }).catch(function (error) {
+            console.error("THREE.GLTFLoader: Couldn't load texture", sourceURI);
+            throw error;
+          });
+          this.sourceCache[sourceIndex] = promise;
+          return promise;
+        }
+        assignTexture(materialParams, mapName, mapDef, colorSpace) {
+          const parser = this;
+          return this.getDependency("texture", mapDef.index).then(function (texture) {
+            if (!texture) return null;
+            if (mapDef.texCoord !== void 0 && mapDef.texCoord > 0) {
+              texture = texture.clone();
+              texture.channel = mapDef.texCoord;
+            }
+            if (parser.extensions[EXTENSIONS.KHR_TEXTURE_TRANSFORM]) {
+              const transform = mapDef.extensions !== void 0 ? mapDef.extensions[EXTENSIONS.KHR_TEXTURE_TRANSFORM] : void 0;
+              if (transform) {
+                const gltfReference = parser.associations.get(texture);
+                texture = parser.extensions[EXTENSIONS.KHR_TEXTURE_TRANSFORM].extendTexture(texture, transform);
+                parser.associations.set(texture, gltfReference);
+              }
+            }
+            if (colorSpace !== void 0) {
+              texture.colorSpace = colorSpace;
+            }
+            materialParams[mapName] = texture;
+            return texture;
+          });
+        }
+        assignFinalMaterial(mesh) {
+          const geometry = mesh.geometry;
+          let material = mesh.material;
+          const useDerivativeTangents = geometry.attributes.tangent === void 0;
+          const useVertexColors = geometry.attributes.color !== void 0;
+          const useFlatShading = geometry.attributes.normal === void 0;
+          if (mesh.isPoints) {
+            const cacheKey = "PointsMaterial:" + material.uuid;
+            let pointsMaterial = this.cache.get(cacheKey);
+            if (!pointsMaterial) {
+              pointsMaterial = new import_three3.PointsMaterial();
+              import_three3.Material.prototype.copy.call(pointsMaterial, material);
+              pointsMaterial.color.copy(material.color);
+              pointsMaterial.map = material.map;
+              pointsMaterial.sizeAttenuation = false;
+              this.cache.add(cacheKey, pointsMaterial);
+            }
+            material = pointsMaterial;
+          } else if (mesh.isLine) {
+            const cacheKey = "LineBasicMaterial:" + material.uuid;
+            let lineMaterial = this.cache.get(cacheKey);
+            if (!lineMaterial) {
+              lineMaterial = new import_three3.LineBasicMaterial();
+              import_three3.Material.prototype.copy.call(lineMaterial, material);
+              lineMaterial.color.copy(material.color);
+              lineMaterial.map = material.map;
+              this.cache.add(cacheKey, lineMaterial);
+            }
+            material = lineMaterial;
+          }
+          if (useDerivativeTangents || useVertexColors || useFlatShading) {
+            let cacheKey = "ClonedMaterial:" + material.uuid + ":";
+            if (useDerivativeTangents) cacheKey += "derivative-tangents:";
+            if (useVertexColors) cacheKey += "vertex-colors:";
+            if (useFlatShading) cacheKey += "flat-shading:";
+            let cachedMaterial = this.cache.get(cacheKey);
+            if (!cachedMaterial) {
+              cachedMaterial = material.clone();
+              if (useVertexColors) cachedMaterial.vertexColors = true;
+              if (useFlatShading) cachedMaterial.flatShading = true;
+              if (useDerivativeTangents) {
+                if (cachedMaterial.normalScale) cachedMaterial.normalScale.y *= -1;
+                if (cachedMaterial.clearcoatNormalScale) cachedMaterial.clearcoatNormalScale.y *= -1;
+              }
+              this.cache.add(cacheKey, cachedMaterial);
+              this.associations.set(cachedMaterial, this.associations.get(material));
+            }
+            material = cachedMaterial;
+          }
+          mesh.material = material;
+        }
+        getMaterialType() {
+          return import_three3.MeshStandardMaterial;
+        }
+        loadMaterial(materialIndex) {
+          const parser = this;
+          const json = this.json;
+          const extensions = this.extensions;
+          const materialDef = json.materials[materialIndex];
+          let materialType;
+          const materialParams = {};
+          const materialExtensions = materialDef.extensions || {};
+          const pending = [];
+          if (materialExtensions[EXTENSIONS.KHR_MATERIALS_UNLIT]) {
+            const kmuExtension = extensions[EXTENSIONS.KHR_MATERIALS_UNLIT];
+            materialType = kmuExtension.getMaterialType();
+            pending.push(kmuExtension.extendParams(materialParams, materialDef, parser));
+          } else {
+            const metallicRoughness = materialDef.pbrMetallicRoughness || {};
+            materialParams.color = new import_three3.Color(1, 1, 1);
+            materialParams.opacity = 1;
+            if (Array.isArray(metallicRoughness.baseColorFactor)) {
+              const array = metallicRoughness.baseColorFactor;
+              materialParams.color.setRGB(array[0], array[1], array[2], import_three3.LinearSRGBColorSpace);
+              materialParams.opacity = array[3];
+            }
+            if (metallicRoughness.baseColorTexture !== void 0) {
+              pending.push(parser.assignTexture(materialParams, "map", metallicRoughness.baseColorTexture, import_three3.SRGBColorSpace));
+            }
+            materialParams.metalness = metallicRoughness.metallicFactor !== void 0 ? metallicRoughness.metallicFactor : 1;
+            materialParams.roughness = metallicRoughness.roughnessFactor !== void 0 ? metallicRoughness.roughnessFactor : 1;
+            if (metallicRoughness.metallicRoughnessTexture !== void 0) {
+              pending.push(parser.assignTexture(materialParams, "metalnessMap", metallicRoughness.metallicRoughnessTexture));
+              pending.push(parser.assignTexture(materialParams, "roughnessMap", metallicRoughness.metallicRoughnessTexture));
+            }
+            materialType = this._invokeOne(function (ext) {
+              return ext.getMaterialType && ext.getMaterialType(materialIndex);
+            });
+            pending.push(Promise.all(this._invokeAll(function (ext) {
+              return ext.extendMaterialParams && ext.extendMaterialParams(materialIndex, materialParams);
+            })));
+          }
+          if (materialDef.doubleSided === true) {
+            materialParams.side = import_three3.DoubleSide;
+          }
+          const alphaMode = materialDef.alphaMode || ALPHA_MODES.OPAQUE;
+          if (alphaMode === ALPHA_MODES.BLEND) {
+            materialParams.transparent = true;
+            materialParams.depthWrite = false;
+          } else {
+            materialParams.transparent = false;
+            if (alphaMode === ALPHA_MODES.MASK) {
+              materialParams.alphaTest = materialDef.alphaCutoff !== void 0 ? materialDef.alphaCutoff : 0.5;
+            }
+          }
+          if (materialDef.normalTexture !== void 0 && materialType !== import_three3.MeshBasicMaterial) {
+            pending.push(parser.assignTexture(materialParams, "normalMap", materialDef.normalTexture));
+            materialParams.normalScale = new import_three3.Vector2(1, 1);
+            if (materialDef.normalTexture.scale !== void 0) {
+              const scale = materialDef.normalTexture.scale;
+              materialParams.normalScale.set(scale, scale);
+            }
+          }
+          if (materialDef.occlusionTexture !== void 0 && materialType !== import_three3.MeshBasicMaterial) {
+            pending.push(parser.assignTexture(materialParams, "aoMap", materialDef.occlusionTexture));
+            if (materialDef.occlusionTexture.strength !== void 0) {
+              materialParams.aoMapIntensity = materialDef.occlusionTexture.strength;
+            }
+          }
+          if (materialDef.emissiveFactor !== void 0 && materialType !== import_three3.MeshBasicMaterial) {
+            const emissiveFactor = materialDef.emissiveFactor;
+            materialParams.emissive = new import_three3.Color().setRGB(emissiveFactor[0], emissiveFactor[1], emissiveFactor[2], import_three3.LinearSRGBColorSpace);
+          }
+          if (materialDef.emissiveTexture !== void 0 && materialType !== import_three3.MeshBasicMaterial) {
+            pending.push(parser.assignTexture(materialParams, "emissiveMap", materialDef.emissiveTexture, import_three3.SRGBColorSpace));
+          }
+          return Promise.all(pending).then(function () {
+            const material = new materialType(materialParams);
+            if (materialDef.name) material.name = materialDef.name;
+            assignExtrasToUserData(material, materialDef);
+            parser.associations.set(material, {
+              materials: materialIndex
+            });
+            if (materialDef.extensions) addUnknownExtensionsToUserData(extensions, material, materialDef);
+            return material;
+          });
+        }
+        createUniqueName(originalName) {
+          const sanitizedName = import_three3.PropertyBinding.sanitizeNodeName(originalName || "");
+          if (sanitizedName in this.nodeNamesUsed) {
+            return sanitizedName + "_" + ++this.nodeNamesUsed[sanitizedName];
+          } else {
+            this.nodeNamesUsed[sanitizedName] = 0;
+            return sanitizedName;
+          }
+        }
+        loadGeometries(primitives) {
+          const parser = this;
+          const extensions = this.extensions;
+          const cache = this.primitiveCache;
+          function createDracoPrimitive(primitive) {
+            return extensions[EXTENSIONS.KHR_DRACO_MESH_COMPRESSION].decodePrimitive(primitive, parser).then(function (geometry) {
+              return addPrimitiveAttributes(geometry, primitive, parser);
+            });
+          }
+          const pending = [];
+          for (let i = 0, il = primitives.length; i < il; i++) {
+            const primitive = primitives[i];
+            const cacheKey = createPrimitiveKey(primitive);
+            const cached = cache[cacheKey];
+            if (cached) {
+              pending.push(cached.promise);
+            } else {
+              let geometryPromise;
+              if (primitive.extensions && primitive.extensions[EXTENSIONS.KHR_DRACO_MESH_COMPRESSION]) {
+                geometryPromise = createDracoPrimitive(primitive);
+              } else {
+                geometryPromise = addPrimitiveAttributes(new import_three3.BufferGeometry(), primitive, parser);
+              }
+              if (primitive.mode === WEBGL_CONSTANTS.TRIANGLE_STRIP) {
+                geometryPromise = geometryPromise.then(geometry => toTrianglesDrawMode(geometry, import_three3.TriangleStripDrawMode));
+              } else if (primitive.mode === WEBGL_CONSTANTS.TRIANGLE_FAN) {
+                geometryPromise = geometryPromise.then(geometry => toTrianglesDrawMode(geometry, import_three3.TriangleFanDrawMode));
+              }
+              cache[cacheKey] = {
+                primitive,
+                promise: geometryPromise
+              };
+              pending.push(geometryPromise);
+            }
+          }
+          return Promise.all(pending);
+        }
+        loadMesh(meshIndex) {
+          const parser = this;
+          const json = this.json;
+          const extensions = this.extensions;
+          const meshDef = json.meshes[meshIndex];
+          const primitives = meshDef.primitives;
+          const pending = [];
+          for (let i = 0, il = primitives.length; i < il; i++) {
+            const material = primitives[i].material === void 0 ? createDefaultMaterial(this.cache) : this.getDependency("material", primitives[i].material);
+            pending.push(material);
+          }
+          pending.push(parser.loadGeometries(primitives));
+          return Promise.all(pending).then(async function (results) {
+            const materials = results.slice(0, results.length - 1);
+            const geometries = results[results.length - 1];
+            const meshes = [];
+            for (let i = 0, il = geometries.length; i < il; i++) {
+              const geometry = geometries[i];
+              const primitive = primitives[i];
+              let mesh;
+              const material = materials[i];
+              if (primitive.mode === WEBGL_CONSTANTS.TRIANGLES || primitive.mode === WEBGL_CONSTANTS.TRIANGLE_STRIP || primitive.mode === WEBGL_CONSTANTS.TRIANGLE_FAN || primitive.mode === void 0) {
+                const needsSkinning = meshDef.isSkinnedMesh === true;
+                const hasSkinningAttributes = geometry.hasAttribute("skinIndex") && geometry.hasAttribute("skinWeight");
+                if (needsSkinning && hasSkinningAttributes === false) {
+                  console.warn("THREE.GLTFLoader: Missing skinIndex or skinWeight attributes. Skinning disabled.");
+                }
+                mesh = needsSkinning && hasSkinningAttributes ? new import_three3.SkinnedMesh(geometry, material) : new import_three3.Mesh(geometry, material);
+                if (mesh.isSkinnedMesh === true) {
+                  mesh.normalizeSkinWeights();
+                }
+              } else if (primitive.mode === WEBGL_CONSTANTS.LINES) {
+                mesh = new import_three3.LineSegments(geometry, material);
+              } else if (primitive.mode === WEBGL_CONSTANTS.LINE_STRIP) {
+                mesh = new import_three3.Line(geometry, material);
+              } else if (primitive.mode === WEBGL_CONSTANTS.LINE_LOOP) {
+                mesh = new import_three3.LineLoop(geometry, material);
+              } else if (primitive.mode === WEBGL_CONSTANTS.POINTS) {
+                mesh = new import_three3.Points(geometry, material);
+              } else {
+                throw new Error("THREE.GLTFLoader: Primitive mode unsupported: " + primitive.mode);
+              }
+              if (Object.keys(mesh.geometry.morphAttributes).length > 0) {
+                updateMorphTargets(mesh, meshDef);
+              }
+              mesh.name = parser.createUniqueName(meshDef.name || "mesh_" + meshIndex);
+              assignExtrasToUserData(mesh, meshDef);
+              if (primitive.extensions) addUnknownExtensionsToUserData(extensions, mesh, primitive);
+              parser.assignFinalMaterial(mesh);
+              meshes.push(mesh);
+            }
+            for (let i = 0, il = meshes.length; i < il; i++) {
+              parser.associations.set(meshes[i], {
+                meshes: meshIndex,
+                primitives: i
+              });
+            }
+            if (meshes.length === 1) {
+              if (meshDef.extensions) addUnknownExtensionsToUserData(extensions, meshes[0], meshDef);
+              return meshes[0];
+            }
+            const group = new import_three3.Group();
+            if (meshDef.extensions) addUnknownExtensionsToUserData(extensions, group, meshDef);
+            parser.associations.set(group, {
+              meshes: meshIndex
+            });
+            for (let i = 0, il = meshes.length; i < il; i++) {
+              group.add(meshes[i]);
+            }
+            return group;
+          });
+        }
+        loadCamera(cameraIndex) {
+          let camera;
+          const cameraDef = this.json.cameras[cameraIndex];
+          const params = cameraDef[cameraDef.type];
+          if (!params) {
+            console.warn("THREE.GLTFLoader: Missing camera parameters.");
+            return;
+          }
+          if (cameraDef.type === "perspective") {
+            camera = new import_three3.PerspectiveCamera(import_three3.MathUtils.radToDeg(params.yfov), params.aspectRatio || 1, params.znear || 1, params.zfar || 2e6);
+          } else if (cameraDef.type === "orthographic") {
+            camera = new import_three3.OrthographicCamera(-params.xmag, params.xmag, params.ymag, -params.ymag, params.znear, params.zfar);
+          }
+          if (cameraDef.name) camera.name = this.createUniqueName(cameraDef.name);
+          assignExtrasToUserData(camera, cameraDef);
+          return Promise.resolve(camera);
+        }
+        loadSkin(skinIndex) {
+          const skinDef = this.json.skins[skinIndex];
+          const pending = [];
+          for (let i = 0, il = skinDef.joints.length; i < il; i++) {
+            pending.push(this._loadNodeShallow(skinDef.joints[i]));
+          }
+          if (skinDef.inverseBindMatrices !== void 0) {
+            pending.push(this.getDependency("accessor", skinDef.inverseBindMatrices));
+          } else {
+            pending.push(null);
+          }
+          return Promise.all(pending).then(function (results) {
+            const inverseBindMatrices = results.pop();
+            const jointNodes = results;
+            const bones = [];
+            const boneInverses = [];
+            for (let i = 0, il = jointNodes.length; i < il; i++) {
+              const jointNode = jointNodes[i];
+              if (jointNode) {
+                bones.push(jointNode);
+                const mat = new import_three3.Matrix4();
+                if (inverseBindMatrices !== null) {
+                  mat.fromArray(inverseBindMatrices.array, i * 16);
+                }
+                boneInverses.push(mat);
+              } else {
+                console.warn('THREE.GLTFLoader: Joint "%s" could not be found.', skinDef.joints[i]);
+              }
+            }
+            return new import_three3.Skeleton(bones, boneInverses);
+          });
+        }
+        loadAnimation(animationIndex) {
+          const json = this.json;
+          const parser = this;
+          const animationDef = json.animations[animationIndex];
+          const animationName = animationDef.name ? animationDef.name : "animation_" + animationIndex;
+          const pendingNodes = [];
+          const pendingInputAccessors = [];
+          const pendingOutputAccessors = [];
+          const pendingSamplers = [];
+          const pendingTargets = [];
+          for (let i = 0, il = animationDef.channels.length; i < il; i++) {
+            const channel = animationDef.channels[i];
+            const sampler = animationDef.samplers[channel.sampler];
+            const target = channel.target;
+            const name = target.node;
+            const input = animationDef.parameters !== void 0 ? animationDef.parameters[sampler.input] : sampler.input;
+            const output = animationDef.parameters !== void 0 ? animationDef.parameters[sampler.output] : sampler.output;
+            if (target.node === void 0) continue;
+            pendingNodes.push(this.getDependency("node", name));
+            pendingInputAccessors.push(this.getDependency("accessor", input));
+            pendingOutputAccessors.push(this.getDependency("accessor", output));
+            pendingSamplers.push(sampler);
+            pendingTargets.push(target);
+          }
+          return Promise.all([Promise.all(pendingNodes), Promise.all(pendingInputAccessors), Promise.all(pendingOutputAccessors), Promise.all(pendingSamplers), Promise.all(pendingTargets)]).then(function (dependencies) {
+            const nodes = dependencies[0];
+            const inputAccessors = dependencies[1];
+            const outputAccessors = dependencies[2];
+            const samplers = dependencies[3];
+            const targets = dependencies[4];
+            const tracks = [];
+            for (let i = 0, il = nodes.length; i < il; i++) {
+              const node = nodes[i];
+              const inputAccessor = inputAccessors[i];
+              const outputAccessor = outputAccessors[i];
+              const sampler = samplers[i];
+              const target = targets[i];
+              if (node === void 0) continue;
+              if (node.updateMatrix) {
+                node.updateMatrix();
+              }
+              const createdTracks = parser._createAnimationTracks(node, inputAccessor, outputAccessor, sampler, target);
+              if (createdTracks) {
+                for (let k = 0; k < createdTracks.length; k++) {
+                  tracks.push(createdTracks[k]);
+                }
+              }
+            }
+            const animation = new import_three3.AnimationClip(animationName, void 0, tracks);
+            assignExtrasToUserData(animation, animationDef);
+            return animation;
+          });
+        }
+        createNodeMesh(nodeIndex) {
+          const json = this.json;
+          const parser = this;
+          const nodeDef = json.nodes[nodeIndex];
+          if (nodeDef.mesh === void 0) return null;
+          return parser.getDependency("mesh", nodeDef.mesh).then(function (mesh) {
+            const node = parser._getNodeRef(parser.meshCache, nodeDef.mesh, mesh);
+            if (nodeDef.weights !== void 0) {
+              node.traverse(function (o) {
+                if (!o.isMesh) return;
+                for (let i = 0, il = nodeDef.weights.length; i < il; i++) {
+                  o.morphTargetInfluences[i] = nodeDef.weights[i];
+                }
+              });
+            }
+            return node;
+          });
+        }
+        loadNode(nodeIndex) {
+          const json = this.json;
+          const parser = this;
+          const nodeDef = json.nodes[nodeIndex];
+          const nodePending = parser._loadNodeShallow(nodeIndex);
+          const childPending = [];
+          const childrenDef = nodeDef.children || [];
+          for (let i = 0, il = childrenDef.length; i < il; i++) {
+            childPending.push(parser.getDependency("node", childrenDef[i]));
+          }
+          const skeletonPending = nodeDef.skin === void 0 ? Promise.resolve(null) : parser.getDependency("skin", nodeDef.skin);
+          return Promise.all([nodePending, Promise.all(childPending), skeletonPending]).then(function (results) {
+            const node = results[0];
+            const children = results[1];
+            const skeleton = results[2];
+            if (skeleton !== null) {
+              node.traverse(function (mesh) {
+                if (!mesh.isSkinnedMesh) return;
+                mesh.bind(skeleton, _identityMatrix);
+              });
+            }
+            for (let i = 0, il = children.length; i < il; i++) {
+              node.add(children[i]);
+            }
+            if (node.userData.pivot !== void 0 && children.length > 0) {
+              const pivot = node.userData.pivot;
+              const pivotChild = children[0];
+              node.pivot = new import_three3.Vector3().fromArray(pivot);
+              node.position.x -= pivot[0];
+              node.position.y -= pivot[1];
+              node.position.z -= pivot[2];
+              pivotChild.position.set(0, 0, 0);
+              delete node.userData.pivot;
+            }
+            return node;
+          });
+        }
+        _loadNodeShallow(nodeIndex) {
+          const json = this.json;
+          const extensions = this.extensions;
+          const parser = this;
+          if (this.nodeCache[nodeIndex] !== void 0) {
+            return this.nodeCache[nodeIndex];
+          }
+          const nodeDef = json.nodes[nodeIndex];
+          const nodeName = nodeDef.name ? parser.createUniqueName(nodeDef.name) : "";
+          const pending = [];
+          const meshPromise = parser._invokeOne(function (ext) {
+            return ext.createNodeMesh && ext.createNodeMesh(nodeIndex);
+          });
+          if (meshPromise) {
+            pending.push(meshPromise);
+          }
+          if (nodeDef.camera !== void 0) {
+            pending.push(parser.getDependency("camera", nodeDef.camera).then(function (camera) {
+              return parser._getNodeRef(parser.cameraCache, nodeDef.camera, camera);
+            }));
+          }
+          parser._invokeAll(function (ext) {
+            return ext.createNodeAttachment && ext.createNodeAttachment(nodeIndex);
+          }).forEach(function (promise) {
+            pending.push(promise);
+          });
+          this.nodeCache[nodeIndex] = Promise.all(pending).then(function (objects) {
+            let node;
+            if (nodeDef.isBone === true) {
+              node = new import_three3.Bone();
+            } else if (objects.length > 1) {
+              node = new import_three3.Group();
+            } else if (objects.length === 1) {
+              node = objects[0];
+            } else {
+              node = new import_three3.Object3D();
+            }
+            if (node !== objects[0]) {
+              for (let i = 0, il = objects.length; i < il; i++) {
+                node.add(objects[i]);
+              }
+            }
+            if (nodeDef.name) {
+              node.userData.name = nodeDef.name;
+              node.name = nodeName;
+            }
+            assignExtrasToUserData(node, nodeDef);
+            if (nodeDef.extensions) addUnknownExtensionsToUserData(extensions, node, nodeDef);
+            if (nodeDef.matrix !== void 0) {
+              const matrix = new import_three3.Matrix4();
+              matrix.fromArray(nodeDef.matrix);
+              node.applyMatrix4(matrix);
+            } else {
+              if (nodeDef.translation !== void 0) {
+                node.position.fromArray(nodeDef.translation);
+              }
+              if (nodeDef.rotation !== void 0) {
+                node.quaternion.fromArray(nodeDef.rotation);
+              }
+              if (nodeDef.scale !== void 0) {
+                node.scale.fromArray(nodeDef.scale);
+              }
+            }
+            if (!parser.associations.has(node)) {
+              parser.associations.set(node, {});
+            } else if (nodeDef.mesh !== void 0 && parser.meshCache.refs[nodeDef.mesh] > 1) {
+              const mapping = parser.associations.get(node);
+              parser.associations.set(node, {
+                ...mapping
+              });
+            }
+            parser.associations.get(node).nodes = nodeIndex;
+            return node;
+          });
+          return this.nodeCache[nodeIndex];
+        }
+        loadScene(sceneIndex) {
+          const extensions = this.extensions;
+          const sceneDef = this.json.scenes[sceneIndex];
+          const parser = this;
+          const scene = new import_three3.Group();
+          if (sceneDef.name) scene.name = parser.createUniqueName(sceneDef.name);
+          assignExtrasToUserData(scene, sceneDef);
+          if (sceneDef.extensions) addUnknownExtensionsToUserData(extensions, scene, sceneDef);
+          const nodeIds = sceneDef.nodes || [];
+          const pending = [];
+          for (let i = 0, il = nodeIds.length; i < il; i++) {
+            pending.push(parser.getDependency("node", nodeIds[i]));
+          }
+          return Promise.all(pending).then(function (nodes) {
+            for (let i = 0, il = nodes.length; i < il; i++) {
+              const node = nodes[i];
+              if (node.parent !== null) {
+                scene.add(clone(node));
+              } else {
+                scene.add(node);
+              }
+            }
+            const reduceAssociations = node => {
+              const reducedAssociations = new Map();
+              for (const [key, value] of parser.associations) {
+                if (key instanceof import_three3.Material || key instanceof import_three3.Texture) {
+                  reducedAssociations.set(key, value);
+                }
+              }
+              node.traverse(node2 => {
+                const mappings = parser.associations.get(node2);
+                if (mappings != null) {
+                  reducedAssociations.set(node2, mappings);
+                }
+              });
+              return reducedAssociations;
+            };
+            parser.associations = reduceAssociations(scene);
+            return scene;
+          });
+        }
+        _createAnimationTracks(node, inputAccessor, outputAccessor, sampler, target) {
+          const tracks = [];
+          const targetName = node.name ? node.name : node.uuid;
+          const targetNames = [];
+          function collectMorphTargets(object) {
+            if (object.morphTargetInfluences) {
+              targetNames.push(object.name ? object.name : object.uuid);
+            }
+          }
+          if (PATH_PROPERTIES[target.path] === PATH_PROPERTIES.weights) {
+            collectMorphTargets(node);
+            if (node.isGroup) {
+              node.children.forEach(collectMorphTargets);
+            }
+          } else {
+            targetNames.push(targetName);
+          }
+          let TypedKeyframeTrack;
+          switch (PATH_PROPERTIES[target.path]) {
+            case PATH_PROPERTIES.weights:
+              TypedKeyframeTrack = import_three3.NumberKeyframeTrack;
+              break;
+            case PATH_PROPERTIES.rotation:
+              TypedKeyframeTrack = import_three3.QuaternionKeyframeTrack;
+              break;
+            case PATH_PROPERTIES.translation:
+            case PATH_PROPERTIES.scale:
+              TypedKeyframeTrack = import_three3.VectorKeyframeTrack;
+              break;
+            default:
+              switch (outputAccessor.itemSize) {
+                case 1:
+                  TypedKeyframeTrack = import_three3.NumberKeyframeTrack;
+                  break;
+                case 2:
+                case 3:
+                default:
+                  TypedKeyframeTrack = import_three3.VectorKeyframeTrack;
+                  break;
+              }
+              break;
+          }
+          const interpolation = sampler.interpolation !== void 0 ? INTERPOLATION[sampler.interpolation] : import_three3.InterpolateLinear;
+          const outputArray = this._getArrayFromAccessor(outputAccessor);
+          for (let j = 0, jl = targetNames.length; j < jl; j++) {
+            const track = new TypedKeyframeTrack(targetNames[j] + "." + PATH_PROPERTIES[target.path], inputAccessor.array, outputArray, interpolation);
+            if (sampler.interpolation === "CUBICSPLINE") {
+              this._createCubicSplineTrackInterpolant(track);
+            }
+            tracks.push(track);
+          }
+          return tracks;
+        }
+        _getArrayFromAccessor(accessor) {
+          let outputArray = accessor.array;
+          if (accessor.normalized) {
+            const scale = getNormalizedComponentScale(outputArray.constructor);
+            const scaled = new Float32Array(outputArray.length);
+            for (let j = 0, jl = outputArray.length; j < jl; j++) {
+              scaled[j] = outputArray[j] * scale;
+            }
+            outputArray = scaled;
+          }
+          return outputArray;
+        }
+        _createCubicSplineTrackInterpolant(track) {
+          track.createInterpolant = function InterpolantFactoryMethodGLTFCubicSpline(result) {
+            const interpolantType = this instanceof import_three3.QuaternionKeyframeTrack ? GLTFCubicSplineQuaternionInterpolant : GLTFCubicSplineInterpolant;
+            return new interpolantType(this.times, this.values, this.getValueSize() / 3, result);
+          };
+          track.createInterpolant.isInterpolantFactoryMethodGLTFCubicSpline = true;
+        }
+      };
+      function computeBounds(geometry, primitiveDef, parser) {
+        const attributes = primitiveDef.attributes;
+        const box = new import_three3.Box3();
+        if (attributes.POSITION !== void 0) {
+          const accessor = parser.json.accessors[attributes.POSITION];
+          const min = accessor.min;
+          const max = accessor.max;
+          if (min !== void 0 && max !== void 0) {
+            box.set(new import_three3.Vector3(min[0], min[1], min[2]), new import_three3.Vector3(max[0], max[1], max[2]));
+            if (accessor.normalized) {
+              const boxScale = getNormalizedComponentScale(WEBGL_COMPONENT_TYPES[accessor.componentType]);
+              box.min.multiplyScalar(boxScale);
+              box.max.multiplyScalar(boxScale);
+            }
+          } else {
+            console.warn("THREE.GLTFLoader: Missing min/max properties for accessor POSITION.");
+            return;
+          }
+        } else {
+          return;
+        }
+        const targets = primitiveDef.targets;
+        if (targets !== void 0) {
+          const maxDisplacement = new import_three3.Vector3();
+          const vector = new import_three3.Vector3();
+          for (let i = 0, il = targets.length; i < il; i++) {
+            const target = targets[i];
+            if (target.POSITION !== void 0) {
+              const accessor = parser.json.accessors[target.POSITION];
+              const min = accessor.min;
+              const max = accessor.max;
+              if (min !== void 0 && max !== void 0) {
+                vector.setX(Math.max(Math.abs(min[0]), Math.abs(max[0])));
+                vector.setY(Math.max(Math.abs(min[1]), Math.abs(max[1])));
+                vector.setZ(Math.max(Math.abs(min[2]), Math.abs(max[2])));
+                if (accessor.normalized) {
+                  const boxScale = getNormalizedComponentScale(WEBGL_COMPONENT_TYPES[accessor.componentType]);
+                  vector.multiplyScalar(boxScale);
+                }
+                maxDisplacement.max(vector);
+              } else {
+                console.warn("THREE.GLTFLoader: Missing min/max properties for accessor POSITION.");
+              }
+            }
+          }
+          box.expandByVector(maxDisplacement);
+        }
+        geometry.boundingBox = box;
+        const sphere = new import_three3.Sphere();
+        box.getCenter(sphere.center);
+        sphere.radius = box.min.distanceTo(box.max) / 2;
+        geometry.boundingSphere = sphere;
+      }
+      function addPrimitiveAttributes(geometry, primitiveDef, parser) {
+        const attributes = primitiveDef.attributes;
+        const pending = [];
+        function assignAttributeAccessor(accessorIndex, attributeName) {
+          return parser.getDependency("accessor", accessorIndex).then(function (accessor) {
+            geometry.setAttribute(attributeName, accessor);
+          });
+        }
+        for (const gltfAttributeName in attributes) {
+          const threeAttributeName = ATTRIBUTES[gltfAttributeName] || gltfAttributeName.toLowerCase();
+          if (threeAttributeName in geometry.attributes) continue;
+          pending.push(assignAttributeAccessor(attributes[gltfAttributeName], threeAttributeName));
+        }
+        if (primitiveDef.indices !== void 0 && !geometry.index) {
+          const accessor = parser.getDependency("accessor", primitiveDef.indices).then(function (accessor2) {
+            geometry.setIndex(accessor2);
+          });
+          pending.push(accessor);
+        }
+        if (import_three3.ColorManagement.workingColorSpace !== import_three3.LinearSRGBColorSpace && "COLOR_0" in attributes) {
+          console.warn(`THREE.GLTFLoader: Converting vertex colors from "srgb-linear" to "${import_three3.ColorManagement.workingColorSpace}" not supported.`);
+        }
+        assignExtrasToUserData(geometry, primitiveDef);
+        computeBounds(geometry, primitiveDef, parser);
+        return Promise.all(pending).then(function () {
+          return primitiveDef.targets !== void 0 ? addMorphTargets(geometry, primitiveDef.targets, parser) : geometry;
+        });
+      }
+      return __toCommonJS(GLTFLoader_exports);
+    })();
+    return travelerGLTFLoaderAddon.GLTFLoader;
+  })(specifier => {
+    if (specifier !== "three") {
+      throw new Error("Unexpected character loader dependency: " + specifier);
+    }
+    return Ry;
+  });
+}
+{
+  const LANTERN_PAPER_LIGHT = `
+  float paper = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722));
+  float wick = exp(-4.0 * abs(vPaperHeight - 0.24));
+  vec3 amber = paper * vec3(1.0, 0.57, 0.24);
+  float paperTransmission = 0.22 + (0.47 + 0.16 * wick) * vLanternFlame;
+  outgoingLight = mix(outgoingLight, amber, 0.62) * paperTransmission;
+  outgoingLight += vec3(0.39, 0.133, 0.031) * wick * vLanternFlame
+    * smoothstep(0.08, 0.6, paper);
+`;
+  function sampleLanternFlame(time, phase) {
+    const rate = 1.55 + 0.23 * Math.sin(phase);
+    const breath = 0.5 + 0.5 * Math.sin(time * rate + phase);
+    const flicker = 0.08 * Math.sin(time * 8.6 + phase * 3.1) + 0.045 * Math.sin(time * 15.1 + phase * 5.3);
+    return 0.3 + 0.7 * breath + flicker;
+  }
+}
+{
+  const MODEL_URL = new URL("../../assets/sky-lantern/aholo-kongming.glb", import.meta.url);
+  function createLanternMaterial(source) {
+    const material = new Ry.MeshBasicMaterial({
+      color: source.color,
+      map: source.map,
+      alphaMap: source.alphaMap,
+      alphaTest: source.alphaTest,
+      side: source.side,
+      vertexColors: source.vertexColors,
+      transparent: true,
+      depthWrite: false,
+      forceSinglePass: true
+    });
+    material.onBeforeCompile = shader => {
+      shader.vertexShader = shader.vertexShader.replace("#include <common>", `#include <common>
+        attribute float aLanternOpacity;
+        attribute float aLanternFlame;
+        varying float vLanternOpacity;
+        varying float vLanternFlame;
+        varying float vPaperHeight;`).replace("#include <begin_vertex>", `#include <begin_vertex>
+        vLanternOpacity = aLanternOpacity;
+        vLanternFlame = aLanternFlame;
+        vPaperHeight = position.y + 0.5;`);
+      shader.fragmentShader = shader.fragmentShader.replace("#include <common>", `#include <common>
+        varying float vLanternOpacity;
+        varying float vLanternFlame;
+        varying float vPaperHeight;`).replace("#include <opaque_fragment>", `${LANTERN_PAPER_LIGHT}
+        diffuseColor.a *= vLanternOpacity;
+        #include <opaque_fragment>`);
+    };
+    return material;
+  }
+  function instanceLanternModel(scene, opacity, flame) {
+    scene.updateMatrixWorld(true);
+    const bounds = new Ry.Box3().setFromObject(scene, true);
+    const center = bounds.getCenter(new Ry.Vector3());
+    const height = bounds.max.y - bounds.min.y;
+    if (!Number.isFinite(height) || height <= 0) {
+      throw new Error("Invalid sky lantern GLB bounds.");
+    }
+    const scale = 1 / height;
+    const normalize = new Ry.Matrix4().makeScale(scale, scale, scale);
+    normalize.setPosition(center.multiplyScalar(-scale));
+    const transform = new Ry.Matrix4();
+    const parts = [];
+    scene.traverse(object => {
+      if (!object.isMesh) return;
+      const geometry = object.geometry.clone();
+      geometry.applyMatrix4(transform.multiplyMatrices(normalize, object.matrixWorld));
+      geometry.setAttribute("aLanternOpacity", opacity);
+      geometry.setAttribute("aLanternFlame", flame);
+      const material = Array.isArray(object.material) ? object.material.map(createLanternMaterial) : createLanternMaterial(object.material);
+      const mesh = new Ry.InstancedMesh(geometry, material, opacity.count);
+      mesh.instanceMatrix.setUsage(Ry.DynamicDrawUsage);
+      mesh.frustumCulled = false;
+      mesh.renderOrder = 1.2;
+      mesh.count = 0;
+      parts.push(mesh);
+    });
+    if (parts.length === 0) throw new Error("No meshes in the sky lantern GLB.");
+    return parts;
+  }
+  function createFlightSlots(ctx) {
+    const random = createSeededRandom(54121);
+    const [columns, rows] = ctx.quality.pick([7, 5], [8, 6], [9, 6]);
+    const halfWidth = LANDSCAPE_BOUNDS.halfW - 0.95;
+    const halfDepth = LANDSCAPE_BOUNDS.halfD - 0.85;
+    return Array.from({
+      length: columns * rows
+    }, (_, index) => {
+      const x = lerp(-halfWidth, halfWidth, (index % columns + 0.16 + random() * 0.68) / columns);
+      const z = lerp(-halfDepth, halfDepth, (Math.floor(index / columns) + 0.16 + random() * 0.68) / rows);
+      const ground = Math.max(ctx.terrain.height(x, z), ctx.world.lakeLevel);
+      const startHeight = ground + lerp(0.65, 1.5, random());
+      const travelHeight = Math.max(4.6, lerp(7.5, 9.9, random()) - startHeight);
+      return {
+        x,
+        z,
+        startHeight,
+        travelHeight,
+        size: lerp(0.145, 0.225, random()),
+        delay: lerp(0.2, 9.2, random()),
+        duration: lerp(32, 61, random()),
+        pause: lerp(1.8, 5.4, random()),
+        phase: random() * Math.PI * 2,
+        yaw: random() * Math.PI * 2
+      };
+    });
+  }
+  class SkyLanterns {
+    constructor(ctx, group) {
+      this.ctx = ctx;
+      this.group = new Ry.Group();
+      this.group.name = "sky-lanterns";
+      this.group.visible = false;
+      group.add(this.group);
+      this.parts = [];
+      this.loading = false;
+      this.loadFailed = false;
+      this.elapsed = 0;
+      this.visibility = 0;
+      this.transform = new Ry.Object3D();
+    }
+    async load() {
+      this.loading = true;
+      try {
+        const {
+          scene
+        } = await new CharacterGLTFLoader().loadAsync(MODEL_URL.href);
+        const slots = createFlightSlots(this.ctx);
+        const opacity = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
+        const flame = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
+        const parts = instanceLanternModel(scene, opacity, flame);
+        this.group.add(...parts);
+        this.slots = slots;
+        this.opacity = opacity;
+        this.flame = flame;
+        this.parts = parts;
+      } catch (error) {
+        this.loadFailed = true;
+        console.warn("[sky-lanterns] Could not load the Aholo Lux3D model.", error);
+      } finally {
+        this.loading = false;
+      }
+    }
+    update(dt) {
+      const selected = this.ctx.weather.currentScenario === "lanterns";
+      if (!selected) this.loadFailed = false;
+      if (!this.parts.length) {
+        if (selected && !this.loading && !this.loadFailed) this.load();
+        return;
+      }
+      const darkness = smoothstep(0.14, 0.85, this.ctx.world.night);
+      const target = selected ? darkness : 0;
+      this.visibility = damp(this.visibility, target, 1.35, dt);
+      this.group.visible = this.visibility > 0.004;
+      if (!this.group.visible) {
+        this.elapsed = 0;
+        return;
+      }
+      this.elapsed += dt;
+      const {
+        ambient
+      } = this.ctx.wind;
+      let count = 0;
+      for (const slot of this.slots) {
+        const flightTime = this.elapsed - slot.delay;
+        if (flightTime < 0) continue;
+        const age = flightTime % (slot.duration + slot.pause);
+        if (age >= slot.duration) continue;
+        const progress = age / slot.duration;
+        const sway = slot.phase + age * 0.39;
+        const height = slot.startHeight + slot.travelHeight * progress;
+        const fadeIn = smoothstep(0, 2.2, age);
+        const fadeOut = 1 - smoothstep(0.77, 1, progress);
+        this.opacity.setX(count, this.visibility * fadeIn * fadeOut);
+        this.flame.setX(count, sampleLanternFlame(age, slot.phase));
+        this.transform.position.set(slot.x + Math.sin(sway) * 0.18 + clamp(ambient.x, -1, 1) * 0.56 * progress, height, slot.z + Math.cos(sway * 0.8) * 0.17 + clamp(ambient.y, -1, 1) * 0.56 * progress);
+        this.transform.rotation.set(Math.sin(sway * 0.83) * 0.065, slot.yaw + Math.sin(sway * 0.45) * 0.28, Math.cos(sway) * 0.085);
+        this.transform.scale.setScalar(slot.size);
+        this.transform.updateMatrix();
+        for (const mesh of this.parts) mesh.setMatrixAt(count, this.transform.matrix);
+        count++;
+      }
+      this.opacity.needsUpdate = true;
+      this.flame.needsUpdate = true;
+      for (const mesh of this.parts) {
+        mesh.count = count;
+        mesh.instanceMatrix.needsUpdate = true;
+      }
+    }
+  }
+}
+{
   const wrapTimeOfDay = r => (r % 1 + 1) % 1;
   class SkySystem {
     constructor(t) {
-      this.ctx = t, this.group = new ThreeGroup(), this.group.name = "sky", t.scene.add(this.group), this.orbit = new CelestialOrbit(t.world), this.orbs = new SunAndMoon(t, this.group), this.atmosphere = new SkyAtmosphere(t, this.group), this.stars = new StarsAndMeteors(t, this.group), this.aurora = new AuroraEffect(t, this.group), this.rainbowFx = new RainbowEffect(t, this.group), this.grabbing = null, this.sunVisibility = 0, this.drag = null, this.glide = null, this.timeVel = 0, this._hinted = !1, this._time = 0, this._installInput(), t.events.on("scenario", () => {
+      this.ctx = t, this.group = new ThreeGroup(), this.group.name = "sky", t.scene.add(this.group), this.orbit = new CelestialOrbit(t.world), this.orbs = new SunAndMoon(t, this.group), this.atmosphere = new SkyAtmosphere(t, this.group), this.stars = new StarsAndMeteors(t, this.group), this.aurora = new AuroraEffect(t, this.group), this.lanterns = new SkyLanterns(t, this.group), this.rainbowFx = new RainbowEffect(t, this.group), this.grabbing = null, this.sunVisibility = 0, this.drag = null, this.glide = null, this.timeVel = 0, this._hinted = !1, this._time = 0, this._installInput(), t.events.on("scenario", () => {
         this.timeVel = 0, this.glide = null;
       });
     }
@@ -22089,7 +24760,7 @@ void main() {
       });
     }
     update(t, e) {
-      this._time = e, this.orbit.sync(), this._clock(t), this.orbs.update(t, e, this), this.atmosphere.update(t), this.stars.update(t), this.aurora.update(t, e), this.ctx.input.hover?.handler?.name !== "sky" && (this.orbs.sun.hovered = this.orbs.moon.hovered = !1);
+      this._time = e, this.orbit.sync(), this._clock(t), this.orbs.update(t, e, this), this.atmosphere.update(t), this.stars.update(t), this.aurora.update(t, e), this.lanterns.update(t), this.ctx.input.hover?.handler?.name !== "sky" && (this.orbs.sun.hovered = this.orbs.moon.hovered = !1);
     }
     _clock(t) {
       const e = this.ctx.world,
@@ -29209,6 +31880,14 @@ void main() {
           f = h + 0.25 - 0.35 * c;
         f > o && (o = f, e.set(l.x, h, l.z));
       }
+      for (const landmark of i.aholoLandmarks || []) {
+        if (landmark.role !== "shrine") continue;
+        const c = Math.hypot(landmark.x - t.x, landmark.z - t.z);
+        if (c > 1.8) continue;
+        const h = (landmark.y ?? i.terrain.height(landmark.x, landmark.z)) + (landmark.height ?? 0.8) + 0.12;
+        const f = h - 0.35 * c;
+        f > o && (o = f, e.set(landmark.x, h, landmark.z));
+      }
       return e.x = Math.max(-LANDSCAPE_BOUNDS.halfW + 0.2, Math.min(LANDSCAPE_BOUNDS.halfW - 0.2, e.x)), e.z = Math.max(-LANDSCAPE_BOUNDS.halfD + 0.2, Math.min(LANDSCAPE_BOUNDS.halfD - 0.2, e.z)), e;
     }
     strike({
@@ -30983,6 +33662,7 @@ void main() {
     storm: createHudSvg('<path d="M6.5 14.5a3.1 3.1 0 0 1-.1-6.2 5 5 0 0 1 9.7-1.1 3.7 3.7 0 0 1 1.5 7.1"/><path d="m12.5 11-4 6h4l-1 4 5-7h-4z"/>'),
     meteor: createHudSvg('<path d="m20.5 3.5-9 9M20.5 9l-5 5M15 3.5l-5 5"/><path d="m7 11 1.5 3.5L12 16l-3.5 1.5L7 21l-1.5-3.5L2 16l3.5-1.5z"/>'),
     migration: createHudSvg('<path d="M3 17h18M6 20h12M7 17a5 5 0 0 1 10 0M3 8q2-.5 3.5 2 1.5-2.5 3.5-2M13 6q2-.5 3.5 2 1.5-2.5 3.5-2"/>'),
+    lanterns: createHudSvg('<path d="M7 14a13 13 0 0 1-1.5-6 6.5 6.5 0 0 1 13 0 13 13 0 0 1-1.5 6l-2 4H9l-2-4zM9 18h6M12 20v2"/><path d="M12 14.5c-2 0-2.7-2.6 0-4.5 2.7 1.9 2 4.5 0 4.5z"/>'),
     flake: createHudSvg(`<path d="${createSnowflakePath(12, 12, 9, 3)}"/>`, 'stroke-width="2"'),
     spring: `<svg class="wg-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${createFlowerIconMarkup()}</svg>`,
     summer: createHudSvg(`<circle cx="12" cy="12" r="4.3" fill="currentColor" stroke="none"/><path d="${createSunRayPath(12, 12, 6.8, 9.6)}" stroke-width="1.9"/>`),
@@ -32549,6 +35229,10 @@ void main() {
     name: "migration",
     label: "秋暮雁阵",
     icon: "migration"
+  }, {
+    name: "lanterns",
+    label: "孔明灯",
+    icon: "lanterns"
   }];
   class WeatherPresets {
     constructor(ctx, hud, root) {
@@ -37523,2476 +40207,6 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
   }
 }
 {
-  const CharacterGLTFLoader = (require => {
-    var travelerGLTFLoaderAddon = (() => {
-      var __defProp = Object.defineProperty;
-      var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-      var __getOwnPropNames = Object.getOwnPropertyNames;
-      var __hasOwnProp = Object.prototype.hasOwnProperty;
-      var __require = (x => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
-        get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
-      }) : x)(function (x) {
-        if (typeof require !== "undefined") return require.apply(this, arguments);
-        throw Error('Dynamic require of "' + x + '" is not supported');
-      });
-      var __export = (target, all) => {
-        for (var name in all) __defProp(target, name, {
-          get: all[name],
-          enumerable: true
-        });
-      };
-      var __copyProps = (to, from, except, desc) => {
-        if (from && typeof from === "object" || typeof from === "function") {
-          for (let key of __getOwnPropNames(from)) if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-            get: () => from[key],
-            enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-          });
-        }
-        return to;
-      };
-      var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", {
-        value: true
-      }), mod);
-      var GLTFLoader_exports = {};
-      __export(GLTFLoader_exports, {
-        GLTFLoader: () => GLTFLoader
-      });
-      var import_three3 = __require("three");
-      var import_three = __require("three");
-      function toTrianglesDrawMode(geometry, drawMode) {
-        if (drawMode === import_three.TrianglesDrawMode) {
-          console.warn("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Geometry already defined as triangles.");
-          return geometry;
-        }
-        if (drawMode === import_three.TriangleFanDrawMode || drawMode === import_three.TriangleStripDrawMode) {
-          let index = geometry.getIndex();
-          if (index === null) {
-            const indices = [];
-            const position = geometry.getAttribute("position");
-            if (position !== void 0) {
-              for (let i = 0; i < position.count; i++) {
-                indices.push(i);
-              }
-              geometry.setIndex(indices);
-              index = geometry.getIndex();
-            } else {
-              console.error("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Undefined position attribute. Processing not possible.");
-              return geometry;
-            }
-          }
-          const numberOfTriangles = index.count - 2;
-          const newIndices = [];
-          if (drawMode === import_three.TriangleFanDrawMode) {
-            for (let i = 1; i <= numberOfTriangles; i++) {
-              newIndices.push(index.getX(0));
-              newIndices.push(index.getX(i));
-              newIndices.push(index.getX(i + 1));
-            }
-          } else {
-            for (let i = 0; i < numberOfTriangles; i++) {
-              if (i % 2 === 0) {
-                newIndices.push(index.getX(i));
-                newIndices.push(index.getX(i + 1));
-                newIndices.push(index.getX(i + 2));
-              } else {
-                newIndices.push(index.getX(i + 2));
-                newIndices.push(index.getX(i + 1));
-                newIndices.push(index.getX(i));
-              }
-            }
-          }
-          if (newIndices.length / 3 !== numberOfTriangles) {
-            console.error("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Unable to generate correct amount of triangles.");
-          }
-          geometry.setIndex(newIndices);
-          geometry.clearGroups();
-          return geometry;
-        } else {
-          console.error("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Unknown draw mode:", drawMode);
-          return geometry;
-        }
-      }
-      var import_three2 = __require("three");
-      function clone(source) {
-        const sourceLookup = new Map();
-        const cloneLookup = new Map();
-        const clone2 = source.clone();
-        parallelTraverse(source, clone2, function (sourceNode, clonedNode) {
-          sourceLookup.set(clonedNode, sourceNode);
-          cloneLookup.set(sourceNode, clonedNode);
-        });
-        clone2.traverse(function (node) {
-          if (!node.isSkinnedMesh) return;
-          const clonedMesh = node;
-          const sourceMesh = sourceLookup.get(node);
-          const sourceBones = sourceMesh.skeleton.bones;
-          clonedMesh.skeleton = sourceMesh.skeleton.clone();
-          clonedMesh.bindMatrix.copy(sourceMesh.bindMatrix);
-          clonedMesh.skeleton.bones = sourceBones.map(function (bone) {
-            return cloneLookup.get(bone);
-          });
-          clonedMesh.bind(clonedMesh.skeleton, clonedMesh.bindMatrix);
-        });
-        return clone2;
-      }
-      function parallelTraverse(a, b, callback) {
-        callback(a, b);
-        for (let i = 0; i < a.children.length; i++) {
-          parallelTraverse(a.children[i], b.children[i], callback);
-        }
-      }
-      var GLTFLoader = class extends import_three3.Loader {
-        constructor(manager) {
-          super(manager);
-          this.dracoLoader = null;
-          this.ktx2Loader = null;
-          this.meshoptDecoder = null;
-          this.pluginCallbacks = [];
-          this.register(function (parser) {
-            return new GLTFMaterialsClearcoatExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsDispersionExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFTextureBasisUExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFTextureWebPExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFTextureAVIFExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsSheenExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsTransmissionExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsVolumeExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsIorExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsEmissiveStrengthExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsSpecularExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsIridescenceExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsAnisotropyExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMaterialsBumpExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFLightsExtension(parser);
-          });
-          this.register(function (parser) {
-            return new GLTFMeshoptCompression(parser, EXTENSIONS.EXT_MESHOPT_COMPRESSION);
-          });
-          this.register(function (parser) {
-            return new GLTFMeshoptCompression(parser, EXTENSIONS.KHR_MESHOPT_COMPRESSION);
-          });
-          this.register(function (parser) {
-            return new GLTFMeshGpuInstancing(parser);
-          });
-        }
-        load(url, onLoad, onProgress, onError) {
-          const scope = this;
-          let resourcePath;
-          if (this.resourcePath !== "") {
-            resourcePath = this.resourcePath;
-          } else if (this.path !== "") {
-            const relativeUrl = import_three3.LoaderUtils.extractUrlBase(url);
-            resourcePath = import_three3.LoaderUtils.resolveURL(relativeUrl, this.path);
-          } else {
-            resourcePath = import_three3.LoaderUtils.extractUrlBase(url);
-          }
-          this.manager.itemStart(url);
-          const _onError = function (e) {
-            if (onError) {
-              onError(e);
-            } else {
-              console.error(e);
-            }
-            scope.manager.itemError(url);
-            scope.manager.itemEnd(url);
-          };
-          const loader = new import_three3.FileLoader(this.manager);
-          loader.setPath(this.path);
-          loader.setResponseType("arraybuffer");
-          loader.setRequestHeader(this.requestHeader);
-          loader.setWithCredentials(this.withCredentials);
-          loader.load(url, function (data) {
-            try {
-              scope.parse(data, resourcePath, function (gltf) {
-                onLoad(gltf);
-                scope.manager.itemEnd(url);
-              }, _onError);
-            } catch (e) {
-              _onError(e);
-            }
-          }, onProgress, _onError);
-        }
-        setDRACOLoader(dracoLoader) {
-          this.dracoLoader = dracoLoader;
-          return this;
-        }
-        setKTX2Loader(ktx2Loader) {
-          this.ktx2Loader = ktx2Loader;
-          return this;
-        }
-        setMeshoptDecoder(meshoptDecoder) {
-          this.meshoptDecoder = meshoptDecoder;
-          return this;
-        }
-        register(callback) {
-          if (this.pluginCallbacks.indexOf(callback) === -1) {
-            this.pluginCallbacks.push(callback);
-          }
-          return this;
-        }
-        unregister(callback) {
-          if (this.pluginCallbacks.indexOf(callback) !== -1) {
-            this.pluginCallbacks.splice(this.pluginCallbacks.indexOf(callback), 1);
-          }
-          return this;
-        }
-        parse(data, path, onLoad, onError) {
-          let json;
-          const extensions = {};
-          const plugins = {};
-          const textDecoder = new TextDecoder();
-          if (typeof data === "string") {
-            json = JSON.parse(data);
-          } else if (data instanceof ArrayBuffer) {
-            const magic = textDecoder.decode(new Uint8Array(data, 0, 4));
-            if (magic === BINARY_EXTENSION_HEADER_MAGIC) {
-              try {
-                extensions[EXTENSIONS.KHR_BINARY_GLTF] = new GLTFBinaryExtension(data);
-              } catch (error) {
-                if (onError) onError(error);
-                return;
-              }
-              json = JSON.parse(extensions[EXTENSIONS.KHR_BINARY_GLTF].content);
-            } else {
-              json = JSON.parse(textDecoder.decode(data));
-            }
-          } else {
-            json = data;
-          }
-          if (json.asset === void 0 || json.asset.version[0] < 2) {
-            if (onError) onError(new Error("THREE.GLTFLoader: Unsupported asset. glTF versions >=2.0 are supported."));
-            return;
-          }
-          const parser = new GLTFParser(json, {
-            path: path || this.resourcePath || "",
-            crossOrigin: this.crossOrigin,
-            requestHeader: this.requestHeader,
-            manager: this.manager,
-            ktx2Loader: this.ktx2Loader,
-            meshoptDecoder: this.meshoptDecoder
-          });
-          parser.fileLoader.setRequestHeader(this.requestHeader);
-          for (let i = 0; i < this.pluginCallbacks.length; i++) {
-            const plugin = this.pluginCallbacks[i](parser);
-            if (!plugin.name) console.error("THREE.GLTFLoader: Invalid plugin found: missing name");
-            plugins[plugin.name] = plugin;
-            extensions[plugin.name] = true;
-          }
-          if (json.extensionsUsed) {
-            for (let i = 0; i < json.extensionsUsed.length; ++i) {
-              const extensionName = json.extensionsUsed[i];
-              const extensionsRequired = json.extensionsRequired || [];
-              switch (extensionName) {
-                case EXTENSIONS.KHR_MATERIALS_UNLIT:
-                  extensions[extensionName] = new GLTFMaterialsUnlitExtension();
-                  break;
-                case EXTENSIONS.KHR_DRACO_MESH_COMPRESSION:
-                  extensions[extensionName] = new GLTFDracoMeshCompressionExtension(json, this.dracoLoader);
-                  break;
-                case EXTENSIONS.KHR_TEXTURE_TRANSFORM:
-                  extensions[extensionName] = new GLTFTextureTransformExtension();
-                  break;
-                case EXTENSIONS.KHR_MESH_QUANTIZATION:
-                  extensions[extensionName] = new GLTFMeshQuantizationExtension();
-                  break;
-                default:
-                  if (extensionsRequired.indexOf(extensionName) >= 0 && plugins[extensionName] === void 0) {
-                    console.warn('THREE.GLTFLoader: Unknown extension "' + extensionName + '".');
-                  }
-              }
-            }
-          }
-          parser.setExtensions(extensions);
-          parser.setPlugins(plugins);
-          parser.parse(onLoad, onError);
-        }
-        parseAsync(data, path) {
-          const scope = this;
-          return new Promise(function (resolve, reject) {
-            scope.parse(data, path, resolve, reject);
-          });
-        }
-      };
-      function GLTFRegistry() {
-        let objects = {};
-        return {
-          get: function (key) {
-            return objects[key];
-          },
-          add: function (key, object) {
-            objects[key] = object;
-          },
-          remove: function (key) {
-            delete objects[key];
-          },
-          removeAll: function () {
-            objects = {};
-          }
-        };
-      }
-      function getMaterialExtension(parser, materialIndex, extensionName) {
-        const materialDef = parser.json.materials[materialIndex];
-        if (materialDef.extensions && materialDef.extensions[extensionName]) {
-          return materialDef.extensions[extensionName];
-        }
-        return null;
-      }
-      var EXTENSIONS = {
-        KHR_BINARY_GLTF: "KHR_binary_glTF",
-        KHR_DRACO_MESH_COMPRESSION: "KHR_draco_mesh_compression",
-        KHR_LIGHTS_PUNCTUAL: "KHR_lights_punctual",
-        KHR_MATERIALS_CLEARCOAT: "KHR_materials_clearcoat",
-        KHR_MATERIALS_DISPERSION: "KHR_materials_dispersion",
-        KHR_MATERIALS_IOR: "KHR_materials_ior",
-        KHR_MATERIALS_SHEEN: "KHR_materials_sheen",
-        KHR_MATERIALS_SPECULAR: "KHR_materials_specular",
-        KHR_MATERIALS_TRANSMISSION: "KHR_materials_transmission",
-        KHR_MATERIALS_IRIDESCENCE: "KHR_materials_iridescence",
-        KHR_MATERIALS_ANISOTROPY: "KHR_materials_anisotropy",
-        KHR_MATERIALS_UNLIT: "KHR_materials_unlit",
-        KHR_MATERIALS_VOLUME: "KHR_materials_volume",
-        KHR_TEXTURE_BASISU: "KHR_texture_basisu",
-        KHR_TEXTURE_TRANSFORM: "KHR_texture_transform",
-        KHR_MESH_QUANTIZATION: "KHR_mesh_quantization",
-        KHR_MATERIALS_EMISSIVE_STRENGTH: "KHR_materials_emissive_strength",
-        EXT_MATERIALS_BUMP: "EXT_materials_bump",
-        EXT_TEXTURE_WEBP: "EXT_texture_webp",
-        EXT_TEXTURE_AVIF: "EXT_texture_avif",
-        EXT_MESHOPT_COMPRESSION: "EXT_meshopt_compression",
-        KHR_MESHOPT_COMPRESSION: "KHR_meshopt_compression",
-        EXT_MESH_GPU_INSTANCING: "EXT_mesh_gpu_instancing"
-      };
-      var GLTFLightsExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_LIGHTS_PUNCTUAL;
-          this.cache = {
-            refs: {},
-            uses: {}
-          };
-        }
-        _markDefs() {
-          const parser = this.parser;
-          const nodeDefs = this.parser.json.nodes || [];
-          for (let nodeIndex = 0, nodeLength = nodeDefs.length; nodeIndex < nodeLength; nodeIndex++) {
-            const nodeDef = nodeDefs[nodeIndex];
-            if (nodeDef.extensions && nodeDef.extensions[this.name] && nodeDef.extensions[this.name].light !== void 0) {
-              parser._addNodeRef(this.cache, nodeDef.extensions[this.name].light);
-            }
-          }
-        }
-        _loadLight(lightIndex) {
-          const parser = this.parser;
-          const cacheKey = "light:" + lightIndex;
-          let dependency = parser.cache.get(cacheKey);
-          if (dependency) return dependency;
-          const json = parser.json;
-          const extensions = json.extensions && json.extensions[this.name] || {};
-          const lightDefs = extensions.lights || [];
-          const lightDef = lightDefs[lightIndex];
-          let lightNode;
-          const color = new import_three3.Color(16777215);
-          if (lightDef.color !== void 0) color.setRGB(lightDef.color[0], lightDef.color[1], lightDef.color[2], import_three3.LinearSRGBColorSpace);
-          const range = lightDef.range !== void 0 ? lightDef.range : 0;
-          switch (lightDef.type) {
-            case "directional":
-              lightNode = new import_three3.DirectionalLight(color);
-              lightNode.target.position.set(0, 0, -1);
-              lightNode.add(lightNode.target);
-              break;
-            case "point":
-              lightNode = new import_three3.PointLight(color);
-              lightNode.distance = range;
-              break;
-            case "spot":
-              lightNode = new import_three3.SpotLight(color);
-              lightNode.distance = range;
-              lightDef.spot = lightDef.spot || {};
-              lightDef.spot.innerConeAngle = lightDef.spot.innerConeAngle !== void 0 ? lightDef.spot.innerConeAngle : 0;
-              lightDef.spot.outerConeAngle = lightDef.spot.outerConeAngle !== void 0 ? lightDef.spot.outerConeAngle : Math.PI / 4;
-              lightNode.angle = lightDef.spot.outerConeAngle;
-              lightNode.penumbra = 1 - lightDef.spot.innerConeAngle / lightDef.spot.outerConeAngle;
-              lightNode.target.position.set(0, 0, -1);
-              lightNode.add(lightNode.target);
-              break;
-            default:
-              throw new Error("THREE.GLTFLoader: Unexpected light type: " + lightDef.type);
-          }
-          lightNode.position.set(0, 0, 0);
-          assignExtrasToUserData(lightNode, lightDef);
-          if (lightDef.intensity !== void 0) lightNode.intensity = lightDef.intensity;
-          lightNode.name = parser.createUniqueName(lightDef.name || "light_" + lightIndex);
-          dependency = Promise.resolve(lightNode);
-          parser.cache.add(cacheKey, dependency);
-          return dependency;
-        }
-        getDependency(type, index) {
-          if (type !== "light") return;
-          return this._loadLight(index);
-        }
-        createNodeAttachment(nodeIndex) {
-          const self2 = this;
-          const parser = this.parser;
-          const json = parser.json;
-          const nodeDef = json.nodes[nodeIndex];
-          const lightDef = nodeDef.extensions && nodeDef.extensions[this.name] || {};
-          const lightIndex = lightDef.light;
-          if (lightIndex === void 0) return null;
-          return this._loadLight(lightIndex).then(function (light) {
-            return parser._getNodeRef(self2.cache, lightIndex, light);
-          });
-        }
-      };
-      var GLTFMaterialsUnlitExtension = class {
-        constructor() {
-          this.name = EXTENSIONS.KHR_MATERIALS_UNLIT;
-        }
-        getMaterialType() {
-          return import_three3.MeshBasicMaterial;
-        }
-        extendParams(materialParams, materialDef, parser) {
-          const pending = [];
-          materialParams.color = new import_three3.Color(1, 1, 1);
-          materialParams.opacity = 1;
-          const metallicRoughness = materialDef.pbrMetallicRoughness;
-          if (metallicRoughness) {
-            if (Array.isArray(metallicRoughness.baseColorFactor)) {
-              const array = metallicRoughness.baseColorFactor;
-              materialParams.color.setRGB(array[0], array[1], array[2], import_three3.LinearSRGBColorSpace);
-              materialParams.opacity = array[3];
-            }
-            if (metallicRoughness.baseColorTexture !== void 0) {
-              pending.push(parser.assignTexture(materialParams, "map", metallicRoughness.baseColorTexture, import_three3.SRGBColorSpace));
-            }
-          }
-          return Promise.all(pending);
-        }
-      };
-      var GLTFMaterialsEmissiveStrengthExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_EMISSIVE_STRENGTH;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          if (extension.emissiveStrength !== void 0) {
-            materialParams.emissiveIntensity = extension.emissiveStrength;
-          }
-          return Promise.resolve();
-        }
-      };
-      var GLTFMaterialsClearcoatExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_CLEARCOAT;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          const pending = [];
-          if (extension.clearcoatFactor !== void 0) {
-            materialParams.clearcoat = extension.clearcoatFactor;
-          }
-          if (extension.clearcoatTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "clearcoatMap", extension.clearcoatTexture));
-          }
-          if (extension.clearcoatRoughnessFactor !== void 0) {
-            materialParams.clearcoatRoughness = extension.clearcoatRoughnessFactor;
-          }
-          if (extension.clearcoatRoughnessTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "clearcoatRoughnessMap", extension.clearcoatRoughnessTexture));
-          }
-          if (extension.clearcoatNormalTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "clearcoatNormalMap", extension.clearcoatNormalTexture));
-            if (extension.clearcoatNormalTexture.scale !== void 0) {
-              const scale = extension.clearcoatNormalTexture.scale;
-              materialParams.clearcoatNormalScale = new import_three3.Vector2(scale, scale);
-            }
-          }
-          return Promise.all(pending);
-        }
-      };
-      var GLTFMaterialsDispersionExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_DISPERSION;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          materialParams.dispersion = extension.dispersion !== void 0 ? extension.dispersion : 0;
-          return Promise.resolve();
-        }
-      };
-      var GLTFMaterialsIridescenceExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_IRIDESCENCE;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          const pending = [];
-          if (extension.iridescenceFactor !== void 0) {
-            materialParams.iridescence = extension.iridescenceFactor;
-          }
-          if (extension.iridescenceTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "iridescenceMap", extension.iridescenceTexture));
-          }
-          if (extension.iridescenceIor !== void 0) {
-            materialParams.iridescenceIOR = extension.iridescenceIor;
-          }
-          if (materialParams.iridescenceThicknessRange === void 0) {
-            materialParams.iridescenceThicknessRange = [100, 400];
-          }
-          if (extension.iridescenceThicknessMinimum !== void 0) {
-            materialParams.iridescenceThicknessRange[0] = extension.iridescenceThicknessMinimum;
-          }
-          if (extension.iridescenceThicknessMaximum !== void 0) {
-            materialParams.iridescenceThicknessRange[1] = extension.iridescenceThicknessMaximum;
-          }
-          if (extension.iridescenceThicknessTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "iridescenceThicknessMap", extension.iridescenceThicknessTexture));
-          }
-          return Promise.all(pending);
-        }
-      };
-      var GLTFMaterialsSheenExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_SHEEN;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          const pending = [];
-          materialParams.sheenColor = new import_three3.Color(0, 0, 0);
-          materialParams.sheenRoughness = 0;
-          materialParams.sheen = 1;
-          if (extension.sheenColorFactor !== void 0) {
-            const colorFactor = extension.sheenColorFactor;
-            materialParams.sheenColor.setRGB(colorFactor[0], colorFactor[1], colorFactor[2], import_three3.LinearSRGBColorSpace);
-          }
-          if (extension.sheenRoughnessFactor !== void 0) {
-            materialParams.sheenRoughness = extension.sheenRoughnessFactor;
-          }
-          if (extension.sheenColorTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "sheenColorMap", extension.sheenColorTexture, import_three3.SRGBColorSpace));
-          }
-          if (extension.sheenRoughnessTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "sheenRoughnessMap", extension.sheenRoughnessTexture));
-          }
-          return Promise.all(pending);
-        }
-      };
-      var GLTFMaterialsTransmissionExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_TRANSMISSION;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          const pending = [];
-          if (extension.transmissionFactor !== void 0) {
-            materialParams.transmission = extension.transmissionFactor;
-          }
-          if (extension.transmissionTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "transmissionMap", extension.transmissionTexture));
-          }
-          return Promise.all(pending);
-        }
-      };
-      var GLTFMaterialsVolumeExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_VOLUME;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          const pending = [];
-          materialParams.thickness = extension.thicknessFactor !== void 0 ? extension.thicknessFactor : 0;
-          if (extension.thicknessTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "thicknessMap", extension.thicknessTexture));
-          }
-          materialParams.attenuationDistance = extension.attenuationDistance || Infinity;
-          const colorArray = extension.attenuationColor || [1, 1, 1];
-          materialParams.attenuationColor = new import_three3.Color().setRGB(colorArray[0], colorArray[1], colorArray[2], import_three3.LinearSRGBColorSpace);
-          return Promise.all(pending);
-        }
-      };
-      var GLTFMaterialsIorExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_IOR;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          materialParams.ior = extension.ior !== void 0 ? extension.ior : 1.5;
-          if (materialParams.ior === 0) materialParams.ior = 1e3;
-          return Promise.resolve();
-        }
-      };
-      var GLTFMaterialsSpecularExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_SPECULAR;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          const pending = [];
-          materialParams.specularIntensity = extension.specularFactor !== void 0 ? extension.specularFactor : 1;
-          if (extension.specularTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "specularIntensityMap", extension.specularTexture));
-          }
-          const colorArray = extension.specularColorFactor || [1, 1, 1];
-          materialParams.specularColor = new import_three3.Color().setRGB(colorArray[0], colorArray[1], colorArray[2], import_three3.LinearSRGBColorSpace);
-          if (extension.specularColorTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "specularColorMap", extension.specularColorTexture, import_three3.SRGBColorSpace));
-          }
-          return Promise.all(pending);
-        }
-      };
-      var GLTFMaterialsBumpExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.EXT_MATERIALS_BUMP;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          const pending = [];
-          materialParams.bumpScale = extension.bumpFactor !== void 0 ? extension.bumpFactor : 1;
-          if (extension.bumpTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "bumpMap", extension.bumpTexture));
-          }
-          return Promise.all(pending);
-        }
-      };
-      var GLTFMaterialsAnisotropyExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_MATERIALS_ANISOTROPY;
-        }
-        getMaterialType(materialIndex) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          return extension !== null ? import_three3.MeshPhysicalMaterial : null;
-        }
-        extendMaterialParams(materialIndex, materialParams) {
-          const extension = getMaterialExtension(this.parser, materialIndex, this.name);
-          if (extension === null) return Promise.resolve();
-          const pending = [];
-          if (extension.anisotropyStrength !== void 0) {
-            materialParams.anisotropy = extension.anisotropyStrength;
-          }
-          if (extension.anisotropyRotation !== void 0) {
-            materialParams.anisotropyRotation = extension.anisotropyRotation;
-          }
-          if (extension.anisotropyTexture !== void 0) {
-            pending.push(this.parser.assignTexture(materialParams, "anisotropyMap", extension.anisotropyTexture));
-          }
-          return Promise.all(pending);
-        }
-      };
-      var GLTFTextureBasisUExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.KHR_TEXTURE_BASISU;
-        }
-        loadTexture(textureIndex) {
-          const parser = this.parser;
-          const json = parser.json;
-          const textureDef = json.textures[textureIndex];
-          if (!textureDef.extensions || !textureDef.extensions[this.name]) {
-            return null;
-          }
-          const extension = textureDef.extensions[this.name];
-          const loader = parser.options.ktx2Loader;
-          if (!loader) {
-            if (json.extensionsRequired && json.extensionsRequired.indexOf(this.name) >= 0) {
-              throw new Error("THREE.GLTFLoader: setKTX2Loader must be called before loading KTX2 textures");
-            } else {
-              return null;
-            }
-          }
-          return parser.loadTextureImage(textureIndex, extension.source, loader);
-        }
-      };
-      var GLTFTextureWebPExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.EXT_TEXTURE_WEBP;
-        }
-        loadTexture(textureIndex) {
-          const name = this.name;
-          const parser = this.parser;
-          const json = parser.json;
-          const textureDef = json.textures[textureIndex];
-          if (!textureDef.extensions || !textureDef.extensions[name]) {
-            return null;
-          }
-          const extension = textureDef.extensions[name];
-          const source = json.images[extension.source];
-          let loader = parser.textureLoader;
-          if (source.uri) {
-            const handler = parser.options.manager.getHandler(source.uri);
-            if (handler !== null) loader = handler;
-          }
-          return parser.loadTextureImage(textureIndex, extension.source, loader);
-        }
-      };
-      var GLTFTextureAVIFExtension = class {
-        constructor(parser) {
-          this.parser = parser;
-          this.name = EXTENSIONS.EXT_TEXTURE_AVIF;
-        }
-        loadTexture(textureIndex) {
-          const name = this.name;
-          const parser = this.parser;
-          const json = parser.json;
-          const textureDef = json.textures[textureIndex];
-          if (!textureDef.extensions || !textureDef.extensions[name]) {
-            return null;
-          }
-          const extension = textureDef.extensions[name];
-          const source = json.images[extension.source];
-          let loader = parser.textureLoader;
-          if (source.uri) {
-            const handler = parser.options.manager.getHandler(source.uri);
-            if (handler !== null) loader = handler;
-          }
-          return parser.loadTextureImage(textureIndex, extension.source, loader);
-        }
-      };
-      var GLTFMeshoptCompression = class {
-        constructor(parser, name) {
-          this.name = name;
-          this.parser = parser;
-        }
-        loadBufferView(index) {
-          const json = this.parser.json;
-          const bufferView = json.bufferViews[index];
-          if (bufferView.extensions && bufferView.extensions[this.name]) {
-            const extensionDef = bufferView.extensions[this.name];
-            const buffer = this.parser.getDependency("buffer", extensionDef.buffer);
-            const decoder = this.parser.options.meshoptDecoder;
-            if (!decoder || !decoder.supported) {
-              if (json.extensionsRequired && json.extensionsRequired.indexOf(this.name) >= 0) {
-                throw new Error("THREE.GLTFLoader: setMeshoptDecoder must be called before loading compressed files");
-              } else {
-                return null;
-              }
-            }
-            return buffer.then(function (res) {
-              const byteOffset = extensionDef.byteOffset || 0;
-              const byteLength = extensionDef.byteLength || 0;
-              const count = extensionDef.count;
-              const stride = extensionDef.byteStride;
-              const source = new Uint8Array(res, byteOffset, byteLength);
-              if (decoder.decodeGltfBufferAsync) {
-                return decoder.decodeGltfBufferAsync(count, stride, source, extensionDef.mode, extensionDef.filter).then(function (res2) {
-                  return res2.buffer;
-                });
-              } else {
-                return decoder.ready.then(function () {
-                  const result = new ArrayBuffer(count * stride);
-                  decoder.decodeGltfBuffer(new Uint8Array(result), count, stride, source, extensionDef.mode, extensionDef.filter);
-                  return result;
-                });
-              }
-            });
-          } else {
-            return null;
-          }
-        }
-      };
-      var GLTFMeshGpuInstancing = class {
-        constructor(parser) {
-          this.name = EXTENSIONS.EXT_MESH_GPU_INSTANCING;
-          this.parser = parser;
-        }
-        createNodeMesh(nodeIndex) {
-          const json = this.parser.json;
-          const nodeDef = json.nodes[nodeIndex];
-          if (!nodeDef.extensions || !nodeDef.extensions[this.name] || nodeDef.mesh === void 0) {
-            return null;
-          }
-          const meshDef = json.meshes[nodeDef.mesh];
-          for (const primitive of meshDef.primitives) {
-            if (primitive.mode !== WEBGL_CONSTANTS.TRIANGLES && primitive.mode !== WEBGL_CONSTANTS.TRIANGLE_STRIP && primitive.mode !== WEBGL_CONSTANTS.TRIANGLE_FAN && primitive.mode !== void 0) {
-              return null;
-            }
-          }
-          const extensionDef = nodeDef.extensions[this.name];
-          const attributesDef = extensionDef.attributes;
-          const pending = [];
-          const attributes = {};
-          for (const key in attributesDef) {
-            pending.push(this.parser.getDependency("accessor", attributesDef[key]).then(accessor => {
-              attributes[key] = accessor;
-              return attributes[key];
-            }));
-          }
-          if (pending.length < 1) {
-            return null;
-          }
-          pending.push(this.parser.createNodeMesh(nodeIndex));
-          return Promise.all(pending).then(results => {
-            const nodeObject = results.pop();
-            const meshes = nodeObject.isGroup ? nodeObject.children : [nodeObject];
-            const count = results[0].count;
-            const instancedMeshes = [];
-            for (const mesh of meshes) {
-              const m = new import_three3.Matrix4();
-              const p = new import_three3.Vector3();
-              const q = new import_three3.Quaternion();
-              const s = new import_three3.Vector3(1, 1, 1);
-              const instancedMesh = new import_three3.InstancedMesh(mesh.geometry, mesh.material, count);
-              for (let i = 0; i < count; i++) {
-                if (attributes.TRANSLATION) {
-                  p.fromBufferAttribute(attributes.TRANSLATION, i);
-                }
-                if (attributes.ROTATION) {
-                  q.fromBufferAttribute(attributes.ROTATION, i);
-                }
-                if (attributes.SCALE) {
-                  s.fromBufferAttribute(attributes.SCALE, i);
-                }
-                instancedMesh.setMatrixAt(i, m.compose(p, q, s));
-              }
-              let instanceGeometry = null;
-              for (const attributeName in attributes) {
-                if (attributeName === "_COLOR_0") {
-                  const attr = attributes[attributeName];
-                  instancedMesh.instanceColor = new import_three3.InstancedBufferAttribute(attr.array, attr.itemSize, attr.normalized);
-                } else if (attributeName !== "TRANSLATION" && attributeName !== "ROTATION" && attributeName !== "SCALE") {
-                  if (instanceGeometry === null) {
-                    const source = instancedMesh.geometry;
-                    instanceGeometry = new import_three3.BufferGeometry();
-                    instanceGeometry.name = source.name;
-                    for (const name in source.attributes) instanceGeometry.setAttribute(name, source.attributes[name]);
-                    for (const name in source.morphAttributes) instanceGeometry.morphAttributes[name] = source.morphAttributes[name];
-                    if (source.index !== null) instanceGeometry.setIndex(source.index);
-                    instanceGeometry.morphTargetsRelative = source.morphTargetsRelative;
-                    for (const group of source.groups) instanceGeometry.addGroup(group.start, group.count, group.materialIndex);
-                    if (source.boundingBox !== null) instanceGeometry.boundingBox = source.boundingBox.clone();
-                    if (source.boundingSphere !== null) instanceGeometry.boundingSphere = source.boundingSphere.clone();
-                    instanceGeometry.drawRange.start = source.drawRange.start;
-                    instanceGeometry.drawRange.count = source.drawRange.count;
-                    instanceGeometry.userData = Object.assign({}, source.userData);
-                    instancedMesh.geometry = instanceGeometry;
-                  }
-                  const attr = attributes[attributeName];
-                  instanceGeometry.setAttribute(attributeName, new import_three3.InstancedBufferAttribute(attr.array, attr.itemSize, attr.normalized));
-                }
-              }
-              import_three3.Object3D.prototype.copy.call(instancedMesh, mesh);
-              this.parser.assignFinalMaterial(instancedMesh);
-              instancedMeshes.push(instancedMesh);
-            }
-            if (nodeObject.isGroup) {
-              nodeObject.clear();
-              nodeObject.add(...instancedMeshes);
-              return nodeObject;
-            }
-            return instancedMeshes[0];
-          });
-        }
-      };
-      var BINARY_EXTENSION_HEADER_MAGIC = "glTF";
-      var BINARY_EXTENSION_HEADER_LENGTH = 12;
-      var BINARY_EXTENSION_CHUNK_TYPES = {
-        JSON: 1313821514,
-        BIN: 5130562
-      };
-      var GLTFBinaryExtension = class {
-        constructor(data) {
-          this.name = EXTENSIONS.KHR_BINARY_GLTF;
-          this.content = null;
-          this.body = null;
-          const headerView = new DataView(data, 0, BINARY_EXTENSION_HEADER_LENGTH);
-          const textDecoder = new TextDecoder();
-          this.header = {
-            magic: textDecoder.decode(new Uint8Array(data.slice(0, 4))),
-            version: headerView.getUint32(4, true),
-            length: headerView.getUint32(8, true)
-          };
-          if (this.header.magic !== BINARY_EXTENSION_HEADER_MAGIC) {
-            throw new Error("THREE.GLTFLoader: Unsupported glTF-Binary header.");
-          } else if (this.header.version < 2) {
-            throw new Error("THREE.GLTFLoader: Legacy binary file detected.");
-          }
-          const chunkContentsLength = this.header.length - BINARY_EXTENSION_HEADER_LENGTH;
-          const chunkView = new DataView(data, BINARY_EXTENSION_HEADER_LENGTH);
-          let chunkIndex = 0;
-          while (chunkIndex < chunkContentsLength) {
-            const chunkLength = chunkView.getUint32(chunkIndex, true);
-            chunkIndex += 4;
-            const chunkType = chunkView.getUint32(chunkIndex, true);
-            chunkIndex += 4;
-            if (chunkType === BINARY_EXTENSION_CHUNK_TYPES.JSON) {
-              const contentArray = new Uint8Array(data, BINARY_EXTENSION_HEADER_LENGTH + chunkIndex, chunkLength);
-              this.content = textDecoder.decode(contentArray);
-            } else if (chunkType === BINARY_EXTENSION_CHUNK_TYPES.BIN) {
-              const byteOffset = BINARY_EXTENSION_HEADER_LENGTH + chunkIndex;
-              this.body = data.slice(byteOffset, byteOffset + chunkLength);
-            }
-            chunkIndex += chunkLength;
-          }
-          if (this.content === null) {
-            throw new Error("THREE.GLTFLoader: JSON content not found.");
-          }
-        }
-      };
-      var GLTFDracoMeshCompressionExtension = class {
-        constructor(json, dracoLoader) {
-          if (!dracoLoader) {
-            throw new Error("THREE.GLTFLoader: No DRACOLoader instance provided.");
-          }
-          this.name = EXTENSIONS.KHR_DRACO_MESH_COMPRESSION;
-          this.json = json;
-          this.dracoLoader = dracoLoader;
-          this.dracoLoader.preload();
-        }
-        decodePrimitive(primitive, parser) {
-          const json = this.json;
-          const dracoLoader = this.dracoLoader;
-          const bufferViewIndex = primitive.extensions[this.name].bufferView;
-          const gltfAttributeMap = primitive.extensions[this.name].attributes;
-          const threeAttributeMap = {};
-          const attributeNormalizedMap = {};
-          const attributeTypeMap = {};
-          for (const attributeName in gltfAttributeMap) {
-            const threeAttributeName = ATTRIBUTES[attributeName] || attributeName.toLowerCase();
-            threeAttributeMap[threeAttributeName] = gltfAttributeMap[attributeName];
-          }
-          for (const attributeName in primitive.attributes) {
-            const threeAttributeName = ATTRIBUTES[attributeName] || attributeName.toLowerCase();
-            if (gltfAttributeMap[attributeName] !== void 0) {
-              const accessorDef = json.accessors[primitive.attributes[attributeName]];
-              const componentType = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
-              attributeTypeMap[threeAttributeName] = componentType.name;
-              attributeNormalizedMap[threeAttributeName] = accessorDef.normalized === true;
-            }
-          }
-          return parser.getDependency("bufferView", bufferViewIndex).then(function (bufferView) {
-            return new Promise(function (resolve, reject) {
-              dracoLoader.decodeDracoFile(bufferView, function (geometry) {
-                for (const attributeName in geometry.attributes) {
-                  const attribute = geometry.attributes[attributeName];
-                  const normalized = attributeNormalizedMap[attributeName];
-                  if (normalized !== void 0) attribute.normalized = normalized;
-                }
-                resolve(geometry);
-              }, threeAttributeMap, attributeTypeMap, import_three3.LinearSRGBColorSpace, reject);
-            });
-          });
-        }
-      };
-      var GLTFTextureTransformExtension = class {
-        constructor() {
-          this.name = EXTENSIONS.KHR_TEXTURE_TRANSFORM;
-        }
-        extendTexture(texture, transform) {
-          if ((transform.texCoord === void 0 || transform.texCoord === texture.channel) && transform.offset === void 0 && transform.rotation === void 0 && transform.scale === void 0) {
-            return texture;
-          }
-          texture = texture.clone();
-          if (transform.texCoord !== void 0) {
-            texture.channel = transform.texCoord;
-          }
-          if (transform.offset !== void 0) {
-            texture.offset.fromArray(transform.offset);
-          }
-          if (transform.rotation !== void 0) {
-            texture.rotation = transform.rotation;
-          }
-          if (transform.scale !== void 0) {
-            texture.repeat.fromArray(transform.scale);
-          }
-          if (transform.rotation !== void 0) {
-            const c = Math.cos(texture.rotation);
-            const s = Math.sin(texture.rotation);
-            texture.matrix.set(texture.repeat.x * c, texture.repeat.y * s, texture.offset.x, -texture.repeat.x * s, texture.repeat.y * c, texture.offset.y, 0, 0, 1);
-            texture.matrixAutoUpdate = false;
-          }
-          texture.needsUpdate = true;
-          return texture;
-        }
-      };
-      var GLTFMeshQuantizationExtension = class {
-        constructor() {
-          this.name = EXTENSIONS.KHR_MESH_QUANTIZATION;
-        }
-      };
-      var GLTFCubicSplineInterpolant = class extends import_three3.Interpolant {
-        constructor(parameterPositions, sampleValues, sampleSize, resultBuffer) {
-          super(parameterPositions, sampleValues, sampleSize, resultBuffer);
-        }
-        copySampleValue_(index) {
-          const result = this.resultBuffer,
-            values = this.sampleValues,
-            valueSize = this.valueSize,
-            offset = index * valueSize * 3 + valueSize;
-          for (let i = 0; i !== valueSize; i++) {
-            result[i] = values[offset + i];
-          }
-          return result;
-        }
-        interpolate_(i1, t0, t, t1) {
-          const result = this.resultBuffer;
-          const values = this.sampleValues;
-          const stride = this.valueSize;
-          const stride2 = stride * 2;
-          const stride3 = stride * 3;
-          const td = t1 - t0;
-          const p = (t - t0) / td;
-          const pp = p * p;
-          const ppp = pp * p;
-          const offset1 = i1 * stride3;
-          const offset0 = offset1 - stride3;
-          const s2 = -2 * ppp + 3 * pp;
-          const s3 = ppp - pp;
-          const s0 = 1 - s2;
-          const s1 = s3 - pp + p;
-          for (let i = 0; i !== stride; i++) {
-            const p0 = values[offset0 + i + stride];
-            const m0 = values[offset0 + i + stride2] * td;
-            const p1 = values[offset1 + i + stride];
-            const m1 = values[offset1 + i] * td;
-            result[i] = s0 * p0 + s1 * m0 + s2 * p1 + s3 * m1;
-          }
-          return result;
-        }
-      };
-      var _quaternion = new import_three3.Quaternion();
-      var GLTFCubicSplineQuaternionInterpolant = class extends GLTFCubicSplineInterpolant {
-        interpolate_(i1, t0, t, t1) {
-          const result = super.interpolate_(i1, t0, t, t1);
-          _quaternion.fromArray(result).normalize().toArray(result);
-          return result;
-        }
-      };
-      var WEBGL_CONSTANTS = {
-        FLOAT: 5126,
-        FLOAT_MAT3: 35675,
-        FLOAT_MAT4: 35676,
-        FLOAT_VEC2: 35664,
-        FLOAT_VEC3: 35665,
-        FLOAT_VEC4: 35666,
-        LINEAR: 9729,
-        REPEAT: 10497,
-        SAMPLER_2D: 35678,
-        POINTS: 0,
-        LINES: 1,
-        LINE_LOOP: 2,
-        LINE_STRIP: 3,
-        TRIANGLES: 4,
-        TRIANGLE_STRIP: 5,
-        TRIANGLE_FAN: 6,
-        UNSIGNED_BYTE: 5121,
-        UNSIGNED_SHORT: 5123
-      };
-      var WEBGL_COMPONENT_TYPES = {
-        5120: Int8Array,
-        5121: Uint8Array,
-        5122: Int16Array,
-        5123: Uint16Array,
-        5125: Uint32Array,
-        5126: Float32Array
-      };
-      var WEBGL_FILTERS = {
-        9728: import_three3.NearestFilter,
-        9729: import_three3.LinearFilter,
-        9984: import_three3.NearestMipmapNearestFilter,
-        9985: import_three3.LinearMipmapNearestFilter,
-        9986: import_three3.NearestMipmapLinearFilter,
-        9987: import_three3.LinearMipmapLinearFilter
-      };
-      var WEBGL_WRAPPINGS = {
-        33071: import_three3.ClampToEdgeWrapping,
-        33648: import_three3.MirroredRepeatWrapping,
-        10497: import_three3.RepeatWrapping
-      };
-      var WEBGL_TYPE_SIZES = {
-        SCALAR: 1,
-        VEC2: 2,
-        VEC3: 3,
-        VEC4: 4,
-        MAT2: 4,
-        MAT3: 9,
-        MAT4: 16
-      };
-      var ATTRIBUTES = {
-        POSITION: "position",
-        NORMAL: "normal",
-        TANGENT: "tangent",
-        TEXCOORD_0: "uv",
-        TEXCOORD_1: "uv1",
-        TEXCOORD_2: "uv2",
-        TEXCOORD_3: "uv3",
-        COLOR_0: "color",
-        WEIGHTS_0: "skinWeight",
-        JOINTS_0: "skinIndex"
-      };
-      var PATH_PROPERTIES = {
-        scale: "scale",
-        translation: "position",
-        rotation: "quaternion",
-        weights: "morphTargetInfluences"
-      };
-      var INTERPOLATION = {
-        CUBICSPLINE: void 0,
-        LINEAR: import_three3.InterpolateLinear,
-        STEP: import_three3.InterpolateDiscrete
-      };
-      var ALPHA_MODES = {
-        OPAQUE: "OPAQUE",
-        MASK: "MASK",
-        BLEND: "BLEND"
-      };
-      function createDefaultMaterial(cache) {
-        if (cache["DefaultMaterial"] === void 0) {
-          cache["DefaultMaterial"] = new import_three3.MeshStandardMaterial({
-            color: 16777215,
-            emissive: 0,
-            metalness: 1,
-            roughness: 1,
-            transparent: false,
-            depthTest: true,
-            side: import_three3.FrontSide
-          });
-        }
-        return cache["DefaultMaterial"];
-      }
-      function addUnknownExtensionsToUserData(knownExtensions, object, objectDef) {
-        for (const name in objectDef.extensions) {
-          if (knownExtensions[name] === void 0) {
-            object.userData.gltfExtensions = object.userData.gltfExtensions || {};
-            object.userData.gltfExtensions[name] = objectDef.extensions[name];
-          }
-        }
-      }
-      function assignExtrasToUserData(object, gltfDef) {
-        if (gltfDef.extras !== void 0) {
-          if (typeof gltfDef.extras === "object") {
-            Object.assign(object.userData, gltfDef.extras);
-          } else {
-            console.warn("THREE.GLTFLoader: Ignoring primitive type .extras, " + gltfDef.extras);
-          }
-        }
-      }
-      function addMorphTargets(geometry, targets, parser) {
-        let hasMorphPosition = false;
-        let hasMorphNormal = false;
-        let hasMorphColor = false;
-        for (let i = 0, il = targets.length; i < il; i++) {
-          const target = targets[i];
-          if (target.POSITION !== void 0) hasMorphPosition = true;
-          if (target.NORMAL !== void 0) hasMorphNormal = true;
-          if (target.COLOR_0 !== void 0) hasMorphColor = true;
-          if (hasMorphPosition && hasMorphNormal && hasMorphColor) break;
-        }
-        if (!hasMorphPosition && !hasMorphNormal && !hasMorphColor) return Promise.resolve(geometry);
-        const pendingPositionAccessors = [];
-        const pendingNormalAccessors = [];
-        const pendingColorAccessors = [];
-        for (let i = 0, il = targets.length; i < il; i++) {
-          const target = targets[i];
-          if (hasMorphPosition) {
-            const pendingAccessor = target.POSITION !== void 0 ? parser.getDependency("accessor", target.POSITION) : geometry.attributes.position;
-            pendingPositionAccessors.push(pendingAccessor);
-          }
-          if (hasMorphNormal) {
-            const pendingAccessor = target.NORMAL !== void 0 ? parser.getDependency("accessor", target.NORMAL) : geometry.attributes.normal;
-            pendingNormalAccessors.push(pendingAccessor);
-          }
-          if (hasMorphColor) {
-            const pendingAccessor = target.COLOR_0 !== void 0 ? parser.getDependency("accessor", target.COLOR_0) : geometry.attributes.color;
-            pendingColorAccessors.push(pendingAccessor);
-          }
-        }
-        return Promise.all([Promise.all(pendingPositionAccessors), Promise.all(pendingNormalAccessors), Promise.all(pendingColorAccessors)]).then(function (accessors) {
-          const morphPositions = accessors[0];
-          const morphNormals = accessors[1];
-          const morphColors = accessors[2];
-          if (hasMorphPosition) geometry.morphAttributes.position = morphPositions;
-          if (hasMorphNormal) geometry.morphAttributes.normal = morphNormals;
-          if (hasMorphColor) geometry.morphAttributes.color = morphColors;
-          geometry.morphTargetsRelative = true;
-          return geometry;
-        });
-      }
-      function updateMorphTargets(mesh, meshDef) {
-        mesh.updateMorphTargets();
-        if (meshDef.weights !== void 0) {
-          for (let i = 0, il = meshDef.weights.length; i < il; i++) {
-            mesh.morphTargetInfluences[i] = meshDef.weights[i];
-          }
-        }
-        if (meshDef.extras && Array.isArray(meshDef.extras.targetNames)) {
-          const targetNames = meshDef.extras.targetNames;
-          if (mesh.morphTargetInfluences.length === targetNames.length) {
-            mesh.morphTargetDictionary = {};
-            for (let i = 0, il = targetNames.length; i < il; i++) {
-              mesh.morphTargetDictionary[targetNames[i]] = i;
-            }
-          } else {
-            console.warn("THREE.GLTFLoader: Invalid extras.targetNames length. Ignoring names.");
-          }
-        }
-      }
-      function createPrimitiveKey(primitiveDef) {
-        let geometryKey;
-        const dracoExtension = primitiveDef.extensions && primitiveDef.extensions[EXTENSIONS.KHR_DRACO_MESH_COMPRESSION];
-        if (dracoExtension) {
-          geometryKey = "draco:" + dracoExtension.bufferView + ":" + dracoExtension.indices + ":" + createAttributesKey(dracoExtension.attributes);
-        } else {
-          geometryKey = primitiveDef.indices + ":" + createAttributesKey(primitiveDef.attributes) + ":" + primitiveDef.mode;
-        }
-        if (primitiveDef.targets !== void 0) {
-          for (let i = 0, il = primitiveDef.targets.length; i < il; i++) {
-            geometryKey += ":" + createAttributesKey(primitiveDef.targets[i]);
-          }
-        }
-        return geometryKey;
-      }
-      function createAttributesKey(attributes) {
-        let attributesKey = "";
-        const keys = Object.keys(attributes).sort();
-        for (let i = 0, il = keys.length; i < il; i++) {
-          attributesKey += keys[i] + ":" + attributes[keys[i]] + ";";
-        }
-        return attributesKey;
-      }
-      function getNormalizedComponentScale(constructor) {
-        switch (constructor) {
-          case Int8Array:
-            return 1 / 127;
-          case Uint8Array:
-            return 1 / 255;
-          case Int16Array:
-            return 1 / 32767;
-          case Uint16Array:
-            return 1 / 65535;
-          default:
-            throw new Error("THREE.GLTFLoader: Unsupported normalized accessor component type.");
-        }
-      }
-      function getImageURIMimeType(uri) {
-        if (uri.search(/\.jpe?g($|\?)/i) > 0 || uri.search(/^data\:image\/jpeg/) === 0) return "image/jpeg";
-        if (uri.search(/\.webp($|\?)/i) > 0 || uri.search(/^data\:image\/webp/) === 0) return "image/webp";
-        if (uri.search(/\.ktx2($|\?)/i) > 0 || uri.search(/^data\:image\/ktx2/) === 0) return "image/ktx2";
-        return "image/png";
-      }
-      var _identityMatrix = new import_three3.Matrix4();
-      var GLTFParser = class {
-        constructor(json = {}, options = {}) {
-          this.json = json;
-          this.extensions = {};
-          this.plugins = {};
-          this.options = options;
-          this.cache = new GLTFRegistry();
-          this.associations = new Map();
-          this.primitiveCache = {};
-          this.nodeCache = {};
-          this.meshCache = {
-            refs: {},
-            uses: {}
-          };
-          this.cameraCache = {
-            refs: {},
-            uses: {}
-          };
-          this.lightCache = {
-            refs: {},
-            uses: {}
-          };
-          this.sourceCache = {};
-          this.textureCache = {};
-          this.nodeNamesUsed = {};
-          let isSafari = false;
-          let safariVersion = -1;
-          let isFirefox = false;
-          let firefoxVersion = -1;
-          if (typeof navigator !== "undefined" && typeof navigator.userAgent !== "undefined") {
-            const userAgent = navigator.userAgent;
-            isSafari = /^((?!chrome|android).)*safari/i.test(userAgent) === true;
-            const safariMatch = userAgent.match(/Version\/(\d+)/);
-            safariVersion = isSafari && safariMatch ? parseInt(safariMatch[1], 10) : -1;
-            isFirefox = userAgent.indexOf("Firefox") > -1;
-            firefoxVersion = isFirefox ? userAgent.match(/Firefox\/([0-9]+)\./)[1] : -1;
-          }
-          if (typeof createImageBitmap === "undefined" || isSafari && safariVersion < 17 || isFirefox && firefoxVersion < 98) {
-            this.textureLoader = new import_three3.TextureLoader(this.options.manager);
-          } else {
-            this.textureLoader = new import_three3.ImageBitmapLoader(this.options.manager);
-          }
-          this.textureLoader.setCrossOrigin(this.options.crossOrigin);
-          this.textureLoader.setRequestHeader(this.options.requestHeader);
-          this.fileLoader = new import_three3.FileLoader(this.options.manager);
-          this.fileLoader.setResponseType("arraybuffer");
-          if (this.options.crossOrigin === "use-credentials") {
-            this.fileLoader.setWithCredentials(true);
-          }
-        }
-        setExtensions(extensions) {
-          this.extensions = extensions;
-        }
-        setPlugins(plugins) {
-          this.plugins = plugins;
-        }
-        parse(onLoad, onError) {
-          const parser = this;
-          const json = this.json;
-          const extensions = this.extensions;
-          this.cache.removeAll();
-          this.nodeCache = {};
-          this._invokeAll(function (ext) {
-            return ext._markDefs && ext._markDefs();
-          });
-          Promise.all(this._invokeAll(function (ext) {
-            return ext.beforeRoot && ext.beforeRoot();
-          })).then(function () {
-            return Promise.all([parser.getDependencies("scene"), parser.getDependencies("animation"), parser.getDependencies("camera")]);
-          }).then(function (dependencies) {
-            const result = {
-              scene: dependencies[0][json.scene || 0],
-              scenes: dependencies[0],
-              animations: dependencies[1],
-              cameras: dependencies[2],
-              asset: json.asset,
-              parser,
-              userData: {}
-            };
-            addUnknownExtensionsToUserData(extensions, result, json);
-            assignExtrasToUserData(result, json);
-            return Promise.all(parser._invokeAll(function (ext) {
-              return ext.afterRoot && ext.afterRoot(result);
-            })).then(function () {
-              for (const scene of result.scenes) {
-                scene.updateMatrixWorld();
-              }
-              onLoad(result);
-            });
-          }).catch(onError);
-        }
-        _markDefs() {
-          const nodeDefs = this.json.nodes || [];
-          const skinDefs = this.json.skins || [];
-          const meshDefs = this.json.meshes || [];
-          for (let skinIndex = 0, skinLength = skinDefs.length; skinIndex < skinLength; skinIndex++) {
-            const joints = skinDefs[skinIndex].joints;
-            for (let i = 0, il = joints.length; i < il; i++) {
-              nodeDefs[joints[i]].isBone = true;
-            }
-          }
-          for (let nodeIndex = 0, nodeLength = nodeDefs.length; nodeIndex < nodeLength; nodeIndex++) {
-            const nodeDef = nodeDefs[nodeIndex];
-            if (nodeDef.mesh !== void 0) {
-              this._addNodeRef(this.meshCache, nodeDef.mesh);
-              if (nodeDef.skin !== void 0) {
-                meshDefs[nodeDef.mesh].isSkinnedMesh = true;
-              }
-            }
-            if (nodeDef.camera !== void 0) {
-              this._addNodeRef(this.cameraCache, nodeDef.camera);
-            }
-          }
-        }
-        _addNodeRef(cache, index) {
-          if (index === void 0) return;
-          if (cache.refs[index] === void 0) {
-            cache.refs[index] = cache.uses[index] = 0;
-          }
-          cache.refs[index]++;
-        }
-        _getNodeRef(cache, index, object) {
-          if (cache.refs[index] <= 1) return object;
-          const ref = object.clone();
-          const updateMappings = (original, clone2) => {
-            const mappings = this.associations.get(original);
-            if (mappings != null) {
-              this.associations.set(clone2, mappings);
-            }
-            for (const [i, child] of original.children.entries()) {
-              updateMappings(child, clone2.children[i]);
-            }
-          };
-          updateMappings(object, ref);
-          ref.name += "_instance_" + cache.uses[index]++;
-          return ref;
-        }
-        _invokeOne(func) {
-          const extensions = Object.values(this.plugins);
-          extensions.push(this);
-          for (let i = 0; i < extensions.length; i++) {
-            const result = func(extensions[i]);
-            if (result) return result;
-          }
-          return null;
-        }
-        _invokeAll(func) {
-          const extensions = Object.values(this.plugins);
-          extensions.unshift(this);
-          const pending = [];
-          for (let i = 0; i < extensions.length; i++) {
-            const result = func(extensions[i]);
-            if (result) pending.push(result);
-          }
-          return pending;
-        }
-        getDependency(type, index) {
-          const cacheKey = type + ":" + index;
-          let dependency = this.cache.get(cacheKey);
-          if (!dependency) {
-            switch (type) {
-              case "scene":
-                dependency = this.loadScene(index);
-                break;
-              case "node":
-                dependency = this._invokeOne(function (ext) {
-                  return ext.loadNode && ext.loadNode(index);
-                });
-                break;
-              case "mesh":
-                dependency = this._invokeOne(function (ext) {
-                  return ext.loadMesh && ext.loadMesh(index);
-                });
-                break;
-              case "accessor":
-                dependency = this.loadAccessor(index);
-                break;
-              case "bufferView":
-                dependency = this._invokeOne(function (ext) {
-                  return ext.loadBufferView && ext.loadBufferView(index);
-                });
-                break;
-              case "buffer":
-                dependency = this.loadBuffer(index);
-                break;
-              case "material":
-                dependency = this._invokeOne(function (ext) {
-                  return ext.loadMaterial && ext.loadMaterial(index);
-                });
-                break;
-              case "texture":
-                dependency = this._invokeOne(function (ext) {
-                  return ext.loadTexture && ext.loadTexture(index);
-                });
-                break;
-              case "skin":
-                dependency = this.loadSkin(index);
-                break;
-              case "animation":
-                dependency = this._invokeOne(function (ext) {
-                  return ext.loadAnimation && ext.loadAnimation(index);
-                });
-                break;
-              case "camera":
-                dependency = this.loadCamera(index);
-                break;
-              default:
-                dependency = this._invokeOne(function (ext) {
-                  return ext != this && ext.getDependency && ext.getDependency(type, index);
-                });
-                if (!dependency) {
-                  throw new Error("Unknown type: " + type);
-                }
-                break;
-            }
-            this.cache.add(cacheKey, dependency);
-          }
-          return dependency;
-        }
-        getDependencies(type) {
-          let dependencies = this.cache.get(type);
-          if (!dependencies) {
-            const parser = this;
-            const defs = this.json[type + (type === "mesh" ? "es" : "s")] || [];
-            dependencies = Promise.all(defs.map(function (def, index) {
-              return parser.getDependency(type, index);
-            }));
-            this.cache.add(type, dependencies);
-          }
-          return dependencies;
-        }
-        loadBuffer(bufferIndex) {
-          const bufferDef = this.json.buffers[bufferIndex];
-          const loader = this.fileLoader;
-          if (bufferDef.type && bufferDef.type !== "arraybuffer") {
-            throw new Error("THREE.GLTFLoader: " + bufferDef.type + " buffer type is not supported.");
-          }
-          if (bufferDef.uri === void 0 && bufferIndex === 0) {
-            return Promise.resolve(this.extensions[EXTENSIONS.KHR_BINARY_GLTF].body);
-          }
-          const options = this.options;
-          return new Promise(function (resolve, reject) {
-            loader.load(import_three3.LoaderUtils.resolveURL(bufferDef.uri, options.path), resolve, void 0, function () {
-              reject(new Error('THREE.GLTFLoader: Failed to load buffer "' + bufferDef.uri + '".'));
-            });
-          });
-        }
-        loadBufferView(bufferViewIndex) {
-          const bufferViewDef = this.json.bufferViews[bufferViewIndex];
-          return this.getDependency("buffer", bufferViewDef.buffer).then(function (buffer) {
-            const byteLength = bufferViewDef.byteLength || 0;
-            const byteOffset = bufferViewDef.byteOffset || 0;
-            return buffer.slice(byteOffset, byteOffset + byteLength);
-          });
-        }
-        loadAccessor(accessorIndex) {
-          const parser = this;
-          const json = this.json;
-          const accessorDef = this.json.accessors[accessorIndex];
-          if (accessorDef.bufferView === void 0 && accessorDef.sparse === void 0) {
-            const itemSize = WEBGL_TYPE_SIZES[accessorDef.type];
-            const TypedArray = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
-            const normalized = accessorDef.normalized === true;
-            const array = new TypedArray(accessorDef.count * itemSize);
-            return Promise.resolve(new import_three3.BufferAttribute(array, itemSize, normalized));
-          }
-          const pendingBufferViews = [];
-          if (accessorDef.bufferView !== void 0) {
-            pendingBufferViews.push(this.getDependency("bufferView", accessorDef.bufferView));
-          } else {
-            pendingBufferViews.push(null);
-          }
-          if (accessorDef.sparse !== void 0) {
-            pendingBufferViews.push(this.getDependency("bufferView", accessorDef.sparse.indices.bufferView));
-            pendingBufferViews.push(this.getDependency("bufferView", accessorDef.sparse.values.bufferView));
-          }
-          return Promise.all(pendingBufferViews).then(function (bufferViews) {
-            const bufferView = bufferViews[0];
-            const itemSize = WEBGL_TYPE_SIZES[accessorDef.type];
-            const TypedArray = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
-            const elementBytes = TypedArray.BYTES_PER_ELEMENT;
-            const itemBytes = elementBytes * itemSize;
-            const byteOffset = accessorDef.byteOffset || 0;
-            const byteStride = accessorDef.bufferView !== void 0 ? json.bufferViews[accessorDef.bufferView].byteStride : void 0;
-            const normalized = accessorDef.normalized === true;
-            let array, bufferAttribute;
-            if (byteStride && byteStride !== itemBytes) {
-              const ibSlice = Math.floor(byteOffset / byteStride);
-              const ibCacheKey = "InterleavedBuffer:" + accessorDef.bufferView + ":" + accessorDef.componentType + ":" + ibSlice + ":" + accessorDef.count;
-              let ib = parser.cache.get(ibCacheKey);
-              if (!ib) {
-                array = new TypedArray(bufferView, ibSlice * byteStride, accessorDef.count * byteStride / elementBytes);
-                ib = new import_three3.InterleavedBuffer(array, byteStride / elementBytes);
-                parser.cache.add(ibCacheKey, ib);
-              }
-              bufferAttribute = new import_three3.InterleavedBufferAttribute(ib, itemSize, byteOffset % byteStride / elementBytes, normalized);
-            } else {
-              if (bufferView === null) {
-                array = new TypedArray(accessorDef.count * itemSize);
-              } else {
-                array = new TypedArray(bufferView, byteOffset, accessorDef.count * itemSize);
-              }
-              bufferAttribute = new import_three3.BufferAttribute(array, itemSize, normalized);
-            }
-            if (accessorDef.sparse !== void 0) {
-              const itemSizeIndices = WEBGL_TYPE_SIZES.SCALAR;
-              const TypedArrayIndices = WEBGL_COMPONENT_TYPES[accessorDef.sparse.indices.componentType];
-              const byteOffsetIndices = accessorDef.sparse.indices.byteOffset || 0;
-              const byteOffsetValues = accessorDef.sparse.values.byteOffset || 0;
-              const sparseIndices = new TypedArrayIndices(bufferViews[1], byteOffsetIndices, accessorDef.sparse.count * itemSizeIndices);
-              const sparseValues = new TypedArray(bufferViews[2], byteOffsetValues, accessorDef.sparse.count * itemSize);
-              if (bufferView !== null) {
-                bufferAttribute = new import_three3.BufferAttribute(bufferAttribute.array.slice(), bufferAttribute.itemSize, bufferAttribute.normalized);
-              }
-              bufferAttribute.normalized = false;
-              for (let i = 0, il = sparseIndices.length; i < il; i++) {
-                const index = sparseIndices[i];
-                bufferAttribute.setX(index, sparseValues[i * itemSize]);
-                if (itemSize >= 2) bufferAttribute.setY(index, sparseValues[i * itemSize + 1]);
-                if (itemSize >= 3) bufferAttribute.setZ(index, sparseValues[i * itemSize + 2]);
-                if (itemSize >= 4) bufferAttribute.setW(index, sparseValues[i * itemSize + 3]);
-                if (itemSize >= 5) throw new Error("THREE.GLTFLoader: Unsupported itemSize in sparse BufferAttribute.");
-              }
-              bufferAttribute.normalized = normalized;
-            }
-            return bufferAttribute;
-          });
-        }
-        loadTexture(textureIndex) {
-          const json = this.json;
-          const options = this.options;
-          const textureDef = json.textures[textureIndex];
-          const sourceIndex = textureDef.source;
-          const sourceDef = json.images[sourceIndex];
-          let loader = this.textureLoader;
-          if (sourceDef.uri) {
-            const handler = options.manager.getHandler(sourceDef.uri);
-            if (handler !== null) loader = handler;
-          }
-          return this.loadTextureImage(textureIndex, sourceIndex, loader);
-        }
-        loadTextureImage(textureIndex, sourceIndex, loader) {
-          const parser = this;
-          const json = this.json;
-          const textureDef = json.textures[textureIndex];
-          const sourceDef = json.images[sourceIndex];
-          const cacheKey = (sourceDef.uri || sourceDef.bufferView) + ":" + textureDef.sampler;
-          if (this.textureCache[cacheKey]) {
-            return this.textureCache[cacheKey];
-          }
-          const promise = this.loadImageSource(sourceIndex, loader).then(function (texture) {
-            texture.flipY = false;
-            texture.name = textureDef.name || sourceDef.name || "";
-            if (texture.name === "" && typeof sourceDef.uri === "string" && sourceDef.uri.startsWith("data:image/") === false) {
-              texture.name = sourceDef.uri;
-            }
-            const samplers = json.samplers || {};
-            const sampler = samplers[textureDef.sampler] || {};
-            texture.magFilter = WEBGL_FILTERS[sampler.magFilter] || import_three3.LinearFilter;
-            texture.minFilter = WEBGL_FILTERS[sampler.minFilter] || import_three3.LinearMipmapLinearFilter;
-            texture.wrapS = WEBGL_WRAPPINGS[sampler.wrapS] || import_three3.RepeatWrapping;
-            texture.wrapT = WEBGL_WRAPPINGS[sampler.wrapT] || import_three3.RepeatWrapping;
-            texture.generateMipmaps = !texture.isCompressedTexture && texture.minFilter !== import_three3.NearestFilter && texture.minFilter !== import_three3.LinearFilter;
-            parser.associations.set(texture, {
-              textures: textureIndex
-            });
-            return texture;
-          }).catch(function () {
-            return null;
-          });
-          this.textureCache[cacheKey] = promise;
-          return promise;
-        }
-        loadImageSource(sourceIndex, loader) {
-          const parser = this;
-          const json = this.json;
-          const options = this.options;
-          if (this.sourceCache[sourceIndex] !== void 0) {
-            return this.sourceCache[sourceIndex].then(texture => texture.clone());
-          }
-          const sourceDef = json.images[sourceIndex];
-          const URL = self.URL || self.webkitURL;
-          let sourceURI = sourceDef.uri || "";
-          let isObjectURL = false;
-          if (sourceDef.bufferView !== void 0) {
-            sourceURI = parser.getDependency("bufferView", sourceDef.bufferView).then(function (bufferView) {
-              isObjectURL = true;
-              const blob = new Blob([bufferView], {
-                type: sourceDef.mimeType
-              });
-              sourceURI = URL.createObjectURL(blob);
-              return sourceURI;
-            });
-          } else if (sourceDef.uri === void 0) {
-            throw new Error("THREE.GLTFLoader: Image " + sourceIndex + " is missing URI and bufferView");
-          }
-          const promise = Promise.resolve(sourceURI).then(function (sourceURI2) {
-            return new Promise(function (resolve, reject) {
-              let onLoad = resolve;
-              if (loader.isImageBitmapLoader === true) {
-                onLoad = function (imageBitmap) {
-                  const texture = new import_three3.Texture(imageBitmap);
-                  texture.needsUpdate = true;
-                  resolve(texture);
-                };
-              }
-              loader.load(import_three3.LoaderUtils.resolveURL(sourceURI2, options.path), onLoad, void 0, reject);
-            });
-          }).then(function (texture) {
-            if (isObjectURL === true) {
-              URL.revokeObjectURL(sourceURI);
-            }
-            assignExtrasToUserData(texture, sourceDef);
-            texture.userData.mimeType = sourceDef.mimeType || getImageURIMimeType(sourceDef.uri);
-            return texture;
-          }).catch(function (error) {
-            console.error("THREE.GLTFLoader: Couldn't load texture", sourceURI);
-            throw error;
-          });
-          this.sourceCache[sourceIndex] = promise;
-          return promise;
-        }
-        assignTexture(materialParams, mapName, mapDef, colorSpace) {
-          const parser = this;
-          return this.getDependency("texture", mapDef.index).then(function (texture) {
-            if (!texture) return null;
-            if (mapDef.texCoord !== void 0 && mapDef.texCoord > 0) {
-              texture = texture.clone();
-              texture.channel = mapDef.texCoord;
-            }
-            if (parser.extensions[EXTENSIONS.KHR_TEXTURE_TRANSFORM]) {
-              const transform = mapDef.extensions !== void 0 ? mapDef.extensions[EXTENSIONS.KHR_TEXTURE_TRANSFORM] : void 0;
-              if (transform) {
-                const gltfReference = parser.associations.get(texture);
-                texture = parser.extensions[EXTENSIONS.KHR_TEXTURE_TRANSFORM].extendTexture(texture, transform);
-                parser.associations.set(texture, gltfReference);
-              }
-            }
-            if (colorSpace !== void 0) {
-              texture.colorSpace = colorSpace;
-            }
-            materialParams[mapName] = texture;
-            return texture;
-          });
-        }
-        assignFinalMaterial(mesh) {
-          const geometry = mesh.geometry;
-          let material = mesh.material;
-          const useDerivativeTangents = geometry.attributes.tangent === void 0;
-          const useVertexColors = geometry.attributes.color !== void 0;
-          const useFlatShading = geometry.attributes.normal === void 0;
-          if (mesh.isPoints) {
-            const cacheKey = "PointsMaterial:" + material.uuid;
-            let pointsMaterial = this.cache.get(cacheKey);
-            if (!pointsMaterial) {
-              pointsMaterial = new import_three3.PointsMaterial();
-              import_three3.Material.prototype.copy.call(pointsMaterial, material);
-              pointsMaterial.color.copy(material.color);
-              pointsMaterial.map = material.map;
-              pointsMaterial.sizeAttenuation = false;
-              this.cache.add(cacheKey, pointsMaterial);
-            }
-            material = pointsMaterial;
-          } else if (mesh.isLine) {
-            const cacheKey = "LineBasicMaterial:" + material.uuid;
-            let lineMaterial = this.cache.get(cacheKey);
-            if (!lineMaterial) {
-              lineMaterial = new import_three3.LineBasicMaterial();
-              import_three3.Material.prototype.copy.call(lineMaterial, material);
-              lineMaterial.color.copy(material.color);
-              lineMaterial.map = material.map;
-              this.cache.add(cacheKey, lineMaterial);
-            }
-            material = lineMaterial;
-          }
-          if (useDerivativeTangents || useVertexColors || useFlatShading) {
-            let cacheKey = "ClonedMaterial:" + material.uuid + ":";
-            if (useDerivativeTangents) cacheKey += "derivative-tangents:";
-            if (useVertexColors) cacheKey += "vertex-colors:";
-            if (useFlatShading) cacheKey += "flat-shading:";
-            let cachedMaterial = this.cache.get(cacheKey);
-            if (!cachedMaterial) {
-              cachedMaterial = material.clone();
-              if (useVertexColors) cachedMaterial.vertexColors = true;
-              if (useFlatShading) cachedMaterial.flatShading = true;
-              if (useDerivativeTangents) {
-                if (cachedMaterial.normalScale) cachedMaterial.normalScale.y *= -1;
-                if (cachedMaterial.clearcoatNormalScale) cachedMaterial.clearcoatNormalScale.y *= -1;
-              }
-              this.cache.add(cacheKey, cachedMaterial);
-              this.associations.set(cachedMaterial, this.associations.get(material));
-            }
-            material = cachedMaterial;
-          }
-          mesh.material = material;
-        }
-        getMaterialType() {
-          return import_three3.MeshStandardMaterial;
-        }
-        loadMaterial(materialIndex) {
-          const parser = this;
-          const json = this.json;
-          const extensions = this.extensions;
-          const materialDef = json.materials[materialIndex];
-          let materialType;
-          const materialParams = {};
-          const materialExtensions = materialDef.extensions || {};
-          const pending = [];
-          if (materialExtensions[EXTENSIONS.KHR_MATERIALS_UNLIT]) {
-            const kmuExtension = extensions[EXTENSIONS.KHR_MATERIALS_UNLIT];
-            materialType = kmuExtension.getMaterialType();
-            pending.push(kmuExtension.extendParams(materialParams, materialDef, parser));
-          } else {
-            const metallicRoughness = materialDef.pbrMetallicRoughness || {};
-            materialParams.color = new import_three3.Color(1, 1, 1);
-            materialParams.opacity = 1;
-            if (Array.isArray(metallicRoughness.baseColorFactor)) {
-              const array = metallicRoughness.baseColorFactor;
-              materialParams.color.setRGB(array[0], array[1], array[2], import_three3.LinearSRGBColorSpace);
-              materialParams.opacity = array[3];
-            }
-            if (metallicRoughness.baseColorTexture !== void 0) {
-              pending.push(parser.assignTexture(materialParams, "map", metallicRoughness.baseColorTexture, import_three3.SRGBColorSpace));
-            }
-            materialParams.metalness = metallicRoughness.metallicFactor !== void 0 ? metallicRoughness.metallicFactor : 1;
-            materialParams.roughness = metallicRoughness.roughnessFactor !== void 0 ? metallicRoughness.roughnessFactor : 1;
-            if (metallicRoughness.metallicRoughnessTexture !== void 0) {
-              pending.push(parser.assignTexture(materialParams, "metalnessMap", metallicRoughness.metallicRoughnessTexture));
-              pending.push(parser.assignTexture(materialParams, "roughnessMap", metallicRoughness.metallicRoughnessTexture));
-            }
-            materialType = this._invokeOne(function (ext) {
-              return ext.getMaterialType && ext.getMaterialType(materialIndex);
-            });
-            pending.push(Promise.all(this._invokeAll(function (ext) {
-              return ext.extendMaterialParams && ext.extendMaterialParams(materialIndex, materialParams);
-            })));
-          }
-          if (materialDef.doubleSided === true) {
-            materialParams.side = import_three3.DoubleSide;
-          }
-          const alphaMode = materialDef.alphaMode || ALPHA_MODES.OPAQUE;
-          if (alphaMode === ALPHA_MODES.BLEND) {
-            materialParams.transparent = true;
-            materialParams.depthWrite = false;
-          } else {
-            materialParams.transparent = false;
-            if (alphaMode === ALPHA_MODES.MASK) {
-              materialParams.alphaTest = materialDef.alphaCutoff !== void 0 ? materialDef.alphaCutoff : 0.5;
-            }
-          }
-          if (materialDef.normalTexture !== void 0 && materialType !== import_three3.MeshBasicMaterial) {
-            pending.push(parser.assignTexture(materialParams, "normalMap", materialDef.normalTexture));
-            materialParams.normalScale = new import_three3.Vector2(1, 1);
-            if (materialDef.normalTexture.scale !== void 0) {
-              const scale = materialDef.normalTexture.scale;
-              materialParams.normalScale.set(scale, scale);
-            }
-          }
-          if (materialDef.occlusionTexture !== void 0 && materialType !== import_three3.MeshBasicMaterial) {
-            pending.push(parser.assignTexture(materialParams, "aoMap", materialDef.occlusionTexture));
-            if (materialDef.occlusionTexture.strength !== void 0) {
-              materialParams.aoMapIntensity = materialDef.occlusionTexture.strength;
-            }
-          }
-          if (materialDef.emissiveFactor !== void 0 && materialType !== import_three3.MeshBasicMaterial) {
-            const emissiveFactor = materialDef.emissiveFactor;
-            materialParams.emissive = new import_three3.Color().setRGB(emissiveFactor[0], emissiveFactor[1], emissiveFactor[2], import_three3.LinearSRGBColorSpace);
-          }
-          if (materialDef.emissiveTexture !== void 0 && materialType !== import_three3.MeshBasicMaterial) {
-            pending.push(parser.assignTexture(materialParams, "emissiveMap", materialDef.emissiveTexture, import_three3.SRGBColorSpace));
-          }
-          return Promise.all(pending).then(function () {
-            const material = new materialType(materialParams);
-            if (materialDef.name) material.name = materialDef.name;
-            assignExtrasToUserData(material, materialDef);
-            parser.associations.set(material, {
-              materials: materialIndex
-            });
-            if (materialDef.extensions) addUnknownExtensionsToUserData(extensions, material, materialDef);
-            return material;
-          });
-        }
-        createUniqueName(originalName) {
-          const sanitizedName = import_three3.PropertyBinding.sanitizeNodeName(originalName || "");
-          if (sanitizedName in this.nodeNamesUsed) {
-            return sanitizedName + "_" + ++this.nodeNamesUsed[sanitizedName];
-          } else {
-            this.nodeNamesUsed[sanitizedName] = 0;
-            return sanitizedName;
-          }
-        }
-        loadGeometries(primitives) {
-          const parser = this;
-          const extensions = this.extensions;
-          const cache = this.primitiveCache;
-          function createDracoPrimitive(primitive) {
-            return extensions[EXTENSIONS.KHR_DRACO_MESH_COMPRESSION].decodePrimitive(primitive, parser).then(function (geometry) {
-              return addPrimitiveAttributes(geometry, primitive, parser);
-            });
-          }
-          const pending = [];
-          for (let i = 0, il = primitives.length; i < il; i++) {
-            const primitive = primitives[i];
-            const cacheKey = createPrimitiveKey(primitive);
-            const cached = cache[cacheKey];
-            if (cached) {
-              pending.push(cached.promise);
-            } else {
-              let geometryPromise;
-              if (primitive.extensions && primitive.extensions[EXTENSIONS.KHR_DRACO_MESH_COMPRESSION]) {
-                geometryPromise = createDracoPrimitive(primitive);
-              } else {
-                geometryPromise = addPrimitiveAttributes(new import_three3.BufferGeometry(), primitive, parser);
-              }
-              if (primitive.mode === WEBGL_CONSTANTS.TRIANGLE_STRIP) {
-                geometryPromise = geometryPromise.then(geometry => toTrianglesDrawMode(geometry, import_three3.TriangleStripDrawMode));
-              } else if (primitive.mode === WEBGL_CONSTANTS.TRIANGLE_FAN) {
-                geometryPromise = geometryPromise.then(geometry => toTrianglesDrawMode(geometry, import_three3.TriangleFanDrawMode));
-              }
-              cache[cacheKey] = {
-                primitive,
-                promise: geometryPromise
-              };
-              pending.push(geometryPromise);
-            }
-          }
-          return Promise.all(pending);
-        }
-        loadMesh(meshIndex) {
-          const parser = this;
-          const json = this.json;
-          const extensions = this.extensions;
-          const meshDef = json.meshes[meshIndex];
-          const primitives = meshDef.primitives;
-          const pending = [];
-          for (let i = 0, il = primitives.length; i < il; i++) {
-            const material = primitives[i].material === void 0 ? createDefaultMaterial(this.cache) : this.getDependency("material", primitives[i].material);
-            pending.push(material);
-          }
-          pending.push(parser.loadGeometries(primitives));
-          return Promise.all(pending).then(async function (results) {
-            const materials = results.slice(0, results.length - 1);
-            const geometries = results[results.length - 1];
-            const meshes = [];
-            for (let i = 0, il = geometries.length; i < il; i++) {
-              const geometry = geometries[i];
-              const primitive = primitives[i];
-              let mesh;
-              const material = materials[i];
-              if (primitive.mode === WEBGL_CONSTANTS.TRIANGLES || primitive.mode === WEBGL_CONSTANTS.TRIANGLE_STRIP || primitive.mode === WEBGL_CONSTANTS.TRIANGLE_FAN || primitive.mode === void 0) {
-                const needsSkinning = meshDef.isSkinnedMesh === true;
-                const hasSkinningAttributes = geometry.hasAttribute("skinIndex") && geometry.hasAttribute("skinWeight");
-                if (needsSkinning && hasSkinningAttributes === false) {
-                  console.warn("THREE.GLTFLoader: Missing skinIndex or skinWeight attributes. Skinning disabled.");
-                }
-                mesh = needsSkinning && hasSkinningAttributes ? new import_three3.SkinnedMesh(geometry, material) : new import_three3.Mesh(geometry, material);
-                if (mesh.isSkinnedMesh === true) {
-                  mesh.normalizeSkinWeights();
-                }
-              } else if (primitive.mode === WEBGL_CONSTANTS.LINES) {
-                mesh = new import_three3.LineSegments(geometry, material);
-              } else if (primitive.mode === WEBGL_CONSTANTS.LINE_STRIP) {
-                mesh = new import_three3.Line(geometry, material);
-              } else if (primitive.mode === WEBGL_CONSTANTS.LINE_LOOP) {
-                mesh = new import_three3.LineLoop(geometry, material);
-              } else if (primitive.mode === WEBGL_CONSTANTS.POINTS) {
-                mesh = new import_three3.Points(geometry, material);
-              } else {
-                throw new Error("THREE.GLTFLoader: Primitive mode unsupported: " + primitive.mode);
-              }
-              if (Object.keys(mesh.geometry.morphAttributes).length > 0) {
-                updateMorphTargets(mesh, meshDef);
-              }
-              mesh.name = parser.createUniqueName(meshDef.name || "mesh_" + meshIndex);
-              assignExtrasToUserData(mesh, meshDef);
-              if (primitive.extensions) addUnknownExtensionsToUserData(extensions, mesh, primitive);
-              parser.assignFinalMaterial(mesh);
-              meshes.push(mesh);
-            }
-            for (let i = 0, il = meshes.length; i < il; i++) {
-              parser.associations.set(meshes[i], {
-                meshes: meshIndex,
-                primitives: i
-              });
-            }
-            if (meshes.length === 1) {
-              if (meshDef.extensions) addUnknownExtensionsToUserData(extensions, meshes[0], meshDef);
-              return meshes[0];
-            }
-            const group = new import_three3.Group();
-            if (meshDef.extensions) addUnknownExtensionsToUserData(extensions, group, meshDef);
-            parser.associations.set(group, {
-              meshes: meshIndex
-            });
-            for (let i = 0, il = meshes.length; i < il; i++) {
-              group.add(meshes[i]);
-            }
-            return group;
-          });
-        }
-        loadCamera(cameraIndex) {
-          let camera;
-          const cameraDef = this.json.cameras[cameraIndex];
-          const params = cameraDef[cameraDef.type];
-          if (!params) {
-            console.warn("THREE.GLTFLoader: Missing camera parameters.");
-            return;
-          }
-          if (cameraDef.type === "perspective") {
-            camera = new import_three3.PerspectiveCamera(import_three3.MathUtils.radToDeg(params.yfov), params.aspectRatio || 1, params.znear || 1, params.zfar || 2e6);
-          } else if (cameraDef.type === "orthographic") {
-            camera = new import_three3.OrthographicCamera(-params.xmag, params.xmag, params.ymag, -params.ymag, params.znear, params.zfar);
-          }
-          if (cameraDef.name) camera.name = this.createUniqueName(cameraDef.name);
-          assignExtrasToUserData(camera, cameraDef);
-          return Promise.resolve(camera);
-        }
-        loadSkin(skinIndex) {
-          const skinDef = this.json.skins[skinIndex];
-          const pending = [];
-          for (let i = 0, il = skinDef.joints.length; i < il; i++) {
-            pending.push(this._loadNodeShallow(skinDef.joints[i]));
-          }
-          if (skinDef.inverseBindMatrices !== void 0) {
-            pending.push(this.getDependency("accessor", skinDef.inverseBindMatrices));
-          } else {
-            pending.push(null);
-          }
-          return Promise.all(pending).then(function (results) {
-            const inverseBindMatrices = results.pop();
-            const jointNodes = results;
-            const bones = [];
-            const boneInverses = [];
-            for (let i = 0, il = jointNodes.length; i < il; i++) {
-              const jointNode = jointNodes[i];
-              if (jointNode) {
-                bones.push(jointNode);
-                const mat = new import_three3.Matrix4();
-                if (inverseBindMatrices !== null) {
-                  mat.fromArray(inverseBindMatrices.array, i * 16);
-                }
-                boneInverses.push(mat);
-              } else {
-                console.warn('THREE.GLTFLoader: Joint "%s" could not be found.', skinDef.joints[i]);
-              }
-            }
-            return new import_three3.Skeleton(bones, boneInverses);
-          });
-        }
-        loadAnimation(animationIndex) {
-          const json = this.json;
-          const parser = this;
-          const animationDef = json.animations[animationIndex];
-          const animationName = animationDef.name ? animationDef.name : "animation_" + animationIndex;
-          const pendingNodes = [];
-          const pendingInputAccessors = [];
-          const pendingOutputAccessors = [];
-          const pendingSamplers = [];
-          const pendingTargets = [];
-          for (let i = 0, il = animationDef.channels.length; i < il; i++) {
-            const channel = animationDef.channels[i];
-            const sampler = animationDef.samplers[channel.sampler];
-            const target = channel.target;
-            const name = target.node;
-            const input = animationDef.parameters !== void 0 ? animationDef.parameters[sampler.input] : sampler.input;
-            const output = animationDef.parameters !== void 0 ? animationDef.parameters[sampler.output] : sampler.output;
-            if (target.node === void 0) continue;
-            pendingNodes.push(this.getDependency("node", name));
-            pendingInputAccessors.push(this.getDependency("accessor", input));
-            pendingOutputAccessors.push(this.getDependency("accessor", output));
-            pendingSamplers.push(sampler);
-            pendingTargets.push(target);
-          }
-          return Promise.all([Promise.all(pendingNodes), Promise.all(pendingInputAccessors), Promise.all(pendingOutputAccessors), Promise.all(pendingSamplers), Promise.all(pendingTargets)]).then(function (dependencies) {
-            const nodes = dependencies[0];
-            const inputAccessors = dependencies[1];
-            const outputAccessors = dependencies[2];
-            const samplers = dependencies[3];
-            const targets = dependencies[4];
-            const tracks = [];
-            for (let i = 0, il = nodes.length; i < il; i++) {
-              const node = nodes[i];
-              const inputAccessor = inputAccessors[i];
-              const outputAccessor = outputAccessors[i];
-              const sampler = samplers[i];
-              const target = targets[i];
-              if (node === void 0) continue;
-              if (node.updateMatrix) {
-                node.updateMatrix();
-              }
-              const createdTracks = parser._createAnimationTracks(node, inputAccessor, outputAccessor, sampler, target);
-              if (createdTracks) {
-                for (let k = 0; k < createdTracks.length; k++) {
-                  tracks.push(createdTracks[k]);
-                }
-              }
-            }
-            const animation = new import_three3.AnimationClip(animationName, void 0, tracks);
-            assignExtrasToUserData(animation, animationDef);
-            return animation;
-          });
-        }
-        createNodeMesh(nodeIndex) {
-          const json = this.json;
-          const parser = this;
-          const nodeDef = json.nodes[nodeIndex];
-          if (nodeDef.mesh === void 0) return null;
-          return parser.getDependency("mesh", nodeDef.mesh).then(function (mesh) {
-            const node = parser._getNodeRef(parser.meshCache, nodeDef.mesh, mesh);
-            if (nodeDef.weights !== void 0) {
-              node.traverse(function (o) {
-                if (!o.isMesh) return;
-                for (let i = 0, il = nodeDef.weights.length; i < il; i++) {
-                  o.morphTargetInfluences[i] = nodeDef.weights[i];
-                }
-              });
-            }
-            return node;
-          });
-        }
-        loadNode(nodeIndex) {
-          const json = this.json;
-          const parser = this;
-          const nodeDef = json.nodes[nodeIndex];
-          const nodePending = parser._loadNodeShallow(nodeIndex);
-          const childPending = [];
-          const childrenDef = nodeDef.children || [];
-          for (let i = 0, il = childrenDef.length; i < il; i++) {
-            childPending.push(parser.getDependency("node", childrenDef[i]));
-          }
-          const skeletonPending = nodeDef.skin === void 0 ? Promise.resolve(null) : parser.getDependency("skin", nodeDef.skin);
-          return Promise.all([nodePending, Promise.all(childPending), skeletonPending]).then(function (results) {
-            const node = results[0];
-            const children = results[1];
-            const skeleton = results[2];
-            if (skeleton !== null) {
-              node.traverse(function (mesh) {
-                if (!mesh.isSkinnedMesh) return;
-                mesh.bind(skeleton, _identityMatrix);
-              });
-            }
-            for (let i = 0, il = children.length; i < il; i++) {
-              node.add(children[i]);
-            }
-            if (node.userData.pivot !== void 0 && children.length > 0) {
-              const pivot = node.userData.pivot;
-              const pivotChild = children[0];
-              node.pivot = new import_three3.Vector3().fromArray(pivot);
-              node.position.x -= pivot[0];
-              node.position.y -= pivot[1];
-              node.position.z -= pivot[2];
-              pivotChild.position.set(0, 0, 0);
-              delete node.userData.pivot;
-            }
-            return node;
-          });
-        }
-        _loadNodeShallow(nodeIndex) {
-          const json = this.json;
-          const extensions = this.extensions;
-          const parser = this;
-          if (this.nodeCache[nodeIndex] !== void 0) {
-            return this.nodeCache[nodeIndex];
-          }
-          const nodeDef = json.nodes[nodeIndex];
-          const nodeName = nodeDef.name ? parser.createUniqueName(nodeDef.name) : "";
-          const pending = [];
-          const meshPromise = parser._invokeOne(function (ext) {
-            return ext.createNodeMesh && ext.createNodeMesh(nodeIndex);
-          });
-          if (meshPromise) {
-            pending.push(meshPromise);
-          }
-          if (nodeDef.camera !== void 0) {
-            pending.push(parser.getDependency("camera", nodeDef.camera).then(function (camera) {
-              return parser._getNodeRef(parser.cameraCache, nodeDef.camera, camera);
-            }));
-          }
-          parser._invokeAll(function (ext) {
-            return ext.createNodeAttachment && ext.createNodeAttachment(nodeIndex);
-          }).forEach(function (promise) {
-            pending.push(promise);
-          });
-          this.nodeCache[nodeIndex] = Promise.all(pending).then(function (objects) {
-            let node;
-            if (nodeDef.isBone === true) {
-              node = new import_three3.Bone();
-            } else if (objects.length > 1) {
-              node = new import_three3.Group();
-            } else if (objects.length === 1) {
-              node = objects[0];
-            } else {
-              node = new import_three3.Object3D();
-            }
-            if (node !== objects[0]) {
-              for (let i = 0, il = objects.length; i < il; i++) {
-                node.add(objects[i]);
-              }
-            }
-            if (nodeDef.name) {
-              node.userData.name = nodeDef.name;
-              node.name = nodeName;
-            }
-            assignExtrasToUserData(node, nodeDef);
-            if (nodeDef.extensions) addUnknownExtensionsToUserData(extensions, node, nodeDef);
-            if (nodeDef.matrix !== void 0) {
-              const matrix = new import_three3.Matrix4();
-              matrix.fromArray(nodeDef.matrix);
-              node.applyMatrix4(matrix);
-            } else {
-              if (nodeDef.translation !== void 0) {
-                node.position.fromArray(nodeDef.translation);
-              }
-              if (nodeDef.rotation !== void 0) {
-                node.quaternion.fromArray(nodeDef.rotation);
-              }
-              if (nodeDef.scale !== void 0) {
-                node.scale.fromArray(nodeDef.scale);
-              }
-            }
-            if (!parser.associations.has(node)) {
-              parser.associations.set(node, {});
-            } else if (nodeDef.mesh !== void 0 && parser.meshCache.refs[nodeDef.mesh] > 1) {
-              const mapping = parser.associations.get(node);
-              parser.associations.set(node, {
-                ...mapping
-              });
-            }
-            parser.associations.get(node).nodes = nodeIndex;
-            return node;
-          });
-          return this.nodeCache[nodeIndex];
-        }
-        loadScene(sceneIndex) {
-          const extensions = this.extensions;
-          const sceneDef = this.json.scenes[sceneIndex];
-          const parser = this;
-          const scene = new import_three3.Group();
-          if (sceneDef.name) scene.name = parser.createUniqueName(sceneDef.name);
-          assignExtrasToUserData(scene, sceneDef);
-          if (sceneDef.extensions) addUnknownExtensionsToUserData(extensions, scene, sceneDef);
-          const nodeIds = sceneDef.nodes || [];
-          const pending = [];
-          for (let i = 0, il = nodeIds.length; i < il; i++) {
-            pending.push(parser.getDependency("node", nodeIds[i]));
-          }
-          return Promise.all(pending).then(function (nodes) {
-            for (let i = 0, il = nodes.length; i < il; i++) {
-              const node = nodes[i];
-              if (node.parent !== null) {
-                scene.add(clone(node));
-              } else {
-                scene.add(node);
-              }
-            }
-            const reduceAssociations = node => {
-              const reducedAssociations = new Map();
-              for (const [key, value] of parser.associations) {
-                if (key instanceof import_three3.Material || key instanceof import_three3.Texture) {
-                  reducedAssociations.set(key, value);
-                }
-              }
-              node.traverse(node2 => {
-                const mappings = parser.associations.get(node2);
-                if (mappings != null) {
-                  reducedAssociations.set(node2, mappings);
-                }
-              });
-              return reducedAssociations;
-            };
-            parser.associations = reduceAssociations(scene);
-            return scene;
-          });
-        }
-        _createAnimationTracks(node, inputAccessor, outputAccessor, sampler, target) {
-          const tracks = [];
-          const targetName = node.name ? node.name : node.uuid;
-          const targetNames = [];
-          function collectMorphTargets(object) {
-            if (object.morphTargetInfluences) {
-              targetNames.push(object.name ? object.name : object.uuid);
-            }
-          }
-          if (PATH_PROPERTIES[target.path] === PATH_PROPERTIES.weights) {
-            collectMorphTargets(node);
-            if (node.isGroup) {
-              node.children.forEach(collectMorphTargets);
-            }
-          } else {
-            targetNames.push(targetName);
-          }
-          let TypedKeyframeTrack;
-          switch (PATH_PROPERTIES[target.path]) {
-            case PATH_PROPERTIES.weights:
-              TypedKeyframeTrack = import_three3.NumberKeyframeTrack;
-              break;
-            case PATH_PROPERTIES.rotation:
-              TypedKeyframeTrack = import_three3.QuaternionKeyframeTrack;
-              break;
-            case PATH_PROPERTIES.translation:
-            case PATH_PROPERTIES.scale:
-              TypedKeyframeTrack = import_three3.VectorKeyframeTrack;
-              break;
-            default:
-              switch (outputAccessor.itemSize) {
-                case 1:
-                  TypedKeyframeTrack = import_three3.NumberKeyframeTrack;
-                  break;
-                case 2:
-                case 3:
-                default:
-                  TypedKeyframeTrack = import_three3.VectorKeyframeTrack;
-                  break;
-              }
-              break;
-          }
-          const interpolation = sampler.interpolation !== void 0 ? INTERPOLATION[sampler.interpolation] : import_three3.InterpolateLinear;
-          const outputArray = this._getArrayFromAccessor(outputAccessor);
-          for (let j = 0, jl = targetNames.length; j < jl; j++) {
-            const track = new TypedKeyframeTrack(targetNames[j] + "." + PATH_PROPERTIES[target.path], inputAccessor.array, outputArray, interpolation);
-            if (sampler.interpolation === "CUBICSPLINE") {
-              this._createCubicSplineTrackInterpolant(track);
-            }
-            tracks.push(track);
-          }
-          return tracks;
-        }
-        _getArrayFromAccessor(accessor) {
-          let outputArray = accessor.array;
-          if (accessor.normalized) {
-            const scale = getNormalizedComponentScale(outputArray.constructor);
-            const scaled = new Float32Array(outputArray.length);
-            for (let j = 0, jl = outputArray.length; j < jl; j++) {
-              scaled[j] = outputArray[j] * scale;
-            }
-            outputArray = scaled;
-          }
-          return outputArray;
-        }
-        _createCubicSplineTrackInterpolant(track) {
-          track.createInterpolant = function InterpolantFactoryMethodGLTFCubicSpline(result) {
-            const interpolantType = this instanceof import_three3.QuaternionKeyframeTrack ? GLTFCubicSplineQuaternionInterpolant : GLTFCubicSplineInterpolant;
-            return new interpolantType(this.times, this.values, this.getValueSize() / 3, result);
-          };
-          track.createInterpolant.isInterpolantFactoryMethodGLTFCubicSpline = true;
-        }
-      };
-      function computeBounds(geometry, primitiveDef, parser) {
-        const attributes = primitiveDef.attributes;
-        const box = new import_three3.Box3();
-        if (attributes.POSITION !== void 0) {
-          const accessor = parser.json.accessors[attributes.POSITION];
-          const min = accessor.min;
-          const max = accessor.max;
-          if (min !== void 0 && max !== void 0) {
-            box.set(new import_three3.Vector3(min[0], min[1], min[2]), new import_three3.Vector3(max[0], max[1], max[2]));
-            if (accessor.normalized) {
-              const boxScale = getNormalizedComponentScale(WEBGL_COMPONENT_TYPES[accessor.componentType]);
-              box.min.multiplyScalar(boxScale);
-              box.max.multiplyScalar(boxScale);
-            }
-          } else {
-            console.warn("THREE.GLTFLoader: Missing min/max properties for accessor POSITION.");
-            return;
-          }
-        } else {
-          return;
-        }
-        const targets = primitiveDef.targets;
-        if (targets !== void 0) {
-          const maxDisplacement = new import_three3.Vector3();
-          const vector = new import_three3.Vector3();
-          for (let i = 0, il = targets.length; i < il; i++) {
-            const target = targets[i];
-            if (target.POSITION !== void 0) {
-              const accessor = parser.json.accessors[target.POSITION];
-              const min = accessor.min;
-              const max = accessor.max;
-              if (min !== void 0 && max !== void 0) {
-                vector.setX(Math.max(Math.abs(min[0]), Math.abs(max[0])));
-                vector.setY(Math.max(Math.abs(min[1]), Math.abs(max[1])));
-                vector.setZ(Math.max(Math.abs(min[2]), Math.abs(max[2])));
-                if (accessor.normalized) {
-                  const boxScale = getNormalizedComponentScale(WEBGL_COMPONENT_TYPES[accessor.componentType]);
-                  vector.multiplyScalar(boxScale);
-                }
-                maxDisplacement.max(vector);
-              } else {
-                console.warn("THREE.GLTFLoader: Missing min/max properties for accessor POSITION.");
-              }
-            }
-          }
-          box.expandByVector(maxDisplacement);
-        }
-        geometry.boundingBox = box;
-        const sphere = new import_three3.Sphere();
-        box.getCenter(sphere.center);
-        sphere.radius = box.min.distanceTo(box.max) / 2;
-        geometry.boundingSphere = sphere;
-      }
-      function addPrimitiveAttributes(geometry, primitiveDef, parser) {
-        const attributes = primitiveDef.attributes;
-        const pending = [];
-        function assignAttributeAccessor(accessorIndex, attributeName) {
-          return parser.getDependency("accessor", accessorIndex).then(function (accessor) {
-            geometry.setAttribute(attributeName, accessor);
-          });
-        }
-        for (const gltfAttributeName in attributes) {
-          const threeAttributeName = ATTRIBUTES[gltfAttributeName] || gltfAttributeName.toLowerCase();
-          if (threeAttributeName in geometry.attributes) continue;
-          pending.push(assignAttributeAccessor(attributes[gltfAttributeName], threeAttributeName));
-        }
-        if (primitiveDef.indices !== void 0 && !geometry.index) {
-          const accessor = parser.getDependency("accessor", primitiveDef.indices).then(function (accessor2) {
-            geometry.setIndex(accessor2);
-          });
-          pending.push(accessor);
-        }
-        if (import_three3.ColorManagement.workingColorSpace !== import_three3.LinearSRGBColorSpace && "COLOR_0" in attributes) {
-          console.warn(`THREE.GLTFLoader: Converting vertex colors from "srgb-linear" to "${import_three3.ColorManagement.workingColorSpace}" not supported.`);
-        }
-        assignExtrasToUserData(geometry, primitiveDef);
-        computeBounds(geometry, primitiveDef, parser);
-        return Promise.all(pending).then(function () {
-          return primitiveDef.targets !== void 0 ? addMorphTargets(geometry, primitiveDef.targets, parser) : geometry;
-        });
-      }
-      return __toCommonJS(GLTFLoader_exports);
-    })();
-    return travelerGLTFLoaderAddon.GLTFLoader;
-  })(specifier => {
-    if (specifier !== "three") {
-      throw new Error("Unexpected character loader dependency: " + specifier);
-    }
-    return Ry;
-  });
-}
-{
   const CHARACTER_MODEL_HEIGHT = 0.2;
   const CHARACTER_MODEL_YAW = Math.PI;
   const CHARACTER_ANIMATION_NAMES = ["Idle_Loop", "Idle_Crossed_Loop", "Swim_Loop", "Walk_Loop", "Held_Loop"];
@@ -41376,7 +41590,1958 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
   }
 }
 {
-  const MODULE_REGISTRY = [["audio", AudioController], ["sky", SkySystem], ["terrain", TerrainSystem], ["water", WaterSystem], ["vegetation", VegetationSystem], ["landscapeVegetation", LandscapeVegetationSystem], ["willows", WillowSystem], ["alpineTown", AlpineTownLandmark], ["farm", FarmSystem], ["woodworkingYard", WoodworkingYard], ["hikingTrail", HikingTrail], ["life", LifeSystem], ["treeFruit", TreeFruitSystem], ["clouds", CloudSystem], ["precipitation", PrecipitationSystem], ["fog", FogSystem], ["backdrop", BackdropSystem], ["hud", HudSystem], ["mountainRuins", MountainRuins], ["character", CharacterSystem]];
+  const STORAGE_PREFIX = "windhaven.valley-saves.v1";
+  const CURRENT_KEY = `${STORAGE_PREFIX}.current`;
+  const SAVE_PREFIX = `${STORAGE_PREFIX}.save.`;
+  const SAVE_NAME_LIMIT = 60;
+  const ROLES = new Set(["guardian", "lantern", "wind", "shrine"]);
+  function browserStorage() {
+    try {
+      return globalThis.localStorage;
+    } catch {
+      return null;
+    }
+  }
+  function isModelUrl(url) {
+    if (typeof url !== "string" || !/^\/(api\/assets|generated\/examples)\/[^?#]+\.glb$/i.test(url)) {
+      return false;
+    }
+    try {
+      return url.split("/").slice(3).every(part => {
+        const segment = decodeURIComponent(part);
+        return segment && segment !== "." && segment !== ".." && !/[/\\\x00-\x1f\x7f]/.test(segment);
+      });
+    } catch {
+      return false;
+    }
+  }
+  function copyPlacements(placements) {
+    if (!Array.isArray(placements)) throw new Error("山谷布局无效。");
+    return placements.map(value => {
+      const placement = value ?? {};
+      const {
+        url,
+        x,
+        y,
+        z,
+        yaw,
+        role,
+        height
+      } = placement;
+      const pitch = Object.hasOwn(placement, "pitch") ? placement.pitch : 0;
+      const roll = Object.hasOwn(placement, "roll") ? placement.roll : 0;
+      const windYawOffset = Object.hasOwn(placement, "windYawOffset") ? placement.windYawOffset : 0;
+      if (!isModelUrl(url) || ![x, y, z, yaw, pitch, roll, windYawOffset, height].every(Number.isFinite) || height <= 0 || !ROLES.has(role)) {
+        throw new Error("山谷布局包含无效的模型位置。");
+      }
+      return {
+        url,
+        x,
+        y,
+        z,
+        yaw,
+        pitch,
+        roll,
+        windYawOffset,
+        role,
+        height
+      };
+    });
+  }
+  function saveKey(id) {
+    if (typeof id !== "string" || !/^[a-z\d-]+$/i.test(id)) {
+      throw new Error("山谷存档编号无效。");
+    }
+    return `${SAVE_PREFIX}${id}`;
+  }
+  function saveName(name) {
+    const trimmed = typeof name === "string" ? name.trim() : "";
+    if (!trimmed || trimmed.length > SAVE_NAME_LIMIT) {
+      throw new Error(`请输入 1–${SAVE_NAME_LIMIT} 个字符的存档名称。`);
+    }
+    return trimmed;
+  }
+  class ValleySaves {
+    constructor(storage = browserStorage()) {
+      this.storage = storage;
+    }
+    load() {
+      const storage = this._requireStorage();
+      const current = JSON.parse(storage.getItem(CURRENT_KEY)) ?? [];
+      const saves = [];
+      for (let index = 0; index < storage.length; index += 1) {
+        const key = storage.key(index);
+        if (!key?.startsWith(SAVE_PREFIX)) continue;
+        const save = JSON.parse(storage.getItem(key));
+        if (!save) continue;
+        const {
+          id,
+          name,
+          placements,
+          updatedAt
+        } = save;
+        if (saveKey(id) !== key || !Number.isFinite(updatedAt)) {
+          throw new Error("山谷存档记录无效。");
+        }
+        saves.push({
+          id,
+          name: saveName(name),
+          placements: copyPlacements(placements),
+          updatedAt
+        });
+      }
+      saves.sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id));
+      return {
+        current: copyPlacements(current),
+        saves
+      };
+    }
+    setCurrent(placements) {
+      const current = copyPlacements(placements);
+      this._requireStorage().setItem(CURRENT_KEY, JSON.stringify(current));
+      return current;
+    }
+    save(name, placements, id) {
+      const storage = this._requireStorage();
+      const saveId = id ?? globalThis.crypto.getRandomValues(new Uint32Array(4)).join("-");
+      const key = saveKey(saveId);
+      if (id != null && storage.getItem(key) === null) {
+        throw new Error("找不到这个山谷存档。");
+      }
+      const save = {
+        id: saveId,
+        name: saveName(name),
+        placements: copyPlacements(placements),
+        updatedAt: Date.now()
+      };
+      storage.setItem(key, JSON.stringify(save));
+      return save;
+    }
+    remove(id) {
+      const storage = this._requireStorage();
+      const key = saveKey(id);
+      if (storage.getItem(key) === null) return false;
+      storage.removeItem(key);
+      return true;
+    }
+    _requireStorage() {
+      if (!this.storage) throw new Error("浏览器无法保存山谷存档。");
+      return this.storage;
+    }
+  }
+}
+{
+  const THUMBNAIL_SIZE = 192;
+  const CACHE_LIMIT = 64;
+  function disposeModel(model) {
+    const resources = new Set();
+    const images = new Set();
+    model.traverse(object => {
+      if (object.geometry) resources.add(object.geometry);
+      if (object.skeleton) resources.add(object.skeleton);
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) {
+        if (!material || resources.has(material)) continue;
+        resources.add(material);
+        for (const value of Object.values(material)) {
+          if (!value?.isTexture) continue;
+          resources.add(value);
+          if (value.image?.close) images.add(value.image);
+        }
+      }
+    });
+    for (const resource of resources) resource.dispose();
+    for (const image of images) image.close();
+  }
+  class ModelThumbnails {
+    constructor() {
+      this.loader = new CharacterGLTFLoader();
+      this.cache = new Map();
+      this.queue = Promise.resolve();
+      this.renderer = null;
+    }
+    get(url) {
+      const cached = this.cache.get(url);
+      if (cached) return cached;
+      const result = this.queue.then(() => this._render(url));
+      this.queue = result.catch(() => {
+        if (this.cache.get(url) === result) this.cache.delete(url);
+      });
+      this.cache.set(url, result);
+      if (this.cache.size > CACHE_LIMIT) {
+        this.cache.delete(this.cache.keys().next().value);
+      }
+      return result;
+    }
+    _setup() {
+      this.renderer = new Ry.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        powerPreference: "low-power"
+      });
+      this.renderer.setSize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, false);
+      this.renderer.setClearColor(0, 0);
+      this.renderer.outputColorSpace = Ry.SRGBColorSpace;
+      this.renderer.toneMapping = Ry.ACESFilmicToneMapping;
+      this.scene = new Ry.Scene();
+      this.scene.add(new Ry.HemisphereLight(0xfff4de, 0x9793a0, 2));
+      const key = new Ry.DirectionalLight(0xffead3, 3.2);
+      key.position.set(-2, 4, 4);
+      const rim = new Ry.DirectionalLight(0xe3eaff, 1.6);
+      rim.position.set(3, 2, -3);
+      this.scene.add(key, rim);
+      this.camera = new Ry.OrthographicCamera(-1, 1, 1, -1, 0.1, 20);
+      this.camera.position.set(3, 1.8, 4.5);
+      this.camera.lookAt(0, 0, 0);
+      this.camera.updateMatrixWorld();
+    }
+    async _render(url) {
+      if (!this.renderer) this._setup();
+      if (this.renderer.getContext().isContextLost()) {
+        throw new Error("The thumbnail renderer is unavailable.");
+      }
+      const {
+        scene: model
+      } = await this.loader.loadAsync(url);
+      if (!model) throw new Error("The GLB has no preview scene.");
+      const pivot = new Ry.Group();
+      pivot.add(model);
+      try {
+        const bounds = new Ry.Box3().setFromObject(model);
+        const size = bounds.getSize(new Ry.Vector3());
+        const largestSide = Math.max(size.x, size.y, size.z);
+        if (!Number.isFinite(largestSide) || largestSide <= 0) {
+          throw new Error("The GLB has no measurable bounds.");
+        }
+        const scale = 2 / largestSide;
+        pivot.position.copy(bounds.getCenter(new Ry.Vector3())).multiplyScalar(-scale);
+        pivot.scale.setScalar(scale);
+        const half = size.multiplyScalar(scale / 2);
+        const view = this.camera.matrixWorldInverse.elements;
+        const width = Math.abs(view[0]) * half.x + Math.abs(view[4]) * half.y + Math.abs(view[8]) * half.z;
+        const height = Math.abs(view[1]) * half.x + Math.abs(view[5]) * half.y + Math.abs(view[9]) * half.z;
+        const frame = Math.max(width, height) * 1.16;
+        Object.assign(this.camera, {
+          left: -frame,
+          right: frame,
+          top: frame,
+          bottom: -frame
+        });
+        this.camera.updateProjectionMatrix();
+        this.scene.add(pivot);
+        this.renderer.render(this.scene, this.camera);
+        const image = this.renderer.domElement.toDataURL("image/png");
+        if (!image.startsWith("data:image/png")) throw new Error("No thumbnail was rendered.");
+        return image;
+      } finally {
+        pivot.removeFromParent();
+        disposeModel(model);
+      }
+    }
+  }
+}
+{
+  const TARGET_HEIGHT = 0.82;
+  const TRANSFORM_LAYER = 1;
+  const LANTERN_LIGHT_COUNT = 3;
+  const ANCHOR_DIRECTIONS = [-1, 0, 1].flatMap(x => [-1, 0, 1].flatMap(y => [-1, 0, 1].filter(z => x || y || z).map(z => new Ry.Vector3(x, y, z))));
+  const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
+  const MAX_PHOTOS = 32;
+  const POLL_INTERVAL_MS = 2000;
+  const POLL_MAX_FAILURES = 4;
+  const POLL_MAX_WAIT_MS = 15 * 60_000;
+  const MODEL_LOADER = new CharacterGLTFLoader();
+  const ROLES = [{
+    id: "guardian",
+    label: "静态摆件 / Static",
+    hint: "放在原地，适合人物或普通装饰。"
+  }, {
+    id: "lantern",
+    label: "夜间照明 / Lantern",
+    hint: "入夜后亮起暖光，亮度会轻微闪动。"
+  }, {
+    id: "wind",
+    label: "随风转向 / Wind Vane",
+    hint: "跟随摆放位置的风向转动。"
+  }, {
+    id: "shrine",
+    label: "引雷地标 / Lightning Target",
+    hint: "雷暴时更容易成为附近闪电的落点。"
+  }];
+  const STYLES = [["photorealistic", "真实 / Photoreal"], ["hand_painted", "手绘 / Hand-painted"], ["fantasy", "奇幻 / Fantasy"], ["glass", "玻璃 / Glass"], ["cartoon", "卡通 / Cartoon"]];
+  const FACE_COUNTS = [[20000, "20k · 快"], [30000, "30k · 推荐"], [60000, "60k · 精细"]];
+  const DEFAULT_ROLE = ROLES[0];
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  function formatBytes(bytes) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+  function shortAngle(value) {
+    let angle = value;
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    return angle;
+  }
+  function generationView() {
+    return {
+      role: DEFAULT_ROLE.id,
+      faceCount: 30000,
+      jobId: null,
+      busy: false,
+      pollFailures: 0,
+      pollDeadline: 0,
+      pollToken: 0
+    };
+  }
+  function getModelAnchorPoints(template) {
+    const candidates = ANCHOR_DIRECTIONS.map(direction => ({
+      direction,
+      distance: -Infinity,
+      point: new Ry.Vector3()
+    }));
+    const sample = new Ry.Vector3();
+    const record = () => {
+      for (const candidate of candidates) {
+        const distance = sample.dot(candidate.direction);
+        if (distance > candidate.distance) {
+          candidate.distance = distance;
+          candidate.point.copy(sample);
+        }
+      }
+    };
+    template.updateMatrixWorld(true);
+    template.traverse(object => {
+      if (!object.isMesh) return;
+      if (object.isInstancedMesh) {
+        const {
+          min,
+          max
+        } = new Ry.Box3().setFromObject(object);
+        for (let corner = 0; corner < 8; corner++) {
+          sample.set(corner & 1 ? max.x : min.x, corner & 2 ? max.y : min.y, corner & 4 ? max.z : min.z);
+          record();
+        }
+        return;
+      }
+      const count = object.geometry.getAttribute("position")?.count ?? 0;
+      for (let index = 0; index < count; index++) {
+        object.getVertexPosition(index, sample).applyMatrix4(object.matrixWorld);
+        record();
+      }
+    });
+    return candidates.filter(({
+      distance
+    }) => Number.isFinite(distance)).map(({
+      point
+    }) => point);
+  }
+  class AholoCreate {
+    constructor(ctx) {
+      this.ctx = ctx;
+      this.scene = ctx.scene;
+      this.camera = ctx.camera;
+      this.open = false;
+      this.tab = "photo";
+      this.views = {
+        photo: generationView(),
+        text: generationView(),
+        models: {}
+      };
+      this.photoFiles = [];
+      this.cardPlacement = null;
+      this.placing = null;
+      this.selectedEntry = null;
+      this.editAnchors = new WeakMap();
+      this.loadingTemplates = new Map();
+      this.editProjection = new Ry.Vector3();
+      this.transformControls = null;
+      this.transformDrag = null;
+      this.transformMode = "translate";
+      this.ghost = null;
+      this.marker = null;
+      this.placed = [];
+      this.lanterns = [];
+      this.lanternLights = Array.from({
+        length: LANTERN_LIGHT_COUNT
+      }, () => new Ry.PointLight(0xffb46a, 0, 2.8, 2));
+      this.scene.add(...this.lanternLights);
+      this.saves = new ValleySaves();
+      this.layoutBusy = false;
+      this.pendingLayout = null;
+      this.layoutNotice = "";
+      this.modelsLoading = false;
+      this.style = "photorealistic";
+      this.time = 0;
+      this._rayPoint = new Ry.Vector3();
+      this._windSample = {
+        x: 0,
+        z: 0
+      };
+      this._installInput();
+      this._build();
+      ctx.aholoLandmarks ??= [];
+      ctx.aholoCreate = this;
+      this._onKeyDown = event => this._handleKey(event);
+      window.addEventListener("keydown", this._onKeyDown, true);
+      const onSceneMode = ({
+        active,
+        pending
+      }) => {
+        if (!active && !pending) return;
+        this.cancelPlacement();
+        this.closePanel(false);
+      };
+      ctx.events.on("photo:change", onSceneMode);
+      ctx.events.on("exploration:change", onSceneMode);
+      ctx.events.on("tap", () => {
+        if (this.selectedEntry) this._selectPlaced(null);
+      });
+      this._restoreCurrentLayout();
+    }
+    _build() {
+      this.launch = el("button", "wg-aholo-launch");
+      this.launch.type = "button";
+      this.launch.setAttribute("aria-controls", "aholo-workbench");
+      this.launch.setAttribute("aria-expanded", "false");
+      this.launch.innerHTML = '<span class="wg-aholo-spark" aria-hidden="true">✦</span>' + '<span class="wg-aholo-launch-copy"><b>Aholo</b><small>造物 / Create</small></span>';
+      this.launch.addEventListener("click", () => this.open ? this.closePanel() : this.openPanel());
+      document.body.append(this.launch);
+      this.overlay = el("aside", "wg-aholo-overlay");
+      this.overlay.id = "aholo-workbench";
+      this.overlay.hidden = true;
+      this.overlay.setAttribute("aria-label", "Aholo 造物工作台");
+      this.panel = el("div", "wg-aholo-panel");
+      this.overlay.append(this.panel);
+      const header = el("div", "wg-aholo-head");
+      const brand = el("div", "wg-aholo-brand");
+      brand.innerHTML = '<span class="wg-aholo-brand-mark">A</span>' + "<span><b>AHOLO LUX3D</b><small>造物工作台</small></span>";
+      this.closeButton = el("button", "wg-aholo-close", "×");
+      this.closeButton.type = "button";
+      this.closeButton.setAttribute("aria-label", "收起造物工作台");
+      this.closeButton.addEventListener("click", () => this.closePanel());
+      header.append(brand, this.closeButton);
+      const lead = el("p", "wg-aholo-lead", "用照片或文字生成地标。生成期间可以继续观察和操作山谷。");
+      const tabs = el("div", "wg-aholo-tabs");
+      this.tabButtons = new Map();
+      for (const [id, label] of [["photo", "照片 / Photo"], ["text", "文字 / Text"], ["models", "我的模型"], ["saves", "山谷存档"]]) {
+        const button = el("button", "wg-aholo-tab", label);
+        button.type = "button";
+        button.dataset.tab = id;
+        button.addEventListener("click", () => this.setTab(id));
+        this.tabButtons.set(id, button);
+        tabs.append(button);
+      }
+      this.panes = {};
+      const panePhoto = el("div", "wg-aholo-pane");
+      this.drop = el("label", "wg-aholo-drop");
+      const dropIcon = el("span", "wg-aholo-drop-icon", "＋");
+      dropIcon.setAttribute("aria-hidden", "true");
+      this.dropTitle = el("b", "", "上传照片");
+      this.dropHelp = el("small", "", "同一物体的不同角度，第一张作为主视角 · PNG / JPG / WebP · 最多 32 张，合计 12 MB");
+      this.photoInput = el("input", "wg-aholo-file");
+      this.photoInput.type = "file";
+      this.photoInput.accept = "image/png,image/jpeg,image/webp";
+      this.photoInput.multiple = true;
+      this.photoInput.addEventListener("change", () => {
+        const files = Array.from(this.photoInput.files || []);
+        this.photoInput.value = "";
+        if (files.length) this._addPhotos(files);
+      });
+      this.drop.append(dropIcon, this.dropTitle, this.dropHelp, this.photoInput);
+      this.photoList = el("ul", "wg-aholo-photo-list");
+      this.photoList.setAttribute("aria-label", "已选视角");
+      this._renderPhotos();
+      this.drop.addEventListener("dragover", event => {
+        event.preventDefault();
+        this.drop.classList.add("is-over");
+      });
+      this.drop.addEventListener("dragleave", () => this.drop.classList.remove("is-over"));
+      this.drop.addEventListener("drop", event => {
+        event.preventDefault();
+        this.drop.classList.remove("is-over");
+        const files = Array.from(event.dataTransfer?.files || []);
+        if (files.length) this._addPhotos(files);
+      });
+      panePhoto.append(this.photoList, this.drop);
+      const paneText = el("div", "wg-aholo-pane");
+      this.promptInput = el("textarea", "wg-aholo-prompt");
+      this.promptInput.placeholder = "例如：一座长满青苔的小石庙，手工陶土质感，有一个小铃铛…";
+      this.promptInput.maxLength = 1200;
+      const styleRow = el("label", "wg-aholo-field");
+      styleRow.append(el("span", "", "风格 / Style"));
+      this.styleSelect = el("select", "wg-aholo-select");
+      for (const [value, label] of STYLES) {
+        const option = el("option", "", label);
+        option.value = value;
+        this.styleSelect.append(option);
+      }
+      this.styleSelect.value = this.style;
+      this.styleSelect.addEventListener("change", () => {
+        this.style = this.styleSelect.value;
+      });
+      styleRow.append(this.styleSelect);
+      paneText.append(this.promptInput, styleRow);
+      const paneModels = el("div", "wg-aholo-pane");
+      this.modelsHint = el("p", "wg-aholo-hint");
+      this.modelsGrid = el("div", "wg-aholo-models");
+      this.modelThumbnails = new ModelThumbnails();
+      this.thumbnailObserver = new IntersectionObserver(entries => {
+        for (const {
+          target,
+          isIntersecting
+        } of entries) {
+          if (!isIntersecting || !target.isConnected) continue;
+          this.thumbnailObserver.unobserve(target);
+          this._loadModelThumbnail(target);
+        }
+      }, {
+        root: this.panel
+      });
+      paneModels.append(this.modelsHint, this.modelsGrid);
+      this.panes.photo = panePhoto;
+      this.panes.text = paneText;
+      this.panes.models = paneModels;
+      this.panes.saves = this._buildSaves();
+      this.options = el("div", "wg-aholo-options");
+      const roleField = el("label", "wg-aholo-field");
+      roleField.append(el("span", "", "摆放行为"));
+      this.roleSelect = el("select", "wg-aholo-select");
+      for (const role of ROLES) {
+        const option = el("option", "", role.label);
+        option.value = role.id;
+        this.roleSelect.append(option);
+      }
+      this.roleSelect.addEventListener("change", () => {
+        this.views[this.tab].role = this.roleSelect.value;
+        this._updateRoleHint();
+      });
+      roleField.append(this.roleSelect);
+      const faceField = el("label", "wg-aholo-field");
+      faceField.append(el("span", "", "精度 / Detail"));
+      this.faceSelect = el("select", "wg-aholo-select");
+      for (const [value, label] of FACE_COUNTS) {
+        const option = el("option", "", label);
+        option.value = String(value);
+        this.faceSelect.append(option);
+      }
+      this.faceSelect.addEventListener("change", () => {
+        this.views[this.tab].faceCount = Number(this.faceSelect.value);
+      });
+      faceField.append(this.faceSelect);
+      this.options.append(roleField, faceField);
+      this.roleHint = el("p", "wg-aholo-hint");
+      this.statusEl = el("div", "wg-aholo-status");
+      this.statusEl.hidden = true;
+      this.statusText = el("div", "wg-aholo-status-text");
+      this.statusDetail = el("div", "wg-aholo-status-detail");
+      this.retryPollBtn = el("button", "wg-aholo-btn", "继续查询 / Retry status");
+      this.retryPollBtn.type = "button";
+      this.retryPollBtn.hidden = true;
+      this.retryPollBtn.addEventListener("click", () => this._startPolling(this.tab));
+      const progress = el("div", "wg-aholo-progress");
+      this.progressBar = el("span", "wg-aholo-progress-bar");
+      progress.append(this.progressBar);
+      this.statusEl.append(this.statusText, progress, this.statusDetail, this.retryPollBtn);
+      this.resultEl = el("div", "wg-aholo-result");
+      this.resultEl.hidden = true;
+      this.resultImage = el("img", "wg-aholo-result-image");
+      this.resultImage.alt = "Generated landmark";
+      this.resultInfo = el("div", "wg-aholo-result-info");
+      this.resultPlaceholder = el("div", "wg-aholo-result-placeholder", "Aholo Lux3D");
+      const resultCopy = el("div", "wg-aholo-result-copy");
+      const resultKicker = el("small", "wg-aholo-kicker", "GENERATED WITH AHOLO LUX3D");
+      const resultButtons = el("div", "wg-aholo-result-buttons");
+      this.placeBtn = el("button", "wg-aholo-btn wg-aholo-primary", "放入山谷 / Place");
+      this.placeBtn.type = "button";
+      this.placeBtn.disabled = true;
+      this.placeBtn.addEventListener("click", () => this.beginPlacement());
+      this.againBtn = el("button", "wg-aholo-btn", "再生成 / Again");
+      this.againBtn.type = "button";
+      this.againBtn.addEventListener("click", () => {
+        const view = this.views[this.tab];
+        view.result = null;
+        view.template = null;
+        this._setStatus(this.tab, null);
+        (this.tab === "photo" ? this.photoInput : this.promptInput).focus();
+      });
+      resultButtons.append(this.placeBtn, this.againBtn);
+      resultCopy.append(resultKicker, this.resultInfo, resultButtons);
+      this.resultEl.append(this.resultImage, this.resultPlaceholder, resultCopy);
+      this.footer = el("div", "wg-aholo-footer");
+      this.generateBtn = el("button", "wg-aholo-btn wg-aholo-primary wg-aholo-generate", "生成 / Generate");
+      this.generateBtn.type = "button";
+      this.generateBtn.addEventListener("click", () => this.generate());
+      const note = el("p", "wg-aholo-note", "由 Aholo Lux3D 生成 · 图片与提示词只用于本次生成");
+      this.footer.append(this.generateBtn, note);
+      this.modelResult = el("div", "");
+      this.modelResult.append(this.statusEl, this.resultEl);
+      this.editTools = el("div", "wg-aholo-edit-tools");
+      this.editHint = el("p", "wg-aholo-hint");
+      this.editModes = el("div", "wg-aholo-edit-modes");
+      this.editModes.hidden = true;
+      this.editModes.setAttribute("role", "group");
+      this.editModes.setAttribute("aria-label", "地标操控");
+      for (const [mode, label, glyph] of [["translate", "移动", "✥"], ["rotate", "旋转", "↻"]]) {
+        const button = el("button", "wg-aholo-btn");
+        const icon = el("span", "wg-aholo-edit-icon", glyph);
+        icon.setAttribute("aria-hidden", "true");
+        button.append(icon, label);
+        button.type = "button";
+        button.dataset.transformMode = mode;
+        button.addEventListener("click", () => this._setTransformMode(mode));
+        this.editModes.append(button);
+      }
+      this.editTools.append(this.editHint);
+      this._renderEditTools();
+      this.panel.append(header, lead, this.editTools, tabs, panePhoto, paneText, paneModels, this.panes.saves, this.options, this.roleHint, this.modelResult, this.footer);
+      document.body.append(this.overlay, this.editModes);
+      this.setTab("photo");
+    }
+    _updateRoleHint() {
+      const id = this.views[this.tab].role;
+      const role = ROLES.find(item => item.id === id) || DEFAULT_ROLE;
+      this.roleHint.textContent = `放入山谷后：${role.hint}`;
+    }
+    setTab(tab) {
+      if (tab !== this.tab) this._clearCardPlacement();
+      this.tab = tab;
+      for (const [id, button] of this.tabButtons) {
+        const active = id === tab;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-selected", String(active));
+      }
+      for (const [id, pane] of Object.entries(this.panes)) {
+        pane.hidden = id !== tab;
+      }
+      const generating = tab === "photo" || tab === "text";
+      this.options.hidden = this.roleHint.hidden = this.footer.hidden = !generating;
+      this.modelResult.hidden = !generating;
+      if (generating) {
+        this.roleSelect.value = this.views[tab].role;
+        this.faceSelect.value = String(this.views[tab].faceCount);
+        this._updateRoleHint();
+      }
+      this._renderView();
+      if (tab === "models") this._loadModels();
+      if (tab === "saves") this._renderSaves();
+    }
+    _buildSaves() {
+      const pane = el("div", "wg-aholo-pane wg-aholo-saves");
+      const form = el("form", "wg-aholo-save-form");
+      this.saveName = el("input", "wg-aholo-select");
+      this.saveName.setAttribute("aria-label", "存档名称");
+      this.saveName.placeholder = "存档名称，例如「柳岸石灯」";
+      this.saveName.maxLength = 60;
+      this.saveName.required = true;
+      this.saveButton = el("button", "wg-aholo-btn wg-aholo-primary", "保存为新存档");
+      this.saveButton.type = "submit";
+      form.append(this.saveName, this.saveButton);
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        const name = this.saveName.value.trim();
+        if (!name || this.layoutBusy || this.pendingLayout) return;
+        try {
+          this.saves.save(name, this._placementRecords());
+          this.saveName.value = "";
+          this.layoutNotice = `已保存「${name}」。`;
+        } catch {
+          this.layoutNotice = "存档保存失败，请检查浏览器存储空间。";
+        }
+        this._renderSaves();
+      });
+      const actions = el("div", "wg-aholo-save-actions");
+      this.resetLayoutButton = el("button", "wg-aholo-btn", "恢复原始山谷");
+      this.resetLayoutButton.type = "button";
+      this.resetLayoutButton.addEventListener("click", () => this._applyLayout([], "已恢复原始山谷，命名存档仍可载入。"));
+      this.retryLayoutButton = el("button", "wg-aholo-btn", "重试上次布局");
+      this.retryLayoutButton.type = "button";
+      this.retryLayoutButton.hidden = true;
+      this.retryLayoutButton.addEventListener("click", () => this._restoreCurrentLayout());
+      actions.append(this.resetLayoutButton, this.retryLayoutButton);
+      this.saveNotice = el("p", "wg-aholo-save-note");
+      this.saveNotice.setAttribute("role", "status");
+      this.saveList = el("div", "wg-aholo-save-list");
+      pane.append(el("p", "wg-aholo-save-note", "地标的位置和朝向会自动保存在当前浏览器。载入存档或恢复原始山谷会替换当前摆放。"), form, actions, this.saveNotice, this.saveList);
+      return pane;
+    }
+    _renderSaves() {
+      const locked = this.layoutBusy || Boolean(this.pendingLayout);
+      this.saveName.disabled = this.saveButton.disabled = locked;
+      this.resetLayoutButton.disabled = this.layoutBusy;
+      this.retryLayoutButton.hidden = !this.pendingLayout;
+      this.retryLayoutButton.disabled = this.layoutBusy;
+      this.saveNotice.textContent = this.layoutNotice || `当前摆放 ${this.placed.length} 个地标。`;
+      this.saveList.replaceChildren();
+      let saves;
+      try {
+        ({
+          saves
+        } = this.saves.load());
+      } catch {
+        this.saveList.append(el("p", "wg-aholo-save-note", "暂时无法读取本地存档。"));
+        return;
+      }
+      if (!saves.length) {
+        this.saveList.append(el("p", "wg-aholo-save-note", "还没有命名存档。"));
+        return;
+      }
+      for (const save of saves) {
+        const row = el("div", "wg-aholo-save-row");
+        const name = el("div", "wg-aholo-save-name");
+        name.append(el("b", "", save.name), el("small", "", `${save.placements.length} 个地标`));
+        const actions = el("div", "wg-aholo-save-actions");
+        const load = el("button", "wg-aholo-btn", "载入");
+        const remove = el("button", "wg-aholo-btn", "删除");
+        load.type = remove.type = "button";
+        load.disabled = remove.disabled = this.layoutBusy;
+        load.setAttribute("aria-label", `载入 ${save.name}`);
+        remove.setAttribute("aria-label", `删除 ${save.name}`);
+        load.addEventListener("click", () => this._applyLayout(save.placements, `已载入「${save.name}」。`));
+        remove.addEventListener("click", () => {
+          if (!window.confirm(`删除存档「${save.name}」？`)) return;
+          try {
+            this.saves.remove(save.id);
+            this.layoutNotice = `已删除「${save.name}」。`;
+          } catch {
+            this.layoutNotice = "删除失败，请检查浏览器存储。";
+          }
+          this._renderSaves();
+        });
+        actions.append(load, remove);
+        row.append(name, actions);
+        this.saveList.append(row);
+      }
+    }
+    _restoreCurrentLayout() {
+      try {
+        const {
+          current
+        } = this.saves.load();
+        if (!current.length) return;
+        this.pendingLayout = current;
+        this._applyLayout(current, "已恢复上次摆放。", false);
+      } catch {
+        this.layoutNotice = "暂时无法读取上次布局。";
+      }
+    }
+    async _applyLayout(placements, message, remember = true) {
+      if (this.layoutBusy) return;
+      this.layoutBusy = true;
+      this.layoutNotice = "正在载入布局…";
+      if (this.tab === "saves") this._renderSaves();
+      try {
+        const loading = new Map();
+        for (const {
+          url,
+          height,
+          template
+        } of this.placed) {
+          loading.set(`${url}|${height}`, template);
+        }
+        for (const {
+          result,
+          template
+        } of Object.values(this.views)) {
+          if (template) {
+            loading.set(`${result.modelUrl}|${template.height}`, template.root);
+          }
+        }
+        const models = await Promise.all(placements.map(({
+          url,
+          height
+        }) => {
+          const key = `${url}|${height}`;
+          if (!loading.has(key)) {
+            loading.set(key, this._fetchTemplate(url, {
+              height
+            }).then(({
+              root
+            }) => root));
+          }
+          return loading.get(key);
+        }));
+        if (remember) this.saves.setCurrent(placements);
+        this._disposeGhost();
+        this.placing = null;
+        this._clearPlacements();
+        placements.forEach((placement, index) => this._addPlacement(models[index], placement));
+        this.pendingLayout = null;
+        this.layoutNotice = message;
+      } catch {
+        this.layoutNotice = "布局载入失败。请检查模型文件或浏览器存储后重试。";
+        if (this.tab !== "saves") this._toast(this.layoutNotice, 5000);
+      } finally {
+        this.layoutBusy = false;
+        if (this.tab === "saves") this._renderSaves();
+      }
+    }
+    openPanel() {
+      if (this.open) return;
+      this.open = true;
+      this.overlay.hidden = false;
+      this.overlay.classList.add("is-open");
+      document.body.classList.add("aholo-open");
+      this.launch.setAttribute("aria-expanded", "true");
+      this.setTab(this.tab);
+      const focusTarget = this.tab === "text" ? this.promptInput : this.closeButton;
+      focusTarget.focus({
+        preventScroll: true
+      });
+    }
+    closePanel(restoreFocus = true) {
+      if (!this.open) return;
+      const hadFocus = this.overlay.contains(document.activeElement) || this.editModes.contains(document.activeElement);
+      this._clearCardPlacement();
+      this._selectPlaced(null);
+      this.open = false;
+      this.overlay.classList.remove("is-open");
+      this.overlay.hidden = true;
+      document.body.classList.remove("aholo-open");
+      this.launch.setAttribute("aria-expanded", "false");
+      if (restoreFocus && hadFocus) this.launch.focus({
+        preventScroll: true
+      });
+    }
+    _setStatus(tab, status, text, progress, detail) {
+      this.views[tab].status = status && {
+        status,
+        text,
+        progress,
+        detail
+      };
+      this._renderView(tab);
+    }
+    _renderView(tab = this.tab) {
+      if (tab !== this.tab || tab !== "photo" && tab !== "text") return;
+      const {
+        status,
+        result,
+        template,
+        thumbnail,
+        busy,
+        jobId
+      } = this.views[tab];
+      const locked = Boolean(busy || jobId);
+      this.generateBtn.disabled = locked;
+      this.roleSelect.disabled = locked;
+      this.faceSelect.disabled = locked;
+      if (tab === "photo") {
+        this.photoInput.disabled = locked;
+        for (const button of this.photoList.querySelectorAll("button")) {
+          button.disabled = locked;
+        }
+      } else {
+        this.promptInput.disabled = locked;
+        this.styleSelect.disabled = locked;
+      }
+      this.statusEl.hidden = !status;
+      if (status) {
+        this.statusEl.dataset.state = status.status;
+        this.statusText.textContent = status.text;
+        this.statusDetail.textContent = status.detail || "";
+        this.statusDetail.hidden = !status.detail;
+        this.progressBar.style.width = Math.max(0, Math.min(1, status.progress || 0)) * 100 + "%";
+        this.retryPollBtn.hidden = !jobId || busy;
+      }
+      this.resultEl.hidden = !result;
+      if (!result) return;
+      const visual = thumbnail || result.thumbUrl || result.inputUrl;
+      this.resultImage.hidden = !visual;
+      this.resultPlaceholder.hidden = Boolean(visual);
+      if (visual && this.resultImage.getAttribute("src") !== visual) {
+        this.resultImage.src = visual;
+      }
+      this._showMeta(result.meta, result);
+      this.placeBtn.disabled = !template;
+      this.placeBtn.textContent = template || status?.status === "error" ? "放入山谷 / Place" : "加载模型…";
+    }
+    _toast(text, duration = 3600) {
+      this.ctx.modules?.hud?.toast?.(text, duration);
+    }
+    _addPhotos(files) {
+      const view = this.views.photo;
+      if (view.busy || view.jobId) return;
+      if (files.some(({
+        type,
+        size
+      }) => !/^image\/(png|jpeg|webp)$/.test(type) || !size)) {
+        this._setStatus("photo", "error", "请上传有效的 PNG / JPG / WebP 图片。", 0);
+        return;
+      }
+      if (this.photoFiles.length + files.length > MAX_PHOTOS) {
+        this._setStatus("photo", "error", "最多添加 32 张照片。", 0);
+        return;
+      }
+      const existingBytes = this.photoFiles.reduce((sum, {
+        file
+      }) => sum + file.size, 0);
+      if (files.reduce((sum, file) => sum + file.size, existingBytes) > MAX_UPLOAD_BYTES) {
+        this._setStatus("photo", "error", "照片合计超过 12 MB，请压缩后再试。", 0);
+        return;
+      }
+      this.photoFiles.push(...files.map(file => ({
+        file,
+        url: URL.createObjectURL(file)
+      })));
+      this._renderPhotos();
+      this._setStatus("photo", null);
+    }
+    _renderPhotos() {
+      const hasPhotos = this.photoFiles.length > 0;
+      this.drop.classList.toggle("has-photo", hasPhotos);
+      this.dropTitle.textContent = hasPhotos ? "添加视角" : "上传照片";
+      this.dropHelp.hidden = hasPhotos;
+      this.photoList.hidden = !hasPhotos;
+      this.photoList.replaceChildren(...this.photoFiles.map(({
+        file,
+        url
+      }, index) => {
+        const item = el("li", "wg-aholo-photo-item");
+        const image = el("img", "wg-aholo-photo-image");
+        image.src = url;
+        image.alt = "";
+        const name = el("span", "wg-aholo-photo-label", file.name);
+        name.title = file.name;
+        const label = el("span", "wg-aholo-photo-caption");
+        label.append(el("b", "", index === 0 ? "主视角" : `视角 ${index + 1}`), name);
+        const remove = el("button", "wg-aholo-photo-remove", "×");
+        remove.type = "button";
+        remove.setAttribute("aria-label", `移除 ${file.name}`);
+        remove.addEventListener("click", () => {
+          const view = this.views.photo;
+          if (view.busy || view.jobId) return;
+          URL.revokeObjectURL(url);
+          this.photoFiles.splice(index, 1);
+          this._renderPhotos();
+          this._setStatus("photo", null);
+          (this.photoList.children[Math.min(index, this.photoFiles.length - 1)]?.querySelector("button") || this.photoInput).focus();
+        });
+        item.append(image, label, remove);
+        return item;
+      }));
+    }
+    async generate() {
+      const tab = this.tab;
+      if (tab !== "photo" && tab !== "text") return;
+      const view = this.views[tab];
+      if (view.busy || view.jobId) return;
+      let body;
+      const isJson = tab === "text";
+      if (!isJson) {
+        if (!this.photoFiles.length) {
+          this._setStatus(tab, "error", "先选一张照片，或者切到“文字”。", 0);
+          return;
+        }
+        body = new FormData();
+        for (const {
+          file
+        } of this.photoFiles) {
+          body.append("photo", file, file.name || "reference.png");
+        }
+        body.append("role", view.role);
+        body.append("faceCount", String(view.faceCount));
+      } else {
+        const prompt = this.promptInput.value.trim();
+        if (!prompt) {
+          this._setStatus(tab, "error", "先写一句你想生成的东西。", 0);
+          return;
+        }
+        body = {
+          prompt,
+          style: this.style,
+          role: view.role,
+          faceCount: view.faceCount
+        };
+      }
+      view.busy = true;
+      view.result = null;
+      view.template = null;
+      this._setStatus(tab, "queued", "正在连接 Aholo Lux3D…", 0.03);
+      try {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          ...(isJson ? {
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+          } : {
+            body
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data?.error || "Generation request failed.");
+        if (typeof data?.jobId !== "string" || !data.jobId) throw new Error("服务器没有返回任务编号。");
+        view.jobId = data.jobId;
+        this._startPolling(tab);
+      } catch (error) {
+        view.busy = false;
+        this._setStatus(tab, "error", "生成请求失败。", 0, error.message || String(error));
+      }
+    }
+    _startPolling(tab) {
+      const view = this.views[tab];
+      if (!view?.jobId) return;
+      view.busy = true;
+      view.pollFailures = 0;
+      view.pollDeadline = Date.now() + POLL_MAX_WAIT_MS;
+      this._setStatus(tab, "running", "正在查询生成任务…", 0.2);
+      this._poll(tab, ++view.pollToken);
+    }
+    _pausePolling(tab, detail) {
+      this.views[tab].busy = false;
+      this._setStatus(tab, "error", "暂时无法确认生成结果。", 0, detail);
+    }
+    async _poll(tab, token) {
+      const view = this.views[tab];
+      if (token !== view.pollToken) return;
+      try {
+        const response = await fetch("/api/jobs/" + encodeURIComponent(view.jobId), {
+          signal: AbortSignal.timeout(10_000)
+        });
+        const job = await response.json().catch(() => ({}));
+        if (token !== view.pollToken) return;
+        if (response.status === 404) {
+          view.busy = false;
+          view.jobId = null;
+          this._setStatus(tab, "error", "找不到这次生成任务。", 0, job?.error);
+          return;
+        }
+        if (!response.ok) throw new Error(job?.error || `任务查询失败（HTTP ${response.status}）。`);
+        if (job?.id !== view.jobId || !job.status) throw new Error("服务器没有返回有效的任务状态。");
+        view.pollFailures = 0;
+        if (job.status === "done") {
+          view.busy = false;
+          view.jobId = null;
+          if (tab === "photo") {
+            for (const {
+              url
+            } of this.photoFiles) URL.revokeObjectURL(url);
+            this.photoFiles = [];
+            this._renderPhotos();
+          } else {
+            this.promptInput.value = "";
+          }
+          if (this.tab === "models") this._loadModels();
+          this._selectResult(tab, {
+            ...job,
+            role: job.role || view.role
+          });
+          return;
+        }
+        if (job.status === "error") {
+          view.busy = false;
+          view.jobId = null;
+          this._setStatus(tab, "error", "这次生成没有完成。", 0, job.error);
+          return;
+        }
+        this._applyJob(tab, job);
+        if (Date.now() >= view.pollDeadline) {
+          this._pausePolling(tab, "任务仍在处理中，可以继续查询同一任务。");
+          return;
+        }
+        setTimeout(() => this._poll(tab, token), POLL_INTERVAL_MS);
+      } catch (error) {
+        if (token !== view.pollToken) return;
+        const failures = ++view.pollFailures;
+        if (failures >= POLL_MAX_FAILURES || Date.now() >= view.pollDeadline) {
+          this._pausePolling(tab, error.message || "任务状态查询失败。");
+          return;
+        }
+        view.status.detail = "连接暂时中断，正在重新查询同一任务…";
+        this._renderView(tab);
+        setTimeout(() => this._poll(tab, token), POLL_INTERVAL_MS * 2 ** (failures - 1));
+      }
+    }
+    _applyJob(tab, job) {
+      const labels = {
+        queued: "排队中…",
+        creating: "Aholo Lux3D 正在准备…",
+        running: "Aholo Lux3D 正在生成…",
+        downloading: "正在下载并整理模型…"
+      };
+      this._setStatus(tab, job.status, job.message || labels[job.status] || "处理中…", job.progress, job.error || (job.taskId ? "Aholo task #" + job.taskId : ""));
+    }
+    async _selectResult(tab, result, height = TARGET_HEIGHT) {
+      const view = this.views[tab];
+      const previous = view.result;
+      const reuse = previous?.modelUrl === result.modelUrl && view.template?.height === height;
+      view.result = result;
+      if (!reuse) view.template = null;
+      view.thumbnail = null;
+      this._setStatus(tab, null);
+      try {
+        if (!result.modelUrl) throw new Error("任务未返回模型文件。");
+        if (!view.template) {
+          const template = await this._fetchTemplate(result.modelUrl, {
+            height
+          });
+          if (view.result !== result) return;
+          view.template = template;
+          this._renderView(tab);
+        }
+      } catch (error) {
+        if (view.result !== result) return;
+        this._setStatus(tab, "error", "模型已生成，但加载失败。", 1, error.message || String(error));
+        return;
+      }
+      try {
+        const thumbnail = await this.modelThumbnails.get(result.modelUrl);
+        if (view.result !== result) return;
+        view.thumbnail = thumbnail;
+        this._renderView(tab);
+      } catch {}
+    }
+    _showMeta(meta, job) {
+      const bits = [];
+      if (meta?.triangles) bits.push(meta.triangles.toLocaleString() + " tris");
+      if (meta?.bytes) bits.push(formatBytes(meta.bytes));
+      if (job?.elapsedMs) bits.push(Math.round(job.elapsedMs / 1000) + "s");
+      if (job?.taskId) bits.push("Aholo #" + job.taskId);
+      this.resultInfo.textContent = bits.join(" · ") || "Generated with Aholo Lux3D";
+    }
+    async _fetchTemplate(url, meta) {
+      const height = Math.max(0.2, Number(meta?.height) || TARGET_HEIGHT);
+      const placed = this.placed.find(entry => entry.url === url && entry.height === height);
+      if (placed) return {
+        root: placed.template,
+        height
+      };
+      for (const {
+        result,
+        template
+      } of Object.values(this.views)) {
+        if (result?.modelUrl === url && template?.height === height) return template;
+      }
+      const key = `${url}|${height}`;
+      if (!this.loadingTemplates.has(key)) {
+        const loading = MODEL_LOADER.loadAsync(url).then(gltf => {
+          const template = this._prepareModel(gltf, {
+            ...meta,
+            height
+          });
+          this.editAnchors.set(template.root, getModelAnchorPoints(template.root));
+          return template;
+        }).finally(() => this.loadingTemplates.delete(key));
+        this.loadingTemplates.set(key, loading);
+      }
+      return this.loadingTemplates.get(key);
+    }
+    _prepareModel(gltf, meta) {
+      if (!gltf?.scene) throw new Error("The GLB did not contain a renderable scene.");
+      const source = gltf.scene;
+      source.traverse(object => {
+        if (!object.isMesh) return;
+        object.castShadow = true;
+        object.receiveShadow = true;
+        object.frustumCulled = true;
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        for (const material of materials) {
+          if (!material) continue;
+          if (material.transparent) {
+            material.alphaTest = Math.max(material.alphaTest || 0, 0.08);
+          }
+          material.transparent = false;
+          material.opacity = 1;
+          material.depthWrite = true;
+          material.depthTest = true;
+          material.alphaToCoverage = false;
+          if ("transmission" in material) material.transmission = 0;
+          material.envMapIntensity = 0.7;
+          material.needsUpdate = true;
+          if (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial) this._patchWeatherMaterial(material);
+        }
+      });
+      const wrapper = new Ry.Group();
+      wrapper.name = "AholoLandmark";
+      const pivot = new Ry.Group();
+      pivot.name = "AholoLandmarkPivot";
+      pivot.add(source);
+      wrapper.add(pivot);
+      wrapper.updateMatrixWorld(true);
+      let box = new Ry.Box3().setFromObject(pivot);
+      const size = box.getSize(new Ry.Vector3());
+      if (!Number.isFinite(size.y) || size.y <= 1e-6) throw new Error("The generated model has no measurable height.");
+      const targetHeight = Math.max(0.2, Number(meta?.height) || TARGET_HEIGHT);
+      const scale = targetHeight / size.y;
+      pivot.scale.setScalar(scale);
+      wrapper.updateMatrixWorld(true);
+      box = new Ry.Box3().setFromObject(pivot);
+      const center = box.getCenter(new Ry.Vector3());
+      pivot.position.x -= center.x;
+      pivot.position.z -= center.z;
+      pivot.position.y -= box.min.y;
+      wrapper.updateMatrixWorld(true);
+      wrapper.userData.aholo = {
+        ...(meta || {}),
+        height: targetHeight
+      };
+      return {
+        root: wrapper,
+        height: targetHeight
+      };
+    }
+    _patchWeatherMaterial(material) {
+      if (material.userData.aholoWeather) return;
+      material.userData.aholoWeather = true;
+      const previous = material.onBeforeCompile;
+      material.onBeforeCompile = (shader, renderer) => {
+        if (typeof previous === "function") previous.call(material, shader, renderer);
+        Object.assign(shader.uniforms, this.ctx.uniforms);
+        shader.fragmentShader = COMMON_GLSL + shader.fragmentShader.replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
+        vec3 aholoWorldPos = cameraPosition - vViewPosition * mat3(viewMatrix);
+        vec3 aholoWorldNormal = transformNormalByInverseViewMatrix(nonPerturbedNormal, viewMatrix);
+        vec3 aholoFaceNormal = cross(dFdx(vViewPosition), dFdy(vViewPosition));
+        float aholoFaceUp = transformNormalByInverseViewMatrix(aholoFaceNormal, viewMatrix).y;
+        // Keep smoothed corners from carrying snow down the actual side faces.
+        float aholoUp = min(aholoWorldNormal.y, aholoFaceUp + 0.12);
+        float aholoGrain = wgNoise3(aholoWorldPos * 43.0);
+        float aholoCatch = smoothstep(0.38, 0.86, aholoUp + (aholoGrain - 0.5) * 0.12);
+        float aholoSnow = smoothstep(0.18, 0.8, snowCover(aholoWorldPos.xz, aholoWorldNormal) * aholoCatch);
+        vec4 aholoGround = groundAt(aholoWorldPos.xz);
+        float aholoFrost = aholoGround.w * smoothstep(-0.3, 0.7, aholoUp) * 0.4 * (1.0 - aholoSnow);
+        vec3 aholoSnowColor = vec3(0.64, 0.68, 0.72) * mix(0.95, 1.05, aholoGrain);
+        diffuseColor.rgb *= mix(1.0, 0.64, aholoGround.y * 0.72);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.78, 0.83, 0.9), aholoFrost);
+        diffuseColor.rgb = mix(diffuseColor.rgb, aholoSnowColor, aholoSnow * 0.94);
+        roughnessFactor = mix(roughnessFactor, max(roughnessFactor, 0.9), aholoFrost);
+        roughnessFactor = mix(roughnessFactor, 0.84, aholoSnow);
+        metalnessFactor *= 1.0 - aholoSnow;
+        normal = normalize(mix(normal, nonPerturbedNormal, aholoSnow * 0.7));`);
+      };
+      material.customProgramCacheKey = () => "aholo-weather-3";
+      material.needsUpdate = true;
+    }
+    _modelCard(title, subtitle, result) {
+      const card = el("button", "wg-aholo-example");
+      card.type = "button";
+      const copy = el("span", "wg-aholo-example-copy");
+      const action = el("span", "wg-aholo-card-action", "放入山谷");
+      copy.append(el("b", "", title), el("small", "", subtitle), action);
+      card.append(copy);
+      card.addEventListener("click", () => this._placeFromCard(card, action, result));
+      return card;
+    }
+    async _loadModelThumbnail(preview) {
+      const image = preview.querySelector("img");
+      const label = preview.querySelector(".wg-aholo-model-preview-label");
+      try {
+        try {
+          image.src = await this.modelThumbnails.get(preview.dataset.modelUrl);
+          await image.decode();
+        } catch (error) {
+          const fallback = preview.dataset.thumbUrl;
+          if (!fallback) throw error;
+          image.src = fallback;
+          await image.decode();
+        }
+        image.hidden = false;
+        label.hidden = true;
+      } catch {
+        label.textContent = "预览不可用";
+      }
+    }
+    async _loadModels() {
+      if (this.modelsLoading) return;
+      this.modelsLoading = true;
+      this.modelsHint.textContent = "正在读取模型…";
+      try {
+        const response = await fetch("/api/models", {
+          signal: AbortSignal.timeout(8000)
+        });
+        if (!response.ok) throw new Error("Could not load models");
+        const models = await response.json();
+        if (!Array.isArray(models)) throw new Error("Invalid model library");
+        this.modelsHint.textContent = models.length ? "点击模型卡片，再到山谷画面里选择位置。" : "还没有生成的模型。可以从照片或文字开始。";
+        this.thumbnailObserver.disconnect();
+        this.modelsGrid.replaceChildren(...models.map(model => {
+          const role = (ROLES.find(({
+            id
+          }) => id === model.role) || DEFAULT_ROLE).label.split(" / ")[0];
+          const title = `${role} #${model.taskId || model.id.slice(0, 8)}`;
+          const type = model.mode === "photo" ? "照片生成" : "文字生成";
+          const date = new Date(model.createdAt).toLocaleDateString("zh-CN");
+          const card = this._modelCard(title, `${type} · ${date}`, model);
+          const preview = el("span", "wg-aholo-model-preview");
+          preview.setAttribute("aria-hidden", "true");
+          preview.dataset.modelUrl = model.modelUrl;
+          preview.dataset.thumbUrl = model.thumbUrl || "";
+          const image = el("img", "wg-aholo-model-image");
+          image.alt = "";
+          image.hidden = true;
+          preview.append(image, el("span", "wg-aholo-model-preview-label", "预览加载中…"));
+          card.prepend(preview);
+          this.thumbnailObserver.observe(preview);
+          return card;
+        }));
+      } catch {
+        this.modelsHint.textContent = "暂时无法读取模型库，请确认后端已启动。";
+      } finally {
+        this.modelsLoading = false;
+      }
+    }
+    async _placeFromCard(card, action, result) {
+      if (this.cardPlacement?.card === card || !this._canPlace()) return;
+      const view = this.views[this.tab];
+      this._clearCardPlacement();
+      this._disposeGhost();
+      this.placing = null;
+      const request = {
+        card,
+        action
+      };
+      this.cardPlacement = request;
+      card.setAttribute("aria-busy", "true");
+      action.textContent = "加载模型…";
+      let template;
+      try {
+        template = view.result?.modelUrl === result.modelUrl && view.template?.height === TARGET_HEIGHT ? view.template : await this._fetchTemplate(result.modelUrl, {
+          height: TARGET_HEIGHT
+        });
+      } catch {
+        if (this.cardPlacement !== request) return;
+        this._clearCardPlacement();
+        action.textContent = "加载失败，点击重试";
+        return;
+      }
+      if (this.cardPlacement !== request) return;
+      this._clearCardPlacement();
+      view.result = result;
+      view.template = template;
+      this.beginPlacement();
+    }
+    _clearCardPlacement() {
+      if (!this.cardPlacement) return;
+      const {
+        card,
+        action
+      } = this.cardPlacement;
+      this.cardPlacement = null;
+      card.removeAttribute("aria-busy");
+      action.textContent = "放入山谷";
+    }
+    _installInput() {
+      this._unregister = this.ctx.input.addHandler({
+        name: "aholo-placement",
+        priority: 120,
+        tools: ["hand"],
+        cursor: "crosshair",
+        activeCursor: "crosshair",
+        hitTest: pointer => {
+          if (!this.placing || this.layoutBusy) return null;
+          const hit = this._placementHit(pointer.ray);
+          if (!hit) return null;
+          return {
+            distance: this.camera.position.distanceTo(hit.point),
+            point: hit.point,
+            valid: hit.valid,
+            reason: hit.reason
+          };
+        },
+        onHover: hit => {
+          if (this.placing) this._updateGhost(hit);
+        },
+        onDown: (hit, pointer) => {
+          if (!this.placing || this.layoutBusy) return false;
+          const result = this._placementHit(pointer.ray);
+          if (!result?.valid) {
+            this._toast(result?.reason || "这里不适合放置，换一片空地。");
+            return true;
+          }
+          this._place(result.point);
+          return true;
+        },
+        onMove: pointer => {
+          if (this.placing) this._updateGhost(this._placementHit(pointer.ray));
+        },
+        onCancel: () => this.cancelPlacement()
+      });
+      this.editRaycaster = new Ry.Raycaster();
+      this.ctx.input.addHandler({
+        name: "aholo-transform",
+        priority: 130,
+        tools: "*",
+        cursor: "pointer",
+        activeCursor: "grabbing",
+        hitTest: pointer => this._editHit(pointer),
+        onDown: (hit, pointer) => {
+          if (hit.entry) {
+            this._selectPlaced(hit.entry);
+            return true;
+          }
+          const controls = this.transformControls;
+          controls.getHelper().updateMatrixWorld(true);
+          controls.pointerDown({
+            x: pointer.ndc.x,
+            y: pointer.ndc.y,
+            button: 0
+          });
+          if (!controls.dragging) return false;
+          const entry = this.selectedEntry;
+          const {
+            position,
+            quaternion
+          } = entry.root;
+          this.transformDrag = {
+            entry,
+            position: position.clone(),
+            quaternion: quaternion.clone(),
+            surfaceY: this._editSurfaceHeight(position.x, position.z)
+          };
+          return true;
+        },
+        onMove: pointer => this._moveTransform(pointer),
+        onUp: () => this._finishTransform(true),
+        onCancel: () => this._finishTransform(false),
+        onWheel: () => Boolean(this.transformDrag),
+        onHover: hit => {
+          if (!hit && this.transformControls && !this.transformDrag) {
+            this.transformControls.axis = null;
+          }
+        }
+      });
+    }
+    _renderEditTools() {
+      this.editTools.hidden = !this.placed.length;
+      if (!this.selectedEntry) this.editModes.hidden = true;
+      for (const button of this.editModes.children) {
+        button.setAttribute("aria-pressed", String(button.dataset.transformMode === this.transformMode));
+      }
+      this.editHint.textContent = !this.selectedEntry ? "点击山谷中的地标即可编辑。" : this.transformMode === "rotate" ? "拖动圆环旋转地标。" : "拖动箭头移动地标，绿色箭头调节高度。";
+    }
+    _selectPlaced(entry) {
+      if (entry === this.selectedEntry) return;
+      this._finishTransform(false);
+      this.selectedEntry = entry;
+      if (entry) {
+        if (!this.editAnchors.has(entry.template)) {
+          this.editAnchors.set(entry.template, getModelAnchorPoints(entry.template));
+        }
+        const controls = this._getTransformControls();
+        controls.setMode(this.transformMode);
+        controls.attach(entry.root);
+      } else {
+        this.transformControls?.detach();
+      }
+      this.ctx.input.invalidateHover();
+      this._renderEditTools();
+    }
+    _getTransformControls() {
+      if (this.transformControls) return this.transformControls;
+      const controls = new TransformControls(this.camera);
+      const helper = controls.getHelper();
+      helper.traverse(object => object.layers.set(TRANSFORM_LAYER));
+      controls.getRaycaster().layers.set(TRANSFORM_LAYER);
+      controls.setSize(0.7);
+      controls.addEventListener("objectChange", () => this._constrainTranslation());
+      this.camera.layers.enable(TRANSFORM_LAYER);
+      this.scene.add(helper);
+      this.transformControls = controls;
+      return controls;
+    }
+    _setTransformMode(mode) {
+      this._finishTransform(false);
+      this.transformMode = mode;
+      if (this.transformControls) {
+        this.transformControls.axis = null;
+        this.transformControls.setMode(mode);
+      }
+      this.ctx.input.invalidateHover();
+      this._renderEditTools();
+    }
+    _editHit(pointer) {
+      if (!this.open || this.placing || this.cardPlacement || this.layoutBusy || this.pendingLayout || this.ctx.modules?.hud?.settings?.open || !this.placed.length) return null;
+      if (this.selectedEntry) {
+        this.transformControls.getHelper().updateMatrixWorld(true);
+        this.transformControls.pointerHover(pointer.ndc);
+        if (this.transformControls.axis) return {
+          distance: 0
+        };
+      }
+      this.editRaycaster.ray.copy(pointer.ray);
+      let nearest = null;
+      for (const entry of this.placed) {
+        const [hit] = this.editRaycaster.intersectObject(entry.root);
+        if (hit && (!nearest || hit.distance < nearest.distance)) {
+          nearest = {
+            entry,
+            distance: hit.distance
+          };
+        }
+      }
+      if (!nearest) return null;
+      const ground = this.ctx.terrain.raycast(pointer.ray, this._rayPoint);
+      return !ground || pointer.ray.origin.distanceTo(ground) >= nearest.distance ? nearest : null;
+    }
+    _editSurfaceHeight(x, z) {
+      return Math.max(this.ctx.terrain.height(x, z), this.ctx.world.lakeLevel + 0.035);
+    }
+    _moveTransform(pointer) {
+      if (!this.transformDrag) return;
+      const controls = this.transformControls;
+      controls.getHelper().updateMatrixWorld(true);
+      controls.pointerMove({
+        x: pointer.ndc.x,
+        y: pointer.ndc.y,
+        button: -1
+      });
+    }
+    _constrainTranslation() {
+      const drag = this.transformDrag;
+      if (!drag || this.transformMode !== "translate") return;
+      const {
+        position
+      } = drag.entry.root;
+      const limitX = LANDSCAPE_BOUNDS.halfW - 0.25;
+      const limitZ = LANDSCAPE_BOUNDS.halfD - 0.25;
+      position.x = Ry.MathUtils.clamp(position.x, -limitX, limitX);
+      position.z = Ry.MathUtils.clamp(position.z, -limitZ, limitZ);
+      const floor = this._editSurfaceHeight(position.x, position.z);
+      position.y = Math.max(position.y + floor - drag.surfaceY, floor + drag.entry.height * 0.5);
+    }
+    _finishTransform(commit) {
+      if (!this.transformDrag) return;
+      const {
+        entry,
+        position,
+        quaternion
+      } = this.transformDrag;
+      this.transformDrag = null;
+      this.transformControls.pointerUp(null);
+      const {
+        root
+      } = entry;
+      if (!commit || !root.position.toArray().every(Number.isFinite) || !root.quaternion.toArray().every(Number.isFinite)) {
+        root.position.copy(position);
+        root.quaternion.copy(quaternion);
+        return;
+      }
+      if (root.position.equals(position) && root.quaternion.equals(quaternion)) return;
+      entry.x = root.position.x;
+      entry.y = root.position.y - entry.height * 0.5;
+      entry.z = root.position.z;
+      if (this.transformMode === "rotate") {
+        entry.pitch = root.rotation.x;
+        entry.yaw = root.rotation.y;
+        entry.roll = root.rotation.z;
+        if (entry.role === "wind") {
+          entry.windYawOffset = shortAngle(entry.yaw - this._windYaw(entry));
+        }
+      }
+      if (entry.obstacle) {
+        entry.obstacle.x = entry.x;
+        entry.obstacle.z = entry.z;
+      }
+      this._savePlacementLayout();
+    }
+    _placementHit(ray) {
+      const point = this.ctx.terrain.raycast(ray, this._rayPoint);
+      if (!point) return null;
+      const x = point.x;
+      const z = point.z;
+      const limitX = LANDSCAPE_BOUNDS.halfW - 0.25;
+      const limitZ = LANDSCAPE_BOUNDS.halfD - 0.25;
+      if (Math.abs(x) > limitX || Math.abs(z) > limitZ) return {
+        point,
+        x,
+        z,
+        valid: false,
+        reason: "太靠近地图边缘了。"
+      };
+      if (point.y <= this.ctx.world.lakeLevel + 0.035) return {
+        point,
+        x,
+        z,
+        valid: false,
+        reason: "水面不能放置地标，找一片陆地。"
+      };
+      const step = 0.09;
+      const dhx = this.ctx.terrain.height(x + step, z) - point.y;
+      const dhz = this.ctx.terrain.height(x, z + step) - point.y;
+      const slope = Math.hypot(dhx, dhz) / step;
+      if (slope > 1.55) return {
+        point,
+        x,
+        z,
+        valid: false,
+        reason: "坡太陡了，换一片平地。"
+      };
+      if (this.placed.some(item => Math.hypot(item.x - x, item.z - z) < 0.24)) return {
+        point,
+        x,
+        z,
+        valid: false,
+        reason: "离另一个地标太近了。"
+      };
+      return {
+        point,
+        x,
+        z,
+        valid: true,
+        reason: ""
+      };
+    }
+    _canPlace() {
+      if (this.layoutBusy || this.pendingLayout) {
+        this._toast("请先在山谷存档中恢复或切换布局。");
+        return false;
+      }
+      if (this.ctx.photo?.active || this.ctx.exploration?.active) {
+        this._toast("先退出拍照/探索模式，再放置地标。");
+        return false;
+      }
+      return true;
+    }
+    beginPlacement() {
+      if (!this._canPlace()) return;
+      const view = this.views[this.tab];
+      if (!view?.template) {
+        this._toast("模型还没加载好，稍等一下。");
+        return;
+      }
+      document.activeElement?.blur?.();
+      this._selectPlaced(null);
+      this.ctx.input.setTool("hand");
+      this.placing = {
+        template: view.template.root,
+        url: view.result.modelUrl,
+        height: view.template.height,
+        role: view.result.role || DEFAULT_ROLE.id,
+        valid: false
+      };
+      this._getTransformControls();
+      this._createGhost(this.placing.template);
+      this._toast("移动鼠标选择位置，点击放置；Esc 取消。", 4200);
+      this.ctx.events?.emit?.("aholo:placement-start", {});
+    }
+    _createGhost(template) {
+      this._disposeGhost();
+      const ghost = template.clone(true);
+      ghost.name = "AholoGhost";
+      ghost.traverse(object => {
+        if (!object.isMesh) return;
+        object.castShadow = false;
+        object.receiveShadow = false;
+        object.renderOrder = 20;
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        object.material = materials.map(material => {
+          if (!material) return material;
+          const clone = material.clone();
+          clone.transparent = true;
+          clone.opacity = 0.46;
+          clone.depthWrite = false;
+          clone.depthTest = true;
+          if (clone.color) clone.color.multiplyScalar(0.9);
+          clone.needsUpdate = true;
+          return clone;
+        });
+        if (!Array.isArray(materials)) object.material = object.material[0];
+      });
+      ghost.visible = false;
+      this.ghost = ghost;
+      this.scene.add(ghost);
+      const markerMaterial = new Ry.MeshBasicMaterial({
+        color: 0x8dffb0,
+        transparent: true,
+        opacity: 0.85,
+        side: Ry.DoubleSide,
+        depthWrite: false
+      });
+      const marker = new Ry.Mesh(new Ry.RingGeometry(0.22, 0.29, 48), markerMaterial);
+      marker.rotation.x = -Math.PI / 2;
+      marker.visible = false;
+      marker.renderOrder = 21;
+      this.marker = marker;
+      this.scene.add(marker);
+    }
+    _updateGhost(hit) {
+      if (!this.ghost || !this.marker) return;
+      if (!hit?.point) {
+        this.ghost.visible = false;
+        this.marker.visible = false;
+        return;
+      }
+      const point = hit.point;
+      this.ghost.position.set(point.x, point.y, point.z);
+      this.ghost.rotation.y = Math.atan2(this.camera.position.x - point.x, this.camera.position.z - point.z);
+      this.ghost.visible = true;
+      this.marker.position.set(point.x, point.y + 0.012, point.z);
+      this.marker.visible = true;
+      this.marker.material.color.setHex(hit.valid ? 0x8dffb0 : 0xff6b5e);
+      this.marker.scale.setScalar(hit.valid ? 1 : 0.82);
+      this.placing.valid = Boolean(hit.valid);
+    }
+    _place(point) {
+      if (!this.placing) return;
+      const {
+        template,
+        url,
+        height,
+        role
+      } = this.placing;
+      const entry = this._addPlacement(template, {
+        url,
+        x: point.x,
+        y: point.y,
+        z: point.z,
+        yaw: Math.atan2(this.camera.position.x - point.x, this.camera.position.z - point.z),
+        height,
+        role
+      });
+      this._disposeGhost();
+      this.placing = null;
+      this.ctx.audio?.play?.("pop", {
+        volume: 0.45,
+        pitch: 1.1
+      });
+      this._savePlacementLayout("地标已放进风栖谷，摆放位置已自动保存。");
+      if (this.open) {
+        this._setTransformMode("translate");
+        this._selectPlaced(entry);
+      }
+      this.ctx.events?.emit?.("aholo:place", {
+        id: entry.id,
+        role: entry.role,
+        x: entry.x,
+        y: entry.y,
+        z: entry.z
+      });
+    }
+    _savePlacementLayout(message) {
+      try {
+        this.saves.setCurrent(this._placementRecords());
+        this.layoutNotice = "当前摆放已自动保存。";
+        if (message) this._toast(message, 4200);
+      } catch {
+        this.layoutNotice = "摆放已完成，但浏览器未能自动保存。";
+        this._toast(this.layoutNotice, 5000);
+      }
+      if (this.tab === "saves") this.saveNotice.textContent = this.layoutNotice;
+    }
+    _addPlacement(template, placement) {
+      const {
+        x,
+        y,
+        z,
+        yaw,
+        pitch = 0,
+        roll = 0,
+        windYawOffset = 0,
+        role,
+        height
+      } = placement;
+      const root = new Ry.Group();
+      const model = template.clone(true);
+      model.position.y = -height * 0.5;
+      root.add(model);
+      root.position.set(x, y + height * 0.5, z);
+      root.rotation.set(pitch, yaw, roll, "YXZ");
+      this.scene.add(root);
+      const entry = {
+        ...placement,
+        pitch,
+        roll,
+        windYawOffset,
+        id: "aholo-" + root.id,
+        root,
+        template
+      };
+      if (role === "lantern") this.lanterns.push(entry);
+      this.placed.push(entry);
+      this.ctx.aholoLandmarks.push(entry);
+      const navigation = this.ctx.modules.character?.navigation;
+      if (navigation?.obstacles) {
+        entry.obstacle = {
+          id: entry.id,
+          kind: "circle",
+          x,
+          z,
+          radius: Math.max(0.1, height * 0.16)
+        };
+        navigation.obstacles.push(entry.obstacle);
+      }
+      this._renderEditTools();
+      return entry;
+    }
+    _placementRecords() {
+      return this.placed.map(({
+        url,
+        x,
+        y,
+        z,
+        yaw,
+        pitch,
+        roll,
+        windYawOffset,
+        role,
+        height
+      }) => ({
+        url,
+        x,
+        y,
+        z,
+        yaw,
+        pitch,
+        roll,
+        windYawOffset,
+        role,
+        height
+      }));
+    }
+    _clearPlacements() {
+      this._selectPlaced(null);
+      const ids = new Set(this.placed.map(({
+        id
+      }) => id));
+      for (const {
+        root
+      } of this.placed) this.scene.remove(root);
+      this.placed.length = 0;
+      this.lanterns.length = 0;
+      for (const light of this.lanternLights) light.intensity = 0;
+      this._renderEditTools();
+      const obstacles = this.ctx.modules.character?.navigation?.obstacles;
+      for (const entries of [this.ctx.aholoLandmarks, obstacles]) {
+        if (!entries) continue;
+        for (let index = entries.length - 1; index >= 0; index--) {
+          if (ids.has(entries[index].id)) entries.splice(index, 1);
+        }
+      }
+    }
+    cancelPlacement() {
+      if (!this.placing && !this.cardPlacement) return;
+      this._clearCardPlacement();
+      this._disposeGhost();
+      this.placing = null;
+      this._toast("已取消放置。");
+    }
+    _disposeGhost() {
+      if (this.ghost) {
+        this.scene.remove(this.ghost);
+        this.ghost.traverse(object => {
+          if (!object.isMesh) return;
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          for (const material of materials) material?.dispose?.();
+        });
+        this.ghost = null;
+      }
+      if (this.marker) {
+        this.scene.remove(this.marker);
+        this.marker.geometry?.dispose?.();
+        this.marker.material?.dispose?.();
+        this.marker = null;
+      }
+    }
+    _windYaw(entry) {
+      this.ctx.wind.sample(entry.x, entry.z, this._windSample);
+      return Math.atan2(this._windSample.x, this._windSample.z) + Math.PI * 0.5;
+    }
+    _updateLanternLights() {
+      const night = this.ctx.world.night;
+      if (night && this.lanterns.length > this.lanternLights.length) {
+        const cameraPosition = this.camera.position;
+        this.lanterns.sort((a, b) => a.root.position.distanceToSquared(cameraPosition) - b.root.position.distanceToSquared(cameraPosition));
+      }
+      for (const [index, light] of this.lanternLights.entries()) {
+        const entry = this.lanterns[index];
+        if (!entry || !night) {
+          light.intensity = 0;
+          continue;
+        }
+        entry.root.localToWorld(light.position.set(0, entry.height * 0.05, 0));
+        const flicker = 0.86 + 0.14 * Math.sin(this.time * 9 + entry.x * 3);
+        light.intensity = night * 1.15 * flicker;
+      }
+    }
+    beforeRender() {
+      const entry = this.selectedEntry;
+      if (!entry || !this.open || this.cardPlacement) {
+        this.editModes.hidden = true;
+        return;
+      }
+      this.camera.updateMatrixWorld();
+      entry.root.updateWorldMatrix(true, false);
+      const anchors = this.editAnchors.get(entry.template);
+      const point = this.editProjection;
+      let left = Infinity;
+      let right = -Infinity;
+      let top = -Infinity;
+      let bottom = Infinity;
+      for (const anchor of anchors) {
+        point.copy(anchor).setY(anchor.y - entry.height * 0.5).applyMatrix4(entry.root.matrixWorld).project(this.camera);
+        if (!(point.z >= -1 && point.z <= 1)) {
+          this.editModes.hidden = true;
+          return;
+        }
+        left = Math.min(left, point.x);
+        right = Math.max(right, point.x);
+        top = Math.max(top, point.y);
+        bottom = Math.min(bottom, point.y);
+      }
+      if (left > 1 || right < -1 || top < -1 || bottom > 1) {
+        this.editModes.hidden = true;
+        return;
+      }
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const x = (Math.max(left, -1) + Math.min(right, 1) + 2) * width / 4;
+      const y = (1 - Math.min(top, 1)) * height / 2 - 12;
+      this.editModes.hidden = false;
+      const insetX = this.editModes.offsetWidth * 0.5 + 8;
+      const insetY = this.editModes.offsetHeight + 8;
+      const leftPx = `${Math.round(Ry.MathUtils.clamp(x, insetX, width - insetX))}px`;
+      const topPx = `${Math.round(Math.max(y, insetY))}px`;
+      if (this.editModes.style.left !== leftPx) this.editModes.style.left = leftPx;
+      if (this.editModes.style.top !== topPx) this.editModes.style.top = topPx;
+    }
+    update(dt) {
+      this.time += dt;
+      if (this.selectedEntry && this.ctx.modules?.hud?.settings?.open) {
+        this._selectPlaced(null);
+      }
+      if (this.marker) {
+        const pulse = 0.62 + 0.25 * Math.sin(this.time * 5);
+        this.marker.material.opacity = this.placing?.valid ? pulse : 0.55;
+        this.marker.rotation.z += dt * 0.4;
+      }
+      for (const entry of this.placed) {
+        if (entry.role === "wind" && entry !== this.selectedEntry) {
+          const target = this._windYaw(entry) + entry.windYawOffset;
+          const delta = shortAngle(target - entry.root.rotation.y);
+          entry.root.rotation.y += delta * Math.min(1, dt * 2.2);
+        }
+      }
+      this._updateLanternLights();
+    }
+    _handleKey(event) {
+      if (event.key !== "Escape" || event.isComposing || event.defaultPrevented) return;
+      if (this.placing || this.cardPlacement) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.cancelPlacement();
+        return;
+      }
+      if (this.selectedEntry) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.transformDrag) this._finishTransform(false);else this._selectPlaced(null);
+        return;
+      }
+      if (this.open) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.closePanel();
+      }
+    }
+  }
+}
+{
+  const MODULE_REGISTRY = [["audio", AudioController], ["sky", SkySystem], ["terrain", TerrainSystem], ["water", WaterSystem], ["vegetation", VegetationSystem], ["landscapeVegetation", LandscapeVegetationSystem], ["willows", WillowSystem], ["alpineTown", AlpineTownLandmark], ["farm", FarmSystem], ["woodworkingYard", WoodworkingYard], ["hikingTrail", HikingTrail], ["life", LifeSystem], ["treeFruit", TreeFruitSystem], ["clouds", CloudSystem], ["precipitation", PrecipitationSystem], ["fog", FogSystem], ["backdrop", BackdropSystem], ["hud", HudSystem], ["aholo", AholoCreate], ["mountainRuins", MountainRuins], ["character", CharacterSystem]];
   const appParams = new URLSearchParams(location.search);
   const terrainInspectionEnabled = import.meta.env.DEV && appParams.get("inspection") === "terrain";
   if (terrainInspectionEnabled) prepareTerrainInspection(appParams);

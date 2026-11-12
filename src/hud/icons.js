@@ -118,6 +118,9 @@ const HUD_ICONS = {
   migration: createHudSvg(
     '<path d="M3 17h18M6 20h12M7 17a5 5 0 0 1 10 0M3 8q2-.5 3.5 2 1.5-2.5 3.5-2M13 6q2-.5 3.5 2 1.5-2.5 3.5-2"/>',
   ),
+  lanterns: createHudSvg(
+    '<path d="M7 14a13 13 0 0 1-1.5-6 6.5 6.5 0 0 1 13 0 13 13 0 0 1-1.5 6l-2 4H9l-2-4zM9 18h6M12 20v2"/><path d="M12 14.5c-2 0-2.7-2.6 0-4.5 2.7 1.9 2 4.5 0 4.5z"/>',
+  ),
   flake: createHudSvg(
     `<path d="${createSnowflakePath(12, 12, 9, 3)}"/>`,
     'stroke-width="2"',

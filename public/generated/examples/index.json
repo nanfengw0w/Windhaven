@@ -1,0 +1,22 @@
+[
+  {
+    "id": "ceramic-cat",
+    "title": "守山灵猫",
+    "titleEn": "Ceramic Guardian",
+    "subtitle": "照片生成 · 陶猫 · Guardian",
+    "prompt": "A cream handmade ceramic cat figurine with a gold collar, soft studio light, plain warm background.",
+    "model": "/generated/examples/ceramic-cat/model.glb",
+    "thumb": "/generated/examples/ceramic-cat/thumb.png",
+    "input": "/generated/examples/ceramic-cat/input.png",
+    "role": "guardian",
+    "height": 0.9,
+    "taskId": 4881018,
+    "meta": {
+      "triangles": 27914,
+      "meshes": 1,
+      "materials": 1,
+      "bytes": 8856096,
+      "version": "G1-Turbo"
+    }
+  }
+]

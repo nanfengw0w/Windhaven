@@ -2283,9 +2283,15 @@ body.ready #veil {
   outline-offset: 2px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .wg-hud {
     --weather-bottom: calc(var(--gut) + var(--sab) + var(--tool-h) + 24px);
+  }
+}
+
+@media (min-width: 601px) and (max-width: 740px) {
+  .wg-hud .wg-weather-preset {
+    width: 48px;
   }
 }
 
@@ -2384,7 +2390,7 @@ body.exploration-cursor-free .wg-exploration-reticle {
     width: max-content;
   }
 }
-@media (max-width: 600px) {
+@media (max-width: 600px), (max-width: 820px) and (max-height: 560px) {
   .wg-hud .wg-weather-presets {
     flex-direction: column;
     max-height: calc(100dvh - 190px - var(--sat) - var(--sab));
@@ -2396,6 +2402,8 @@ body.exploration-cursor-free .wg-exploration-reticle {
     max-height: calc(100dvh - 110px - var(--sat) - var(--sab));
     overflow-y: auto;
   }
+}
+@media (max-width: 600px) {
   body.exploration-active .wg-hud .wg-dock {
     max-height: calc(100dvh - 110px - var(--sat) - var(--sab));
     overflow-y: auto;
@@ -2791,5 +2799,868 @@ body.photo-active .wg-hud .wg-dock {
       100dvh - 180px - env(safe-area-inset-top, 0px) -
         env(safe-area-inset-bottom, 0px)
     );
+  }
+}
+
+/* ----------------------------------------------------------------------- */
+/* Aholo Lux3D creation studio                                             */
+/* ----------------------------------------------------------------------- */
+.wg-aholo-launch {
+  position: fixed;
+  top: calc(172px + env(safe-area-inset-top, 0px));
+  right: calc(18px + env(safe-area-inset-right, 0px));
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 14px 8px 11px;
+  border: 1px solid rgba(255, 217, 138, 0.3);
+  border-radius: 15px;
+  background:
+    linear-gradient(135deg, rgba(255, 217, 138, 0.12), rgba(255, 217, 138, 0.02)),
+    rgba(18, 19, 20, 0.78);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+  font: 500 12px/1.15 var(--font);
+  text-align: left;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+.wg-aholo-launch:hover {
+  border-color: rgba(255, 217, 138, 0.65);
+  background:
+    linear-gradient(135deg, rgba(255, 217, 138, 0.2), rgba(255, 217, 138, 0.04)),
+    rgba(18, 19, 20, 0.86);
+  transform: translateY(-1px);
+}
+.wg-aholo-launch:focus-visible {
+  outline: 2px solid rgba(255, 217, 138, 0.9);
+  outline-offset: 3px;
+}
+.wg-aholo-spark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: radial-gradient(circle at 35% 25%, #fff4cf, #e7bd67 55%, #9b6c22);
+  color: #3b2a10;
+  font-size: 17px;
+  line-height: 1;
+  box-shadow: 0 0 18px rgba(255, 205, 120, 0.28);
+}
+.wg-aholo-launch-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wg-aholo-launch-copy b {
+  color: #ffe7b0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+.wg-aholo-launch-copy small {
+  color: var(--ink-dim);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+body.photo-active .wg-aholo-launch,
+body.exploration-active .wg-aholo-launch,
+body:has(.wg-settings:not([hidden])) .wg-aholo-launch,
+body.aholo-open .wg-aholo-launch {
+  display: none;
+}
+
+.wg-aholo-overlay {
+  --wg-workbench-bottom: 96px;
+  position: fixed;
+  top: calc(172px + env(safe-area-inset-top, 0px));
+  right: calc(18px + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--wg-workbench-bottom) + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  display: none;
+  width: clamp(300px, 19vw, 384px);
+}
+.wg-aholo-overlay.is-open {
+  display: block;
+}
+.wg-aholo-overlay.is-open .wg-aholo-panel {
+  animation: wg-aholo-fade 0.18s ease;
+}
+body:has(.wg-settings:not([hidden])) .wg-aholo-overlay {
+  visibility: hidden;
+}
+@keyframes wg-aholo-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.wg-aholo-panel {
+  --wg-workbench-padding: 18px;
+  --wg-workbench-tint: rgba(21, 19, 17, 0.62);
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--wg-workbench-padding) 18px;
+  border: 1px solid rgba(255, 246, 228, 0.16);
+  border-radius: 17px;
+  background:
+    linear-gradient(180deg, #fffaf013, #fffaf004 38%, #0000000d),
+    var(--wg-workbench-tint);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 240, 0.14),
+    0 10px 34px rgba(0, 0, 0, 0.35);
+  color: var(--ink);
+  font-family: var(--font);
+  scrollbar-color: rgba(255, 217, 138, 0.28) transparent;
+  scrollbar-width: thin;
+}
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .wg-aholo-panel {
+    --wg-workbench-tint: rgba(22, 20, 18, 0.86);
+  }
+}
+.wg-aholo-panel [hidden] {
+  display: none !important;
+}
+.wg-aholo-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-inline: calc(0px - var(--wg-workbench-padding));
+  padding: 14px var(--wg-workbench-padding);
+  border-bottom: 1px solid rgba(255, 217, 138, 0.13);
+  background: rgba(26, 24, 21, 0.36);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.wg-aholo-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.wg-aholo-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 217, 138, 0.35);
+  border-radius: 13px;
+  background: linear-gradient(145deg, #f7e2ad, #b98334);
+  color: #2b1c09;
+  font: 700 20px/1 var(--serif);
+  box-shadow: 0 0 24px rgba(255, 200, 100, 0.2);
+}
+.wg-aholo-brand b {
+  display: block;
+  color: #ffe9b8;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+}
+.wg-aholo-brand small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-dim);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.wg-aholo-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 246, 228, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink-dim);
+  font: 300 20px/1 var(--font);
+  cursor: pointer;
+}
+.wg-aholo-close:hover {
+  border-color: rgba(255, 217, 138, 0.45);
+  color: var(--ink);
+}
+.wg-aholo-close:focus-visible {
+  outline: 1px solid #ffe7b0;
+  outline-offset: 2px;
+}
+.wg-aholo-lead {
+  margin: 16px 0;
+  color: rgba(244, 239, 230, 0.7);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+.wg-aholo-edit-tools {
+  margin-bottom: 14px;
+}
+.wg-aholo-edit-tools .wg-aholo-hint {
+  margin: 5px 0 0;
+}
+.wg-aholo-edit-modes {
+  position: fixed;
+  z-index: 29;
+  display: flex;
+  gap: 4px;
+  width: max-content;
+  padding: 4px;
+  border: 1px solid #ffe3a67a;
+  border-radius: 999px;
+  background: linear-gradient(155deg, #3a3022ee, #221c16ec);
+  box-shadow:
+    0 5px 16px #120d096b,
+    inset 0 1px #fff1cf1f;
+  transform: translate(-50%, -100%);
+  transform-origin: center bottom;
+  pointer-events: none;
+  animation: wg-aholo-edit-pop 0.19s cubic-bezier(0.2, 0.8, 0.3, 1.18) both;
+}
+.wg-aholo-edit-modes::after {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  border: solid #ffe3a67a;
+  border-width: 0 1px 1px 0;
+  border-radius: 0 0 3px;
+  background: #281f17;
+  content: "";
+  transform: translateX(-50%) rotate(45deg);
+}
+.wg-aholo-edit-modes[hidden],
+body:not(.aholo-open) .wg-aholo-edit-modes,
+body.photo-active .wg-aholo-edit-modes,
+body.exploration-active .wg-aholo-edit-modes,
+body:has(.wg-settings:not([hidden])) .wg-aholo-edit-modes {
+  display: none;
+}
+@keyframes wg-aholo-edit-pop {
+  from {
+    opacity: 0;
+    scale: 0.88;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+.wg-aholo-edit-modes .wg-aholo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 4px 9px;
+  border-color: transparent;
+  border-radius: 999px;
+  color: #fff0d1;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.wg-aholo-edit-modes button.wg-aholo-btn[aria-pressed="true"] {
+  border-color: #ffe5a8;
+  background: linear-gradient(180deg, #ffe9b3, #ebbe70);
+  color: #382413;
+}
+.wg-aholo-edit-modes .wg-aholo-btn:focus-visible {
+  outline: 2px solid #fff6df;
+  outline-offset: 2px;
+}
+.wg-aholo-edit-icon {
+  display: grid;
+  width: 15px;
+  place-items: center;
+  font-size: 15px;
+  line-height: 1;
+}
+.wg-aholo-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 246, 228, 0.08);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+}
+.wg-aholo-tab {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-dim);
+  font: 500 11px/1.2 var(--font);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.wg-aholo-tab:hover {
+  color: var(--ink);
+}
+.wg-aholo-tab.is-active {
+  background: linear-gradient(180deg, rgba(255, 217, 138, 0.2), rgba(255, 217, 138, 0.07));
+  color: #ffe7b0;
+  box-shadow: inset 0 0 0 1px rgba(255, 217, 138, 0.16);
+}
+.wg-aholo-pane {
+  animation: wg-aholo-fade 0.2s ease both;
+}
+.wg-aholo-drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 112px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px dashed rgba(255, 217, 138, 0.32);
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(255, 217, 138, 0.08), transparent 65%),
+    rgba(0, 0, 0, 0.16);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+.wg-aholo-drop:hover,
+.wg-aholo-drop.is-over,
+.wg-aholo-drop:focus-within {
+  border-color: rgba(255, 217, 138, 0.7);
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(255, 217, 138, 0.14), transparent 65%),
+    rgba(0, 0, 0, 0.2);
+}
+.wg-aholo-drop.has-photo {
+  display: inline-flex;
+  flex-direction: row;
+  gap: 8px;
+  min-height: 0;
+  padding: 5px 10px;
+}
+.wg-aholo-drop:has(input:disabled) {
+  opacity: 0.55;
+  cursor: default;
+}
+.wg-aholo-drop b {
+  margin-top: 9px;
+  color: #ffe7b0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.wg-aholo-drop small {
+  max-width: 360px;
+  margin-top: 6px;
+  color: rgba(244, 239, 230, 0.48);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+.wg-aholo-drop-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 217, 138, 0.35);
+  border-radius: 50%;
+  color: #ffd98a;
+  font-size: 20px;
+  font-weight: 300;
+}
+.wg-aholo-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.wg-aholo-drop.has-photo .wg-aholo-drop-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+}
+.wg-aholo-drop.has-photo b {
+  margin-top: 0;
+}
+.wg-aholo-photo-list {
+  display: grid;
+  gap: 5px;
+  max-height: 205px;
+  margin: 0 0 8px;
+  padding: 0;
+  overflow-y: auto;
+  scrollbar-color: rgba(255, 217, 138, 0.28) transparent;
+  scrollbar-width: thin;
+}
+.wg-aholo-photo-item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 8px;
+  min-height: 51px;
+  padding: 5px 7px;
+  border: 1px solid rgba(255, 246, 228, 0.1);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.wg-aholo-photo-image {
+  width: 56px;
+  height: 56px;
+  border-radius: 5px;
+  background: #0c0b0a;
+  object-fit: contain;
+}
+.wg-aholo-photo-item:only-child {
+  grid-template-columns: 96px minmax(0, 1fr) 28px;
+}
+.wg-aholo-photo-item:only-child .wg-aholo-photo-image {
+  width: 96px;
+  height: 96px;
+}
+.wg-aholo-photo-label {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wg-aholo-photo-caption {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.wg-aholo-photo-caption b {
+  color: var(--ink-dim);
+  font-size: 11px;
+}
+.wg-aholo-photo-remove {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255, 246, 228, 0.1);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink-dim);
+  font: 400 16px/1 var(--font);
+  cursor: pointer;
+}
+.wg-aholo-photo-remove:hover,
+.wg-aholo-photo-remove:focus-visible {
+  border-color: rgba(255, 217, 138, 0.45);
+  color: #ffe7b0;
+}
+.wg-aholo-photo-remove:focus-visible {
+  outline: 1px solid #ffe7b0;
+  outline-offset: 1px;
+}
+.wg-aholo-photo-remove:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.wg-aholo-prompt {
+  width: 100%;
+  min-height: 118px;
+  padding: 13px 14px;
+  resize: vertical;
+  border: 1px solid rgba(255, 246, 228, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--ink);
+  font: 12px/1.6 var(--font);
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.wg-aholo-prompt::placeholder {
+  color: var(--ink-dim);
+}
+.wg-aholo-prompt:focus {
+  border-color: rgba(255, 217, 138, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 217, 138, 0.07);
+}
+.wg-aholo-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+.wg-aholo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink-dim);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.wg-aholo-select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 246, 228, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--ink);
+  font: 500 11px/1.2 var(--font);
+  outline: none;
+  cursor: pointer;
+}
+.wg-aholo-select:focus {
+  border-color: rgba(255, 217, 138, 0.55);
+}
+.wg-aholo-hint {
+  margin: 10px 0 0;
+  color: var(--ink-dim);
+  font-size: 10.5px;
+  line-height: 1.55;
+}
+.wg-aholo-status {
+  margin-top: 14px;
+  padding: 12px 13px;
+  border: 1px solid rgba(255, 217, 138, 0.13);
+  border-radius: 12px;
+  background: rgba(255, 217, 138, 0.04);
+}
+.wg-aholo-status-text {
+  color: #ffe7b0;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.wg-aholo-status-detail {
+  margin-top: 4px;
+  color: rgba(244, 239, 230, 0.42);
+  font: 10px/1.4 ui-monospace, "SFMono-Regular", Consolas, monospace;
+  word-break: break-word;
+}
+.wg-aholo-progress {
+  height: 3px;
+  margin-top: 9px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.wg-aholo-progress-bar {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b98334, #ffe2a2);
+  box-shadow: 0 0 12px rgba(255, 205, 120, 0.4);
+  transition: width 0.5s ease;
+}
+.wg-aholo-status[data-state="error"] {
+  border-color: rgba(255, 107, 94, 0.35);
+  background: rgba(255, 107, 94, 0.06);
+}
+.wg-aholo-status[data-state="error"] .wg-aholo-status-text {
+  color: #ffb1a6;
+}
+.wg-aholo-status[data-state="error"] .wg-aholo-progress-bar {
+  background: #ff6b5e;
+}
+.wg-aholo-result {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255, 217, 138, 0.22);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 217, 138, 0.08), transparent 60%),
+    rgba(0, 0, 0, 0.18);
+}
+.wg-aholo-result-image,
+.wg-aholo-result-placeholder {
+  flex: 0 0 104px;
+  width: 104px;
+  height: 104px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #0c0b0a;
+}
+.wg-aholo-result-placeholder {
+  display: grid;
+  place-items: center;
+  color: rgba(255, 217, 138, 0.55);
+  font: 10px/1.3 var(--serif);
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+.wg-aholo-result-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 5px;
+}
+.wg-aholo-kicker {
+  color: rgba(255, 217, 138, 0.62);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+}
+.wg-aholo-result-info {
+  color: var(--ink);
+  font: 10.5px/1.45 ui-monospace, "SFMono-Regular", Consolas, monospace;
+  word-break: break-word;
+}
+.wg-aholo-result-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+.wg-aholo-btn {
+  padding: 9px 13px;
+  border: 1px solid rgba(255, 246, 228, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font: 500 11px/1.2 var(--font);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    opacity 0.2s ease;
+}
+.wg-aholo-btn:hover:not(:disabled) {
+  border-color: rgba(255, 217, 138, 0.5);
+  background: rgba(255, 217, 138, 0.1);
+}
+.wg-aholo-btn:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+.wg-aholo-primary {
+  border-color: rgba(255, 217, 138, 0.42);
+  background: linear-gradient(180deg, rgba(255, 217, 138, 0.24), rgba(255, 217, 138, 0.08));
+  color: #ffe7b0;
+}
+.wg-aholo-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(255, 217, 138, 0.34), rgba(255, 217, 138, 0.12));
+}
+.wg-aholo-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 16px;
+}
+.wg-aholo-generate {
+  flex: 0 0 auto;
+  min-width: 144px;
+  padding: 11px 16px;
+}
+.wg-aholo-note {
+  flex: 1 1 120px;
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 9.5px;
+  line-height: 1.45;
+}
+.wg-aholo-models {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.wg-aholo-example {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid rgba(255, 246, 228, 0.1);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.wg-aholo-example:hover {
+  border-color: rgba(255, 217, 138, 0.45);
+  background: rgba(255, 217, 138, 0.06);
+}
+.wg-aholo-example:focus-visible {
+  outline: 1px solid #ffe7b0;
+  outline-offset: 2px;
+}
+.wg-aholo-example[aria-busy="true"] {
+  cursor: wait;
+}
+.wg-aholo-example-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.wg-aholo-example-copy b {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffe7b0;
+  overflow-wrap: anywhere;
+}
+.wg-aholo-example-copy small {
+  color: rgba(244, 239, 230, 0.45);
+  font-size: 9.5px;
+  line-height: 1.35;
+}
+.wg-aholo-card-action {
+  margin-top: 3px;
+  color: #ffe7b0;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.wg-aholo-models .wg-aholo-example {
+  gap: 12px;
+}
+.wg-aholo-model-preview {
+  position: relative;
+  flex: 0 0 clamp(64px, 36%, 100px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 217, 138, 0.16);
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 38%, #3a3022, #1a1611 78%);
+}
+.wg-aholo-model-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.wg-aholo-model-preview-label {
+  padding: 5px;
+  color: var(--ink-dim);
+  font-size: 10px;
+  line-height: 1.3;
+  text-align: center;
+}
+.wg-aholo-models .wg-aholo-example-copy b {
+  font-size: 12px;
+}
+.wg-aholo-saves,
+.wg-aholo-save-list {
+  display: grid;
+  gap: 10px;
+}
+.wg-aholo-save-form,
+.wg-aholo-save-row,
+.wg-aholo-save-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wg-aholo-save-form input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 246, 228, 0.16);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--ink);
+  font: 500 11px/1.2 var(--font);
+  -webkit-user-select: text;
+  user-select: text;
+}
+.wg-aholo-save-form input::placeholder {
+  color: var(--ink-dim);
+}
+.wg-aholo-save-row {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 246, 228, 0.1);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.wg-aholo-save-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  flex: 1 1 8rem;
+  min-width: 0;
+  color: #ffe7b0;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.wg-aholo-save-name small {
+  color: var(--ink-dim);
+  font-weight: 400;
+}
+.wg-aholo-save-note {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.wg-aholo-tab:focus-visible,
+.wg-aholo-example:focus-visible,
+.wg-aholo-saves :focus-visible {
+  outline: 1px solid #ffe7b0;
+  outline-offset: 2px;
+}
+@media (max-width: 1100px) {
+  .wg-aholo-overlay {
+    --wg-workbench-bottom: 166px;
+  }
+}
+@media (max-width: 600px), (max-width: 820px) and (max-height: 560px) {
+  .wg-aholo-overlay {
+    --wg-workbench-bottom: 86px;
+    right: calc(88px + env(safe-area-inset-right, 0px));
+    width: min(300px, calc(100vw - 100px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  }
+  .wg-aholo-launch {
+    right: calc(88px + env(safe-area-inset-right, 0px));
+    padding-right: 12px;
+  }
+  .wg-aholo-panel {
+    --wg-workbench-padding: 12px;
+  }
+  .wg-aholo-head {
+    padding-block: 10px;
+  }
+  .wg-aholo-result-image,
+  .wg-aholo-result-placeholder {
+    flex-basis: 84px;
+    width: 84px;
+    height: 84px;
+  }
+}
+@media (max-height: 460px) {
+  .wg-aholo-head {
+    position: relative;
+    padding-block: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wg-aholo-overlay.is-open,
+  .wg-aholo-pane,
+  .wg-aholo-edit-modes {
+    animation: none;
   }
 }

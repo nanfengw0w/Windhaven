@@ -9,6 +9,7 @@ import {
 } from "../vendor/three-runtime.js";
 import { LANDSCAPE_BOUNDS } from "../core/config.js";
 import { SCENE_SCALE } from "../layout/world-layout.js";
+import { updateWindowGlow } from "../render/window-glow.js";
 
 function addTrainPiece(
   town,
@@ -287,10 +288,9 @@ function updateTownTrain(town, dt) {
   town.couplerMesh.boundingSphere = null;
   town.materials.warm.emissiveIntensity =
     0.15 + 1.1 * (town.ctx.world?.night ?? 0);
-  const windowGlow = 2.1 * (town.ctx.world?.night ?? 0);
+  const night = town.ctx.world?.night ?? 0;
   for (const material of town.windowGlowMaterials)
-    material.emissiveIntensity =
-      windowGlow * (material.userData.windowGlowScale ?? 1);
+    updateWindowGlow(material, night);
 }
 
 export { addTrainPiece, buildTownTrain, batchTrainCar, updateTownTrain };

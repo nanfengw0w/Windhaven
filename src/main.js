@@ -6,6 +6,7 @@ import "./core/events.js";
 import "./core/quality.js";
 import "./vendor/postprocessing.js";
 import "./render/scene-depth.js";
+import "./render/window-glow.js";
 import "./render/postprocessing.js";
 import "./core/math.js";
 import "./core/camera-presets.js";

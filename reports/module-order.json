@@ -6,6 +6,7 @@
   "core/quality.js",
   "vendor/postprocessing.js",
   "render/scene-depth.js",
+  "render/window-glow.js",
   "render/postprocessing.js",
   "core/math.js",
   "core/camera-presets.js",

@@ -42,7 +42,7 @@ npm start
 左侧是基础贴图 / glow 图，右侧是 3D 模型。左键涂抹，Alt+左键擦除，右键拖拽旋转，滚轮缩放；`[` `]` 调笔刷，`Ctrl+Z` 撤销。
 
 - 导出得到 `aholo-kongming.glow.webp`。
-- 把它放到 `assets/sky-lantern/`，刷新页面即可；孔明灯运行时会优先加载这张单独绘制的 glow 图，找不到时回退到纸面纹理。
+- 把它放到 `assets/sky-lantern/`，刷新页面即可。孔明灯使用这张贴图标记灯纸的发光区域，灯芯附近的高亮参与场景泛光。
 - 导入建筑的 `*.glow.webp` 仍然放在 `assets/imported-models/`。
 
 ## Aholo 造物流程

@@ -4688,6 +4688,22 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
   }
 }
 {
+  const WINDOW_GLOW_INTENSITY = 2.1;
+  function bindWindowGlow(material, texture, scale = 1) {
+    texture.colorSpace = ThreeSRGBColorSpace;
+    texture.flipY = false;
+    texture.needsUpdate = true;
+    material.emissiveMap = texture;
+    material.emissive = new ThreeColor(0xffffff);
+    material.emissiveIntensity = 0;
+    material.userData.windowGlow = true;
+    material.userData.windowGlowScale = scale;
+  }
+  function updateWindowGlow(material, night) {
+    material.emissiveIntensity = WINDOW_GLOW_INTENSITY * night * (material.userData.windowGlowScale ?? 1);
+  }
+}
+{
   const finiteSceneCopyFragment = `
   uniform sampler2D tDiffuse;
   uniform float opacity;
@@ -9562,14 +9578,7 @@ bool railwayTunnelCut(vec3 p) {
           if (!glowTexture?.isTexture) throw new Error("texture loader returned no Three texture");
           textures.add(glowTexture);
           glowTexture.name = `imported-${asset.id}-glow`;
-          glowTexture.colorSpace = ThreeSRGBColorSpace;
-          glowTexture.flipY = false;
-          glowTexture.needsUpdate = true;
-          material.emissiveMap = glowTexture;
-          material.emissive = new ThreeColor(0xffffff);
-          material.emissiveIntensity = 0;
-          material.userData.windowGlow = true;
-          material.userData.windowGlowScale = asset.glowIntensityScale ?? 1;
+          bindWindowGlow(material, glowTexture, asset.glowIntensityScale);
         } catch {
           textures.delete(material.emissiveMap);
           material.emissiveMap = null;
@@ -10252,8 +10261,8 @@ bool railwayTunnelCut(vec3 p) {
     town.couplerMesh.boundingBox = null;
     town.couplerMesh.boundingSphere = null;
     town.materials.warm.emissiveIntensity = 0.15 + 1.1 * (town.ctx.world?.night ?? 0);
-    const windowGlow = 2.1 * (town.ctx.world?.night ?? 0);
-    for (const material of town.windowGlowMaterials) material.emissiveIntensity = windowGlow * (material.userData.windowGlowScale ?? 1);
+    const night = town.ctx.world?.night ?? 0;
+    for (const material of town.windowGlowMaterials) updateWindowGlow(material, night);
   }
 }
 {
@@ -24511,17 +24520,14 @@ void main() {
 {
   const MODEL_URL = new URL("../../assets/sky-lantern/aholo-kongming.glb", import.meta.url);
   const GLOW_URL = new URL("../../assets/sky-lantern/aholo-kongming.glow.webp", import.meta.url);
-  const LANTERN_GLOW_INTENSITY = 0.38;
-  const LANTERN_PAINTED_GLOW_INTENSITY = 0.6;
-  const LANTERN_GLOW_COLOR = 0xffe2c0;
-  function createLanternMaterial(source, paintedGlow = null) {
-    const glowMap = paintedGlow || source.map;
+  const LANTERN_WINDOW_GLOW_SCALE = 0.16;
+  const LANTERN_GROUND_LIGHT_INTENSITY = 0.18;
+  const LANTERN_WICK_Y = -0.33;
+  const LANTERN_LAUNCH_CYCLE = 48;
+  function createLanternMaterial(source, glowTexture) {
     const material = new Ry.MeshStandardMaterial({
       color: source.color,
       map: source.map,
-      emissiveMap: glowMap,
-      emissive: new Ry.Color(paintedGlow ? 0xffffff : LANTERN_GLOW_COLOR),
-      emissiveIntensity: paintedGlow ? LANTERN_PAINTED_GLOW_INTENSITY : LANTERN_GLOW_INTENSITY,
       alphaMap: source.alphaMap,
       alphaTest: source.alphaTest,
       side: source.side,
@@ -24531,25 +24537,39 @@ void main() {
       transparent: true,
       depthWrite: false
     });
+    if (glowTexture) {
+      bindWindowGlow(material, glowTexture, LANTERN_WINDOW_GLOW_SCALE);
+      updateWindowGlow(material, 1);
+    }
     material.onBeforeCompile = shader => {
       shader.vertexShader = shader.vertexShader.replace("#include <common>", `#include <common>
         attribute float aLanternOpacity;
         attribute float aLanternFlame;
         varying float vLanternOpacity;
-        varying float vLanternFlame;`).replace("#include <begin_vertex>", `#include <begin_vertex>
+        varying float vLanternFlame;
+        varying float vLanternHeight;`).replace("#include <begin_vertex>", `#include <begin_vertex>
         vLanternOpacity = aLanternOpacity;
-        vLanternFlame = aLanternFlame;`);
+        vLanternFlame = aLanternFlame;
+        vLanternHeight = position.y;`);
       shader.fragmentShader = shader.fragmentShader.replace("#include <common>", `#include <common>
         varying float vLanternOpacity;
-        varying float vLanternFlame;`).replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-        totalEmissiveRadiance *= vLanternOpacity
-          * mix(0.85, 1.0, clamp(vLanternFlame, 0.0, 1.0));`).replace("#include <opaque_fragment>", `diffuseColor.a *= vLanternOpacity;
+        varying float vLanternFlame;
+        varying float vLanternHeight;`).replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        float flame = clamp(vLanternFlame, 0.0, 1.0);
+        // Preserve the wick's bloom after downsampling in the valley overview.
+        float distant = smoothstep(0.08, 0.33, fwidth(vLanternHeight));
+        float wickOffset = vLanternHeight - ${LANTERN_WICK_Y};
+        float wickWidth = wickOffset < 0.0 ? 0.075 : mix(0.16, 0.24, distant);
+        float wickDistance = wickOffset / wickWidth;
+        float wick = exp2(-wickDistance * wickDistance);
+        float wickGlow = wick * mix(5.5, 7.4, flame) * mix(1.0, 3.0, distant);
+        totalEmissiveRadiance *= mix(0.78, 1.0, flame) + wickGlow;`).replace("#include <opaque_fragment>", `diffuseColor.a *= vLanternOpacity;
         #include <opaque_fragment>`);
     };
-    material.customProgramCacheKey = () => "sky-lantern-window-glow-v1";
+    material.customProgramCacheKey = () => "sky-lantern-window-glow";
     return material;
   }
-  function instanceLanternModel(scene, opacity, flame, paintedGlow = null) {
+  function instanceLanternModel(scene, opacity, flame, glowTexture) {
     scene.updateMatrixWorld(true);
     const bounds = new Ry.Box3().setFromObject(scene, true);
     const center = bounds.getCenter(new Ry.Vector3());
@@ -24568,7 +24588,7 @@ void main() {
       geometry.applyMatrix4(transform.multiplyMatrices(normalize, object.matrixWorld));
       geometry.setAttribute("aLanternOpacity", opacity);
       geometry.setAttribute("aLanternFlame", flame);
-      const material = Array.isArray(object.material) ? object.material.map(source => createLanternMaterial(source, paintedGlow)) : createLanternMaterial(object.material, paintedGlow);
+      const material = Array.isArray(object.material) ? object.material.map(source => createLanternMaterial(source, glowTexture)) : createLanternMaterial(object.material, glowTexture);
       const mesh = new Ry.InstancedMesh(geometry, material, opacity.count);
       mesh.instanceMatrix.setUsage(Ry.DynamicDrawUsage);
       mesh.frustumCulled = false;
@@ -24584,7 +24604,7 @@ void main() {
     const [columns, rows] = ctx.quality.pick([7, 5], [8, 6], [9, 6]);
     const halfWidth = LANDSCAPE_BOUNDS.halfW - 0.95;
     const halfDepth = LANDSCAPE_BOUNDS.halfD - 0.85;
-    return Array.from({
+    const slots = Array.from({
       length: columns * rows
     }, (_, index) => {
       const x = lerp(-halfWidth, halfWidth, (index % columns + 0.16 + random() * 0.68) / columns);
@@ -24595,32 +24615,24 @@ void main() {
       return {
         x,
         z,
+        ground,
         startHeight,
         travelHeight,
         size: lerp(0.145, 0.225, random()),
-        delay: lerp(0.2, 9.2, random()),
-        duration: lerp(32, 61, random()),
-        pause: lerp(1.8, 5.4, random()),
+        duration: lerp(38, 46, random()),
         phase: random() * Math.PI * 2,
         yaw: random() * Math.PI * 2
       };
     });
-  }
-  async function loadPaintedGlowTexture() {
-    try {
-      const response = await fetch(GLOW_URL.href, {
-        cache: "no-cache"
-      });
-      if (!response.ok) return null;
-      const bitmap = await createImageBitmap(await response.blob());
-      const texture = new Ry.Texture(bitmap);
-      texture.flipY = false;
-      texture.colorSpace = Ry.SRGBColorSpace;
-      texture.needsUpdate = true;
-      return texture;
-    } catch {
-      return null;
+    for (let index = slots.length - 1; index > 0; index--) {
+      const other = Math.floor(random() * (index + 1));
+      [slots[index], slots[other]] = [slots[other], slots[index]];
     }
+    const interval = LANTERN_LAUNCH_CYCLE / slots.length;
+    for (const [index, slot] of slots.entries()) {
+      slot.launchOffset = (index + lerp(0.2, 0.8, random())) * interval;
+    }
+    return slots;
   }
   class SkyLanterns {
     constructor(ctx, group) {
@@ -24629,6 +24641,8 @@ void main() {
       this.group.name = "sky-lanterns";
       this.group.visible = false;
       group.add(this.group);
+      this.groundLights = [0, 1].map(() => new Ry.PointLight(0xffb46a, 0, 1.55, 2));
+      group.add(...this.groundLights);
       this.parts = [];
       this.loading = false;
       this.loadFailed = false;
@@ -24641,11 +24655,11 @@ void main() {
       try {
         const [{
           scene
-        }, paintedGlow] = await Promise.all([new CharacterGLTFLoader().loadAsync(MODEL_URL.href), loadPaintedGlowTexture()]);
+        }, glowTexture] = await Promise.all([new CharacterGLTFLoader().loadAsync(MODEL_URL.href), new Ry.TextureLoader().loadAsync(GLOW_URL.href).catch(() => null)]);
         const slots = createFlightSlots(this.ctx);
         const opacity = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
         const flame = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
-        const parts = instanceLanternModel(scene, opacity, flame, paintedGlow);
+        const parts = instanceLanternModel(scene, opacity, flame, glowTexture);
         this.group.add(...parts);
         this.slots = slots;
         this.opacity = opacity;
@@ -24669,6 +24683,8 @@ void main() {
       const target = selected ? darkness : 0;
       this.visibility = damp(this.visibility, target, 1.35, dt);
       this.group.visible = this.visibility > 0.004;
+      const [firstLight, secondLight] = this.groundLights;
+      firstLight.intensity = secondLight.intensity = 0;
       if (!this.group.visible) {
         this.elapsed = 0;
         return;
@@ -24679,21 +24695,30 @@ void main() {
       } = this.ctx.wind;
       let count = 0;
       for (const slot of this.slots) {
-        const flightTime = this.elapsed - slot.delay;
+        const flightTime = this.elapsed - slot.launchOffset;
         if (flightTime < 0) continue;
-        const age = flightTime % (slot.duration + slot.pause);
+        const age = flightTime % LANTERN_LAUNCH_CYCLE;
         if (age >= slot.duration) continue;
         const progress = age / slot.duration;
         const sway = slot.phase + age * 0.39;
         const height = slot.startHeight + slot.travelHeight * progress;
         const fadeIn = smoothstep(0, 2.2, age);
         const fadeOut = 1 - smoothstep(0.77, 1, progress);
-        this.opacity.setX(count, this.visibility * fadeIn * fadeOut);
-        this.flame.setX(count, sampleLanternFlame(age, slot.phase));
+        const opacity = this.visibility * fadeIn * fadeOut;
+        const flame = sampleLanternFlame(age, slot.phase);
+        this.opacity.setX(count, opacity);
+        this.flame.setX(count, flame);
         this.transform.position.set(slot.x + Math.sin(sway) * 0.18 + clamp(ambient.x, -1, 1) * 0.56 * progress, height, slot.z + Math.cos(sway * 0.8) * 0.17 + clamp(ambient.y, -1, 1) * 0.56 * progress);
         this.transform.rotation.set(Math.sin(sway * 0.83) * 0.065, slot.yaw + Math.sin(sway * 0.45) * 0.28, Math.cos(sway) * 0.085);
         this.transform.scale.setScalar(slot.size);
         this.transform.updateMatrix();
+        const groundLight = firstLight.intensity <= secondLight.intensity ? firstLight : secondLight;
+        const lift = height - slot.ground;
+        const intensity = LANTERN_GROUND_LIGHT_INTENSITY * opacity * (1 - smoothstep(0.8, 1.65, lift)) * lerp(0.65, 1, clamp(flame, 0, 1));
+        if (intensity > groundLight.intensity) {
+          groundLight.position.set(0, LANTERN_WICK_Y, 0).applyMatrix4(this.transform.matrix);
+          groundLight.intensity = intensity;
+        }
         for (const mesh of this.parts) mesh.setMatrixAt(count, this.transform.matrix);
         count++;
       }

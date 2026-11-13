@@ -7,6 +7,7 @@ import {
   ThreeSRGBColorSpace,
   ThreeVector3,
 } from "../vendor/three-runtime.js";
+import { bindWindowGlow } from "../render/window-glow.js";
 import { bindMapClipping } from "./map-clipping.js";
 
 // Explicit URLs let Vite include and fingerprint every model in production.
@@ -268,14 +269,7 @@ async function loadImportedModels(ctx, options = {}) {
             throw new Error("texture loader returned no Three texture");
           textures.add(glowTexture);
           glowTexture.name = `imported-${asset.id}-glow`;
-          glowTexture.colorSpace = ThreeSRGBColorSpace;
-          glowTexture.flipY = false;
-          glowTexture.needsUpdate = true;
-          material.emissiveMap = glowTexture;
-          material.emissive = new ThreeColor(0xffffff);
-          material.emissiveIntensity = 0;
-          material.userData.windowGlow = true;
-          material.userData.windowGlowScale = asset.glowIntensityScale ?? 1;
+          bindWindowGlow(material, glowTexture, asset.glowIntensityScale);
         } catch {
           textures.delete(material.emissiveMap);
           material.emissiveMap = null;

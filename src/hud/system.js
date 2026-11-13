@@ -21,6 +21,7 @@ import { SettingsPanel } from "./settings-panel.js";
 import { WeatherPresets } from "./weather-presets.js";
 import { ExplorationControls } from "./exploration-controls.js";
 import { PhotoControls } from "./photo-controls.js";
+import { VideoControls } from "./video-mode.js";
 import { CameraControls } from "./camera-controls.js";
 const HUD_SLOW_UPDATE_INTERVAL = 100;
 const COMPACT_HUD_MEDIA_QUERY = "(max-width: 859px), (max-height: 519px)";
@@ -95,7 +96,8 @@ class HudSystem {
       (this.settings = new SettingsPanel(t, this, i)),
       (this.weatherPresets = new WeatherPresets(t, this, i)),
       (this.explorationControls = new ExplorationControls(t, i)),
-      (this.photoControls = new PhotoControls(t, i)),
+      (this.videoControls = new VideoControls(t)),
+      (this.photoControls = new PhotoControls(t, i, this.videoControls.button)),
       e.append(i));
     // Mode controllers disable InputController, so the visibility shortcut
     // belongs to the HUD rather than its ordinary-mode key event stream.
@@ -144,10 +146,13 @@ class HudSystem {
         this._focusBeforeHide = focus;
         focus?.blur?.();
       }
-      // Hide both the shared climate controls and the separate photo overlay.
-      this._inertBeforeHide = [this.root, this.photoControls.overlay].map(
-        (element) => [element, element.inert],
-      );
+      const elements = [this.root, this.photoControls.overlay];
+      if (!this.videoControls.recording)
+        elements.push(this.videoControls.overlay);
+      this._inertBeforeHide = elements.map((element) => [
+        element,
+        element.inert,
+      ]);
       for (const [element] of this._inertBeforeHide) element.inert = true;
     }
     document.body.classList.toggle("no-ui", t);

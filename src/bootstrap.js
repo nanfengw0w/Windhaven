@@ -16,6 +16,7 @@ import { CameraRig } from "./core/camera.js";
 import { setupCameraViews } from "./core/camera-views.js";
 import { ExplorationController } from "./core/exploration.js";
 import { PhotoModeController } from "./core/photo-mode.js";
+import { VideoModeController } from "./core/video-mode.js";
 import { InputController } from "./core/input.js";
 import { registerWindTool } from "./core/wind-tool.js";
 import { LightingController } from "./render/lighting.js";
@@ -197,6 +198,12 @@ function bootWeatherglass() {
   ctx.modules.character?.initialize();
   ctx.exploration = new ExplorationController(ctx);
   ctx.photo = new PhotoModeController(ctx);
+  ctx.video = new VideoModeController(
+    ctx,
+    stepSimulation,
+    renderFrame,
+    resizeViewport,
+  );
   setupCameraViews(ctx);
   cameraRig.preset(appParams.get("cam") || "overview", true);
   ctx.cameraInspector = new CameraInspector(ctx);
@@ -309,9 +316,10 @@ function bootWeatherglass() {
     resizePending = false;
     if (window.innerWidth < 1 || window.innerHeight < 1) return;
     quality.refreshDpr();
-    if (!ctx.post.setSize(window.innerWidth, window.innerHeight)) return;
+    const resized = ctx.post.setSize(window.innerWidth, window.innerHeight);
     ((camera.aspect = window.innerWidth / window.innerHeight),
       camera.updateProjectionMatrix());
+    if (!resized) return;
     for (const moduleInstance of Object.values(ctx.modules))
       moduleInstance?.resize?.(window.innerWidth, window.innerHeight);
   }
@@ -323,6 +331,7 @@ function bootWeatherglass() {
       (event) => {
         event.preventDefault();
         runtimeErrors.push("WebGL context lost");
+        ctx.video.cancel("图形上下文已中断，录制已停止。");
         console.error("[render] WebGL context lost; waiting for restoration");
       },
       !1,
@@ -349,6 +358,10 @@ function bootWeatherglass() {
     const nowMs = performance.now(),
       frameDeltaSeconds = Math.max(0, (nowMs - previousFrameTimeMs) / 1e3);
     previousFrameTimeMs = nowMs;
+    if (ctx.video.recording) {
+      ctx.video.captureFrame();
+      return;
+    }
     // 性能采样使用真实帧间隔；模拟步长保留原有的 1/20 秒上限。
     const simulationDeltaSeconds = simulationPaused
       ? 0
@@ -378,7 +391,8 @@ function bootWeatherglass() {
       return true;
     },
     simulate(seconds) {
-      if (ctx.photo.active && !ctx.photo.timeRunning) return 0;
+      if (ctx.video.recording || (ctx.photo.active && !ctx.photo.timeRunning))
+        return 0;
       const stepCount = Math.round(seconds * 30);
       for (let stepIndex = 0; stepIndex < stepCount; stepIndex++)
         stepSimulation(1 / 30);

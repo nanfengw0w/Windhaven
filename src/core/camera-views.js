@@ -72,8 +72,7 @@ function setupCameraViews(ctx) {
   });
   ctx.selectCameraPreset = (requested) => {
     const name = CAMERA_PRESET_ALIASES[requested] || requested;
-    if (!Object.hasOwn(CAMERA_PRESETS, name) || ctx.photo?.capturing)
-      return false;
+    if (!Object.hasOwn(CAMERA_PRESETS, name)) return false;
     if (ctx.photo?.active) return ctx.photo.selectPreset(name);
     if (ctx.exploration?.active || ctx.exploration?.pending) {
       // Leaving walking restores its saved orbit. Start this deliberate camera

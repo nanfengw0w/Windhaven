@@ -4,6 +4,7 @@
 import { audioClamp } from "./math.js";
 import { AudioEngine } from "./engine.js";
 import { Soundscape } from "./soundscape.js";
+import { OfflineAudioCapture } from "./offline-capture.js";
 function createSoundscapeState() {
   return {
     wind: 0.3,
@@ -44,7 +45,7 @@ const AUDIO_SOURCE_POSITIONS = {
 const audioNowMilliseconds = () =>
   typeof performance < "u" ? performance.now() : Date.now();
 class AudioController {
-  constructor(t) {
+  constructor(t, offline = null) {
     ((this.ctx = t),
       (this.muted = !1),
       (this.volume = 1),
@@ -67,6 +68,13 @@ class AudioController {
       (this._stroke = null),
       (this._scenarioT = -1e9),
       (this._warned = !1));
+    this.offline = offline;
+    if (offline) {
+      this.available = true;
+      this._attachEngine(offline.context);
+      this._subscribe(t.events);
+      return;
+    }
     const i = t?.params;
     if (
       (i &&
@@ -123,17 +131,8 @@ class AudioController {
       return;
     }
     try {
-      const e = this.ctx?.quality?.tier ?? 1;
-      ((this.engine = new AudioEngine(t, {
-        tier: e,
-        reverb: e > 0,
-        level: this.muted ? 0 : this.volume * AUDIO_MASTER_LEVEL,
-      })),
-        (this.scape = new Soundscape(this.engine, {
-          tier: e,
-        })),
-        (this.ac = t),
-        this.muted && t.suspend()?.catch?.(() => {}));
+      this._attachEngine(t);
+      this.muted && t.suspend()?.catch?.(() => {});
     } catch (e) {
       console.warn("[audio] could not initialise Web Audio", e);
       try {
@@ -144,6 +143,55 @@ class AudioController {
         (this.scape = null),
         (this.ac = null));
     }
+  }
+  _attachEngine(context) {
+    const tier = this.ctx?.quality?.tier ?? 1;
+    this.engine = new AudioEngine(context, {
+      tier,
+      reverb: tier > 0,
+      level: this.muted ? 0 : this.volume * AUDIO_MASTER_LEVEL,
+      offline: this.offline,
+    });
+    this.scape = new Soundscape(this.engine, { tier });
+    this.ac = context;
+  }
+  _nowMilliseconds() {
+    return this.offline ? this.offline.time * 1000 : audioNowMilliseconds();
+  }
+  createCapture(options) {
+    const capture = new OfflineAudioCapture(options);
+    const recorder = new AudioController(this.ctx, capture);
+    recorder.engine.master.gain.value = this.volume * AUDIO_MASTER_LEVEL;
+    const update = (dt) => {
+      recorder._fillState();
+      recorder.scape.update(recorder.state, capture.time, dt);
+      recorder._strokeTick(capture.time);
+    };
+    const close = () => {
+      if (this._capture === recorder) this._capture = null;
+      for (const off of recorder._offs) off();
+      recorder._offs.length = 0;
+    };
+    this._capture = recorder;
+    try {
+      capture.prime(update);
+    } catch (error) {
+      close();
+      throw error;
+    }
+    return {
+      sample(index) {
+        capture.sample(index, (dt) => {
+          recorder._flush(recorder._nowMilliseconds());
+          update(dt);
+        });
+      },
+      finish() {
+        close();
+        return capture.finish();
+      },
+      close,
+    };
   }
   _visibility() {
     this._hidden = !!document.hidden;
@@ -218,9 +266,10 @@ class AudioController {
     } catch {}
     ((this.ac = null), (this.engine = null), (this.scape = null));
   }
-  play(t, e) {
+  play(t, e, { capture = true } = {}) {
+    if (capture) this._capture?.play(t, e);
     return this.available
-      ? (this._explicit.set(t, audioNowMilliseconds()), this._play(t, e || {}))
+      ? (this._explicit.set(t, this._nowMilliseconds()), this._play(t, e || {}))
       : !1;
   }
   _play(t, e) {
@@ -230,11 +279,13 @@ class AudioController {
       const s = this.ac.state;
       if (
         s === "closed" ||
-        (s !== "running" && audioNowMilliseconds() - this._resumeAt > 600) ||
+        (!this.offline &&
+          s !== "running" &&
+          this._nowMilliseconds() - this._resumeAt > 600) ||
         !i.has(t)
       )
         return !1;
-      const n = audioNowMilliseconds();
+      const n = this._nowMilliseconds();
       let o = this._burst.get(t);
       for (o || ((o = []), this._burst.set(t, o)); o.length && n - o[0] > 40;)
         o.shift();
@@ -252,13 +303,14 @@ class AudioController {
   _auto(t, e, i = null, s = 0) {
     !this.engine ||
       this.muted ||
+      (this.offline && i === "ui") ||
       this._pending.length > 32 ||
       this._pending.push({
         name: t,
         opts: e,
         kind: i,
         gapMs: s,
-        t: audioNowMilliseconds(),
+        t: this._nowMilliseconds(),
       });
   }
   _flush(t) {
@@ -382,11 +434,11 @@ class AudioController {
         ),
       ),
       e("scenario", () => {
-        this._scenarioT = audioNowMilliseconds();
+        this._scenarioT = this._nowMilliseconds();
       }),
       e("weather:change", () => {
         // 预设天气渐变时补入的云不播放手动造云音效。
-        this._scenarioT = audioNowMilliseconds();
+        this._scenarioT = this._nowMilliseconds();
       }));
   }
   _onLightning(t) {
@@ -398,7 +450,7 @@ class AudioController {
       pan: i,
     }),
       (this._bolt = {
-        t: audioNowMilliseconds(),
+        t: this._nowMilliseconds(),
         pan: i,
         s: e,
         thunder: !1,
@@ -408,7 +460,7 @@ class AudioController {
     const e = audioClamp(Number(t.delay) || 0, 0, 20),
       i = audioClamp(Number(t.strength) || 1, 0.1, 1.5),
       s = this._bolt;
-    s && !s.thunder && audioNowMilliseconds() - s.t < 400
+    s && !s.thunder && this._nowMilliseconds() - s.t < 400
       ? ((s.thunder = !0),
         this._play("rumble", {
           delay: e,
@@ -425,11 +477,16 @@ class AudioController {
   _strokeStart() {
     const t = this.engine;
     if (
-      !(!t || this.muted || this._hidden || this.ac.state !== "running") &&
+      !(
+        !t ||
+        this.muted ||
+        this._hidden ||
+        (!this.offline && this.ac.state !== "running")
+      ) &&
       !this._stroke
     )
       try {
-        const e = this.ac.currentTime,
+        const e = t.now,
           i = t.voice("windstroke", t.sfx, e, 0, 2);
         i.persistent = !0;
         const s = i.noise(t.noise.pink, e),
@@ -455,7 +512,7 @@ class AudioController {
     this._stroke || this._strokeStart();
     const e = this._stroke;
     if (!e) return;
-    const i = this.ac.currentTime,
+    const i = this.engine.now,
       s = audioClamp(Number(t.strength) || 0, 0, 1.3);
     (e.g.gain.setTargetAtTime(0.06 + 0.6 * Math.pow(s, 0.85), i, 0.07),
       e.bp.frequency.setTargetAtTime(320 + 1500 * s, i, 0.09),
@@ -478,7 +535,7 @@ class AudioController {
     if (t) {
       this._stroke = null;
       try {
-        const e = this.ac.currentTime;
+        const e = this.engine.now;
         (t.g.gain.setTargetAtTime(0, e, 0.15), t.v.stopAt(e + 1.2));
       } catch {
         t.v.dispose();

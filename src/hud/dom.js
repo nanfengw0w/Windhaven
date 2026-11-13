@@ -128,7 +128,7 @@ function vibrateHud(r = 6) {
 }
 function playHudSound(r, t, e) {
   try {
-    r.audio?.play?.(t, e);
+    r.audio?.play?.(t, e, { capture: false });
   } catch {}
 }
 function linearColorToCssRgb(r, t = 0) {

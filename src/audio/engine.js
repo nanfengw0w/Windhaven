@@ -32,6 +32,7 @@ class AudioEngine {
   constructor(t, e = {}) {
     if (
       ((this.ac = t),
+      (this.offline = e.offline ?? null),
       (this.tier = e.tier ?? 1),
       (this.noise = getNoiseBuffers(t)),
       (this.voices = []),
@@ -68,9 +69,14 @@ class AudioEngine {
     }
   }
   get now() {
-    return this.ac.currentTime;
+    return this.offline?.time ?? this.ac.currentTime;
   }
   voice(t, e, i, s, n = SOUND_VOICE_LIMITS[t] ?? 6) {
+    const h = this.now;
+    // Ended callbacks only run during rendering in an offline context.
+    // Forget elapsed voices without disconnecting their scheduled audio.
+    if (this.offline)
+      this.voices = this.voices.filter((voice) => voice.end > h);
     let o = 0,
       a = 0,
       l = null,
@@ -80,7 +86,6 @@ class AudioEngine {
         (a++,
         u.name === t && (o++, l || (l = u)),
         !c && !u.persistent && (c = u));
-    const h = this.ac.currentTime;
     o >= n && l ? l.kill(h) : a >= this.maxVoices && c && c.kill(h);
     const f = new AudioVoice(this, t, e || this.sfx, i, s);
     return (this.voices.push(f), f);
@@ -98,7 +103,7 @@ class AudioEngine {
     const n = audioClamp(Number.isFinite(e.volume) ? e.volume : 1, 0, 2);
     if (n <= 0.001) return !1;
     const o = audioClamp(Number.isFinite(e.delay) ? e.delay : 0, 0, 30),
-      a = i ?? this.ac.currentTime + 0.006 + o,
+      a = i ?? this.now + 0.006 + o,
       l = Number.isFinite(e.pan),
       c = l
         ? audioClamp(e.pan, -1, 1)

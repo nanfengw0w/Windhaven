@@ -4,7 +4,7 @@ const PHOTO_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l1.5-2h5L16 6h4a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>';
 
 class PhotoControls {
-  constructor(ctx, root) {
+  constructor(ctx, root, videoButton) {
     this.ctx = ctx;
     this.active = false;
     this.button = createHudElement(
@@ -29,6 +29,7 @@ class PhotoControls {
     this.timeButton = this.action("继续时间", "toggleTime");
     this.resetButton = this.action("重置镜头", "resetCamera");
     this.exitButton = this.action("退出拍照", "exit");
+    this.videoButton = videoButton;
     this.actions = createHudElement(
       "div",
       {
@@ -36,7 +37,13 @@ class PhotoControls {
         role: "group",
         "aria-label": "拍照操作",
       },
-      [this.saveButton, this.timeButton, this.resetButton, this.exitButton],
+      [
+        this.saveButton,
+        this.videoButton,
+        this.timeButton,
+        this.resetButton,
+        this.exitButton,
+      ],
     );
     for (const name of [
       "pointerdown",
@@ -112,6 +119,7 @@ class PhotoControls {
     this.overlay.hidden = !active;
     this.button.setAttribute("aria-pressed", String(active));
     this.saveButton.disabled = capturing;
+    this.videoButton.disabled = capturing;
     this.timeButton.disabled = capturing;
     this.resetButton.disabled = capturing;
     this.timeButton.textContent = timeRunning ? "暂停时间" : "继续时间";

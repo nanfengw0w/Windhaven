@@ -4,6 +4,7 @@ import {
   hudNow,
   hudStorage,
   parseHudMarkup,
+  playHudSound,
   wrapSignedHud,
 } from "./dom.js";
 import { HUD_ICONS } from "./icons.js";
@@ -215,7 +216,7 @@ class InteractionCoach {
     if (!this.el || this.busy) return;
     ((this.busy = !0),
       this.el.classList.add("is-done"),
-      this.ctx.audio?.play?.("chime", {
+      playHudSound(this.ctx, "chime", {
         volume: 0.1,
         pitch: 1.5,
       }),

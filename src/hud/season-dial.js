@@ -183,8 +183,8 @@ class SeasonDial {
         if (this.dragging) {
           if (
             !cancelled &&
-            this.ctx.photo?.active &&
-            !this.ctx.photo.timeRunning
+            (this.ctx.video?.recording ||
+              (this.ctx.photo?.active && !this.ctx.photo.timeRunning))
           )
             this.glideTo(this.dragTarget);
           ((this.dragging = !1),

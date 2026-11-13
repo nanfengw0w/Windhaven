@@ -109,7 +109,8 @@ class AudioVoice {
       try {
         e.stop(t);
       } catch {}
-    this._fallback((t - this.ac.currentTime) * 1e3 + 400);
+    if (!this.eng.offline)
+      this._fallback((t - this.ac.currentTime) * 1e3 + 400);
   }
   kill(t = this.ac.currentTime) {
     if (!(this.killed || this.disposed)) {

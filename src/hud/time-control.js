@@ -209,12 +209,12 @@ class TimeControl {
       },
       onUp: (t, e, i, cancelled) => {
         if ((this.hud.markUse("time"), this.dragging)) {
-          // Frozen photos skip HUD frames. Keep the last dragged target so it
-          // can advance normally when the user explicitly resumes time.
+          // A capture or a frozen photo can go several input events without
+          // a simulation step. Keep the last target after releasing the drag.
           if (
             !cancelled &&
-            this.ctx.photo?.active &&
-            !this.ctx.photo.timeRunning &&
+            (this.ctx.video?.recording ||
+              (this.ctx.photo?.active && !this.ctx.photo.timeRunning)) &&
             this.target != null
           )
             this.glideTo(this.target);

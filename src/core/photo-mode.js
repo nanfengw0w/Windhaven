@@ -45,7 +45,7 @@ class PhotoModeController {
       if (
         this.active &&
         event.target?.closest?.(
-          ".wg-hud, .wg-photo-actions, .wg-camera-inspector",
+          ".wg-hud, .wg-photo-actions, .wg-video-controls, .wg-camera-inspector",
         )
       )
         this._clearInput();
@@ -116,6 +116,7 @@ class PhotoModeController {
   }
   exit() {
     if (!this.active) return;
+    this.ctx.video?.exit();
     this._clearInput();
     this._captureId++;
     this._capturePending = false;
@@ -150,8 +151,11 @@ class PhotoModeController {
     this.yaw = this._rotation.y;
     this.pitch = this._rotation.x;
   }
+  get cameraLocked() {
+    return this.capturing && !this.ctx.video?.recording;
+  }
   selectPreset(name) {
-    if (!this.active || this.capturing) return false;
+    if (!this.active || this.cameraLocked) return false;
     this._clearInput();
     if (!this.ctx.cameraRig.preset(name)) return false;
     this._presetCamera = true;
@@ -174,6 +178,13 @@ class PhotoModeController {
   toggleTime() {
     if (!this.active || this.capturing) return;
     this.timeRunning = !this.timeRunning;
+    this._emit();
+  }
+
+  setCaptureLocked(locked, timeRunning) {
+    this._clearInput();
+    this.capturing = locked;
+    this.timeRunning = timeRunning;
     this._emit();
   }
   _clearInput() {
@@ -201,7 +212,8 @@ class PhotoModeController {
     ) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (down && !event.repeat) this.active ? this.exit() : this.enter();
+      if (down && !event.repeat && !this.ctx.video?.recording)
+        this.active ? this.exit() : this.enter();
       return;
     }
     if (
@@ -210,7 +222,12 @@ class PhotoModeController {
     ) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (down && !event.repeat) this.exit();
+      if (down && !event.repeat) {
+        const { video } = this.ctx;
+        if (video?.recording) video.cancel();
+        else if (video?.active) video.exit();
+        else this.exit();
+      }
       return;
     }
     if (
@@ -222,13 +239,19 @@ class PhotoModeController {
       return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    if (down && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    if (
+      down &&
+      !this.cameraLocked &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
       this._takeCameraControl();
       this.keys.add(event.code);
     } else this.keys.delete(event.code);
   }
   _down(event) {
-    if (!this.active || this.capturing) return;
+    if (!this.active || this.cameraLocked) return;
     // The canvas is not focusable; clicking back into the scene must release
     // keyboard focus from the restored climate sliders explicitly.
     document.activeElement?.blur?.();
@@ -241,7 +264,7 @@ class PhotoModeController {
   _move(event) {
     if (
       !this.active ||
-      this.capturing ||
+      this.cameraLocked ||
       !this.drag ||
       this.drag.id !== event.pointerId
     )
@@ -262,7 +285,7 @@ class PhotoModeController {
   _wheel(event) {
     if (!this.active) return;
     event.preventDefault();
-    if (this.capturing) return;
+    if (this.cameraLocked) return;
     this._takeCameraControl();
     const { camera } = this.ctx;
     camera.fov = Math.max(
@@ -272,7 +295,7 @@ class PhotoModeController {
     camera.updateProjectionMatrix();
   }
   update(dt) {
-    if (!this.active || this.capturing) return;
+    if (!this.active || this.cameraLocked) return;
     if (this._presetCamera) {
       this.ctx.cameraRig.update(dt);
       this._syncAngles();

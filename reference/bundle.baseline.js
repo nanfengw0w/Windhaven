@@ -4860,8 +4860,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
     setTiltShift(t, e, i) {
       for (const s of [this.tiltX, this.tiltY]) t !== void 0 && (s.uniforms.uFocus.value = t), e !== void 0 && (s.uniforms.uBand.value = e), i !== void 0 && (s.uniforms.uAmount.value = i);
     }
-    setSize(t, e) {
-      const dpr = this.quality.dpr;
+    setSize(t, e, dpr = this.quality.dpr) {
       if (![t, e, dpr].every(Number.isFinite) || dpr <= 0) return false;
       t = Math.floor(t);
       e = Math.floor(e);
@@ -4879,6 +4878,118 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
     render(t, e, i) {
       this.grade.uniforms.uTime.value = e, this.grade.uniforms.uFlash.value = i.flash, this.bloom.strength = 0.3 + i.flash * 0.9 * (1 - 0.6 * i.day) + i.night * 0.25, this.composer.render(t);
     }
+  }
+}
+{
+  async function createVideoEncoder({
+    width,
+    height,
+    fps,
+    includeAudio = false
+  }) {
+    if (![width, height, fps].every(value => Number.isInteger(value) && value > 0)) {
+      throw new Error("视频尺寸和帧率必须是正整数。");
+    }
+    if (typeof VideoEncoder === "undefined" || typeof VideoFrame === "undefined") {
+      throw new Error("当前浏览器无法逐帧编码。请用新版 Chrome 或 Edge 打开本地页面或 HTTPS 页面。");
+    }
+    const {
+      AudioBufferSource,
+      BufferTarget,
+      Output,
+      Quality,
+      VideoSample,
+      VideoSampleSource,
+      WebMOutputFormat,
+      canEncodeAudio,
+      canEncodeVideo
+    } = await import("mediabunny");
+    const bitrate = Math.round(Math.min(90e6, Math.max(8e6, width * height * fps * 0.19)));
+    const quality = new Quality({
+      bitrate
+    });
+    const codecOptions = {
+      width,
+      height,
+      frameRate: fps,
+      latencyMode: "quality",
+      quality
+    };
+    let codec;
+    for (const candidate of ["vp9", "vp8"]) {
+      if (await canEncodeVideo(candidate, codecOptions)) {
+        codec = candidate;
+        break;
+      }
+    }
+    if (!codec) throw new Error(`当前浏览器无法编码 ${width} × ${height}、${fps} 帧/秒的 WebM 视频。`);
+    const audioConfig = {
+      codec: "opus",
+      quality: new Quality("high")
+    };
+    if (includeAudio && !(await canEncodeAudio(audioConfig.codec, {
+      numberOfChannels: 2,
+      sampleRate: 48000,
+      quality: audioConfig.quality
+    }))) {
+      throw new Error("当前浏览器无法编码声音。请使用新版 Chrome 或 Edge，或取消勾选山谷声音。");
+    }
+    let framesAdded = 0;
+    let framesEncoded = 0;
+    const target = new BufferTarget();
+    const output = new Output({
+      format: new WebMOutputFormat(),
+      target
+    });
+    const source = new VideoSampleSource({
+      codec,
+      quality,
+      latencyMode: "quality",
+      onEncodedPacket() {
+        framesEncoded++;
+      }
+    });
+    output.addVideoTrack(source, {
+      frameRate: fps
+    });
+    const audio = includeAudio ? new AudioBufferSource(audioConfig) : null;
+    if (audio) output.addAudioTrack(audio);
+    await output.start();
+    return {
+      async addFrame(canvas, index) {
+        if (index !== framesAdded) throw new Error("视频帧必须按顺序提交。");
+        if (canvas.width !== width || canvas.height !== height) {
+          throw new Error("录制期间画布尺寸发生了变化。");
+        }
+        const sample = new VideoSample(canvas, {
+          timestamp: index / fps,
+          duration: 1 / fps
+        });
+        try {
+          await source.add(sample);
+          framesAdded++;
+        } finally {
+          sample.close();
+        }
+      },
+      async finish(audioBuffer) {
+        if (framesAdded === 0) throw new Error("视频中还没有可导出的帧。");
+        if (audio) {
+          if (!audioBuffer) throw new Error("未能生成山谷音轨。");
+          await audio.add(audioBuffer);
+        }
+        await output.finalize();
+        if (framesEncoded !== framesAdded || !target.buffer?.byteLength) {
+          throw new Error(`视频编码不完整（${framesEncoded}/${framesAdded} 帧）。`);
+        }
+        return new Blob([target.buffer], {
+          type: "video/webm"
+        });
+      },
+      async close() {
+        if (output.state !== "finalized") await output.cancel();
+      }
+    };
   }
 }
 {
@@ -33624,7 +33735,9 @@ void main() {
   }
   function playHudSound(r, t, e) {
     try {
-      r.audio?.play?.(t, e);
+      r.audio?.play?.(t, e, {
+        capture: false
+      });
     } catch {}
   }
   function linearColorToCssRgb(r, t = 0) {
@@ -33912,7 +34025,7 @@ void main() {
         },
         onUp: (n, o, a, cancelled) => {
           if (this.dragging) {
-            if (!cancelled && this.ctx.photo?.active && !this.ctx.photo.timeRunning) this.glideTo(this.dragTarget);
+            if (!cancelled && (this.ctx.video?.recording || this.ctx.photo?.active && !this.ctx.photo.timeRunning)) this.glideTo(this.dragTarget);
             this.dragging = !1, t.classList.remove("is-dragging"), this._emit(!0);
             return;
           }
@@ -34129,7 +34242,7 @@ void main() {
         },
         onUp: (t, e, i, cancelled) => {
           if (this.hud.markUse("time"), this.dragging) {
-            if (!cancelled && this.ctx.photo?.active && !this.ctx.photo.timeRunning && this.target != null) this.glideTo(this.target);
+            if (!cancelled && (this.ctx.video?.recording || this.ctx.photo?.active && !this.ctx.photo.timeRunning) && this.target != null) this.glideTo(this.target);
             this.dragging = !1, this.target = null, this.track.classList.remove("is-dragging");
             return;
           }
@@ -34615,7 +34728,7 @@ void main() {
     }
     _complete() {
       if (!this.el || this.busy) return;
-      this.busy = !0, this.el.classList.add("is-done"), this.ctx.audio?.play?.("chime", {
+      this.busy = !0, this.el.classList.add("is-done"), playHudSound(this.ctx, "chime", {
         volume: 0.1,
         pitch: 1.5
       }), this._highlight(null), setTimeout(() => {
@@ -34981,7 +35094,6 @@ void main() {
       this.slow();
     }
     selectPreset(id) {
-      if (this.ctx.photo?.capturing) return;
       const selected = this.ctx.selectCameraPreset ? this.ctx.selectCameraPreset(id) : this.ctx.cameraRig.preset(id);
       if (selected === false) return;
       this.ctx.cameraRig.poke();
@@ -35017,7 +35129,7 @@ void main() {
         const active = id === this.selected;
         button.classList.toggle("is-active", active);
         button.setAttribute("aria-pressed", String(active));
-        button.disabled = !!this.ctx.photo?.capturing;
+        button.disabled = !!this.ctx.photo?.cameraLocked;
       }
     }
   }
@@ -35422,7 +35534,7 @@ void main() {
 {
   const PHOTO_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l1.5-2h5L16 6h4a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>';
   class PhotoControls {
-    constructor(ctx, root) {
+    constructor(ctx, root, videoButton) {
       this.ctx = ctx;
       this.active = false;
       this.button = createHudElement("button", {
@@ -35442,11 +35554,12 @@ void main() {
       this.timeButton = this.action("继续时间", "toggleTime");
       this.resetButton = this.action("重置镜头", "resetCamera");
       this.exitButton = this.action("退出拍照", "exit");
+      this.videoButton = videoButton;
       this.actions = createHudElement("div", {
         class: "wg-photo-actions",
         role: "group",
         "aria-label": "拍照操作"
-      }, [this.saveButton, this.timeButton, this.resetButton, this.exitButton]);
+      }, [this.saveButton, this.videoButton, this.timeButton, this.resetButton, this.exitButton]);
       for (const name of ["pointerdown", "pointermove", "pointerup", "pointercancel", "wheel", "click", "dblclick"]) this.actions.addEventListener(name, event => event.stopPropagation());
       this.actions.addEventListener("contextmenu", event => event.preventDefault());
       this.badge = createHudElement("div", {
@@ -35504,6 +35617,7 @@ void main() {
       this.overlay.hidden = !active;
       this.button.setAttribute("aria-pressed", String(active));
       this.saveButton.disabled = capturing;
+      this.videoButton.disabled = capturing;
       this.timeButton.disabled = capturing;
       this.resetButton.disabled = capturing;
       this.timeButton.textContent = timeRunning ? "暂停时间" : "继续时间";
@@ -35522,6 +35636,209 @@ void main() {
       this.notice.textContent = message;
       this.notice.hidden = false;
       this.messageTimer = window.setTimeout(() => this.clearMessage(), 6000);
+    }
+  }
+}
+{
+  const VIDEO_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/></svg>';
+  const MAX_VIDEO_SECONDS = 30;
+  const videoSeconds = new Intl.NumberFormat("zh-CN", {
+    maximumFractionDigits: 3
+  });
+  function videoAction(text, attrs = {}) {
+    return createHudElement("button", {
+      class: "wg-photo-action",
+      type: "button",
+      text,
+      ...attrs
+    });
+  }
+  function videoField(text, input) {
+    return createHudElement("label", {
+      class: "wg-video-field"
+    }, [createHudElement("span", {
+      text
+    }), input]);
+  }
+  class VideoControls {
+    constructor(ctx) {
+      this.ctx = ctx;
+      this.active = false;
+      this.recording = false;
+      this.button = createHudElement("button", {
+        class: "wg-photo-action wg-video-button",
+        type: "button",
+        "aria-controls": "wg-video-controls",
+        "aria-expanded": "false",
+        title: "逐帧录像"
+      }, [parseHudMarkup(VIDEO_ICON), createHudElement("span", {
+        text: "录像"
+      })]);
+      this.fps = createHudElement("select", {}, [24, 30, 60].map(fps => createHudElement("option", {
+        value: fps,
+        text: `${fps} 帧/秒`
+      })));
+      this.fps.value = "30";
+      this.resolution = createHudElement("select", {}, [1080, 1440, 2160].map(height => createHudElement("option", {
+        value: height,
+        text: height === 2160 ? "4K" : `${height}p`
+      })));
+      this.resolution.value = "1440";
+      this.audio = createHudElement("input", {
+        type: "checkbox",
+        checked: true
+      });
+      this.frames = createHudElement("input", {
+        type: "number",
+        inputmode: "numeric",
+        value: 150,
+        min: 1,
+        step: 1,
+        required: true
+      });
+      this.summary = createHudElement("p", {
+        class: "wg-video-summary"
+      });
+      this.startButton = videoAction("开始录制", {
+        type: "submit",
+        class: "wg-photo-action is-primary"
+      });
+      this.closeButton = videoAction("返回拍照");
+      this.cancelButton = videoAction("取消录制");
+      this.download = createHudElement("a", {
+        class: "wg-photo-action is-primary wg-video-download",
+        text: "下载视频",
+        hidden: true
+      });
+      this.progressText = createHudElement("p", {
+        class: "wg-video-summary"
+      });
+      this.progress = createHudElement("progress", {
+        "aria-label": "已渲染帧数",
+        value: 0
+      });
+      this.progressPane = createHudElement("div", {
+        class: "wg-video-progress",
+        hidden: true
+      }, [this.progressText, this.progress, this.cancelButton, createHudElement("p", {
+        class: "wg-video-help",
+        text: "录制中可移动、切换镜头，也可调整季节、时间和天气。"
+      })]);
+      this.message = createHudElement("p", {
+        class: "wg-video-notice",
+        role: "status",
+        hidden: true
+      });
+      this.settings = createHudElement("form", {
+        class: "wg-video-settings"
+      }, [createHudElement("div", {
+        class: "wg-video-fields"
+      }, [videoField("输出帧率", this.fps), videoField("总帧数", this.frames), videoField("分辨率", this.resolution), createHudElement("label", {
+        class: "wg-video-audio"
+      }, [this.audio, createHudElement("span", {
+        text: "山谷声音"
+      })])]), this.summary, this.startButton, createHudElement("p", {
+        class: "wg-video-help",
+        text: "WASD 移动 · Q/E 升降 · 右键环顾 · 滚轮变焦"
+      })]);
+      this.heading = createHudElement("h2", {
+        id: "wg-video-heading",
+        text: "录像",
+        tabindex: -1
+      });
+      this.overlay = createHudElement("section", {
+        id: "wg-video-controls",
+        class: "wg-video-controls",
+        "aria-labelledby": this.heading.id,
+        hidden: true
+      }, [createHudElement("div", {
+        class: "wg-video-head"
+      }, [this.heading, this.closeButton]), this.settings, this.progressPane, this.message, this.download]);
+      document.body.append(this.overlay);
+      this.button.addEventListener("click", () => this.ctx.video?.enter());
+      this.closeButton.addEventListener("click", () => this.ctx.video?.exit());
+      this.cancelButton.addEventListener("click", () => this.ctx.video?.cancel());
+      this.fps.addEventListener("change", () => this.syncSettings(true));
+      this.frames.addEventListener("input", () => this.syncSettings());
+      this.settings.addEventListener("submit", event => {
+        event.preventDefault();
+        if (this.recording || !this.frames.validity.valid) return;
+        this.ctx.video?.start({
+          fps: Number(this.fps.value),
+          totalFrames: this.frames.valueAsNumber,
+          resolution: Number(this.resolution.value),
+          includeAudio: this.audio.checked
+        });
+      });
+      for (const name of ["pointerdown", "pointerup", "pointermove", "wheel", "click", "dblclick"]) {
+        this.overlay.addEventListener(name, event => event.stopPropagation());
+      }
+      this.overlay.addEventListener("contextmenu", event => event.preventDefault());
+      ctx.events.on("video:change", state => this.setState(state));
+      this.syncSettings();
+    }
+    syncSettings(clampFrames = false) {
+      const fps = Number(this.fps.value);
+      const max = MAX_VIDEO_SECONDS * fps;
+      this.frames.max = max;
+      if (clampFrames && this.frames.valueAsNumber > max) this.frames.value = max;
+      const valid = this.frames.validity.valid;
+      this.startButton.disabled = !valid;
+      this.summary.textContent = valid ? `成片 ${videoSeconds.format(this.frames.valueAsNumber / fps)} 秒` : `请输入 1–${max} 帧`;
+    }
+    setState({
+      active = false,
+      recording = false,
+      completedFrames = 0,
+      totalFrames = 0,
+      finishing = false,
+      phase,
+      message,
+      downloadUrl,
+      filename,
+      width,
+      height
+    } = {}) {
+      const entering = active && !this.active;
+      const leaving = !active && this.active;
+      const starting = recording && !this.recording;
+      const completed = !recording && this.recording;
+      const canDownload = !recording && Boolean(downloadUrl);
+      this.active = active;
+      this.recording = recording;
+      document.body.classList.toggle("video-active", active);
+      document.body.classList.toggle("video-recording", recording);
+      this.button.setAttribute("aria-expanded", String(active));
+      this.overlay.hidden = !active;
+      this.settings.hidden = recording;
+      this.closeButton.hidden = recording;
+      this.progressPane.hidden = !recording;
+      this.progress.max = totalFrames || 1;
+      this.progress.value = completedFrames;
+      this.progressText.textContent = finishing || phase === "encoding" ? "正在生成视频文件…" : phase === "preparing" ? "正在准备录制…" : `已渲染 ${completedFrames} / ${totalFrames} 帧`;
+      this.message.hidden = !message;
+      this.message.textContent = message || "";
+      this.download.hidden = !canDownload;
+      if (canDownload) {
+        this.download.href = downloadUrl;
+        this.download.download = filename || "windhaven.webm";
+        this.download.textContent = width && height ? `下载视频 · ${width} × ${height}` : "下载视频";
+      } else {
+        this.download.removeAttribute("href");
+      }
+      if (message && !active) this.ctx.modules.hud?.toast(message);
+      if (entering) this.heading.focus({
+        preventScroll: true
+      });
+      if (leaving && this.button.getClientRects().length) this.button.focus({
+        preventScroll: true
+      });
+      if (starting) this.cancelButton.focus({
+        preventScroll: true
+      });
+      if (active && completed) (canDownload ? this.download : this.startButton).focus({
+        preventScroll: true
+      });
     }
   }
 }
@@ -35567,7 +35884,7 @@ void main() {
       const h = createHudElement("div", {
         class: "wg-climate-body"
       });
-      o.append(h), n.append(o), this.thermo = new TemperatureControl(t, this, h), this.season = new SeasonDial(t, this, h), o.querySelector(".wg-climate-head").prepend(this.season.playBtn), this.tempTxt = new CachedText(a), this.offTxt = new CachedText(l), this.offShow = new CachedDomProperty(l, "class", "is-shown"), this.condTxt = new CachedText(c), this.condTitle = new CachedDomProperty(c, "attr", "title"), this.cameraControls = new CameraControls(t, this), this.createClimateCard("season", "季节", o), this.createClimateCard("time", "时间", this.time.el), this.toasts = new ToastManager(i), this.coach = new InteractionCoach(t, this, this.toasts), this.settings = new SettingsPanel(t, this, i), this.weatherPresets = new WeatherPresets(t, this, i), this.explorationControls = new ExplorationControls(t, i), this.photoControls = new PhotoControls(t, i), e.append(i);
+      o.append(h), n.append(o), this.thermo = new TemperatureControl(t, this, h), this.season = new SeasonDial(t, this, h), o.querySelector(".wg-climate-head").prepend(this.season.playBtn), this.tempTxt = new CachedText(a), this.offTxt = new CachedText(l), this.offShow = new CachedDomProperty(l, "class", "is-shown"), this.condTxt = new CachedText(c), this.condTitle = new CachedDomProperty(c, "attr", "title"), this.cameraControls = new CameraControls(t, this), this.createClimateCard("season", "季节", o), this.createClimateCard("time", "时间", this.time.el), this.toasts = new ToastManager(i), this.coach = new InteractionCoach(t, this, this.toasts), this.settings = new SettingsPanel(t, this, i), this.weatherPresets = new WeatherPresets(t, this, i), this.explorationControls = new ExplorationControls(t, i), this.videoControls = new VideoControls(t), this.photoControls = new PhotoControls(t, i, this.videoControls.button), e.append(i);
       window.addEventListener("keydown", event => this._visibilityKey(event), true);
       try {
         this.mq = window.matchMedia(COMPACT_HUD_MEDIA_QUERY);
@@ -35600,7 +35917,9 @@ void main() {
           this._focusBeforeHide = focus;
           focus?.blur?.();
         }
-        this._inertBeforeHide = [this.root, this.photoControls.overlay].map(element => [element, element.inert]);
+        const elements = [this.root, this.photoControls.overlay];
+        if (!this.videoControls.recording) elements.push(this.videoControls.overlay);
+        this._inertBeforeHide = elements.map(element => [element, element.inert]);
         for (const [element] of this._inertBeforeHide) element.inert = true;
       }
       document.body.classList.toggle("no-ui", t);
@@ -35976,7 +36295,7 @@ void main() {
       } of this.srcs) try {
         e.stop(t);
       } catch {}
-      this._fallback((t - this.ac.currentTime) * 1e3 + 400);
+      if (!this.eng.offline) this._fallback((t - this.ac.currentTime) * 1e3 + 400);
     }
     kill(t = this.ac.currentTime) {
       if (!(this.killed || this.disposed)) {
@@ -36294,22 +36613,23 @@ void main() {
   }
   class AudioEngine {
     constructor(t, e = {}) {
-      if (this.ac = t, this.tier = e.tier ?? 1, this.noise = getNoiseBuffers(t), this.voices = [], this.maxVoices = this.tier === 0 ? 22 : 36, this.limiter = createAudioCompressor(t, -3, 0, 20, 0.002, 0.15), this.comp = createAudioCompressor(t, -18, 12, 2.5, 0.008, 0.35), this.master = t.createGain(), this.master.gain.value = e.level ?? 0.8, this.clipIn = t.createGain(), this.clipIn.gain.value = 0.5, this.clip = t.createWaveShaper(), this.clip.curve = createSoftClipCurve(), this.master.connect(this.comp), this.comp.connect(this.limiter), this.limiter.connect(this.clipIn), this.clipIn.connect(this.clip), this.clip.connect(e.destination || t.destination), this.sfx = t.createGain(), this.sfx.connect(this.master), this.beds = t.createGain(), this.beds.connect(this.master), this.verbIn = null, e.reverb !== !1) {
+      if (this.ac = t, this.offline = e.offline ?? null, this.tier = e.tier ?? 1, this.noise = getNoiseBuffers(t), this.voices = [], this.maxVoices = this.tier === 0 ? 22 : 36, this.limiter = createAudioCompressor(t, -3, 0, 20, 0.002, 0.15), this.comp = createAudioCompressor(t, -18, 12, 2.5, 0.008, 0.35), this.master = t.createGain(), this.master.gain.value = e.level ?? 0.8, this.clipIn = t.createGain(), this.clipIn.gain.value = 0.5, this.clip = t.createWaveShaper(), this.clip.curve = createSoftClipCurve(), this.master.connect(this.comp), this.comp.connect(this.limiter), this.limiter.connect(this.clipIn), this.clipIn.connect(this.clip), this.clip.connect(e.destination || t.destination), this.sfx = t.createGain(), this.sfx.connect(this.master), this.beds = t.createGain(), this.beds.connect(this.master), this.verbIn = null, e.reverb !== !1) {
         this.verbIn = t.createGain();
         const i = t.createConvolver();
         i.buffer = createReverbImpulse(t, this.tier >= 2 ? 1.8 : 1.4), this.verbOut = t.createGain(), this.verbOut.gain.value = 0.5, this.verbIn.connect(i), i.connect(this.verbOut), this.verbOut.connect(this.master), this.conv = i;
       }
     }
     get now() {
-      return this.ac.currentTime;
+      return this.offline?.time ?? this.ac.currentTime;
     }
     voice(t, e, i, s, n = SOUND_VOICE_LIMITS[t] ?? 6) {
+      const h = this.now;
+      if (this.offline) this.voices = this.voices.filter(voice => voice.end > h);
       let o = 0,
         a = 0,
         l = null,
         c = null;
       for (const u of this.voices) u.killed || (a++, u.name === t && (o++, l || (l = u)), !c && !u.persistent && (c = u));
-      const h = this.ac.currentTime;
       o >= n && l ? l.kill(h) : a >= this.maxVoices && c && c.kill(h);
       const f = new AudioVoice(this, t, e || this.sfx, i, s);
       return this.voices.push(f), f;
@@ -36327,7 +36647,7 @@ void main() {
       const n = audioClamp(Number.isFinite(e.volume) ? e.volume : 1, 0, 2);
       if (n <= 0.001) return !1;
       const o = audioClamp(Number.isFinite(e.delay) ? e.delay : 0, 0, 30),
-        a = i ?? this.ac.currentTime + 0.006 + o,
+        a = i ?? this.now + 0.006 + o,
         l = Number.isFinite(e.pan),
         c = l ? audioClamp(e.pan, -1, 1) : CENTERED_SOUND_EFFECTS.has(t) ? 0 : null,
         h = this.voice(t, this.sfx, a, c);
@@ -36977,6 +37297,46 @@ void main() {
   }
 }
 {
+  const CAPTURE_SAMPLE_RATE = 48000;
+  const CAPTURE_PREROLL_SECONDS = 1.5;
+  const AMBIENCE_UPDATE_STEP = 0.05;
+  class OfflineAudioCapture {
+    constructor({
+      fps,
+      totalFrames
+    }) {
+      const AudioContext = globalThis.OfflineAudioContext;
+      if (!AudioContext) throw new Error("当前浏览器无法导出场景声音。");
+      this.dt = 1 / fps;
+      this.length = Math.round(totalFrames * CAPTURE_SAMPLE_RATE / fps);
+      this.prerollLength = CAPTURE_PREROLL_SECONDS * CAPTURE_SAMPLE_RATE;
+      this.context = new AudioContext(2, this.length + this.prerollLength, CAPTURE_SAMPLE_RATE);
+      this.time = 0;
+    }
+    prime(update) {
+      const steps = Math.round(CAPTURE_PREROLL_SECONDS / AMBIENCE_UPDATE_STEP);
+      for (let index = 0; index < steps; index++) {
+        this.time = index * AMBIENCE_UPDATE_STEP;
+        update(AMBIENCE_UPDATE_STEP);
+      }
+      this.time = CAPTURE_PREROLL_SECONDS;
+    }
+    sample(index, update) {
+      this.time = CAPTURE_PREROLL_SECONDS + index * this.dt;
+      update(this.dt);
+      this.time = CAPTURE_PREROLL_SECONDS + (index + 1) * this.dt;
+    }
+    async finish() {
+      const rendered = await this.context.startRendering();
+      const audio = this.context.createBuffer(2, this.length, CAPTURE_SAMPLE_RATE);
+      for (let channel = 0; channel < 2; channel++) {
+        audio.copyToChannel(rendered.getChannelData(channel).subarray(this.prerollLength), channel);
+      }
+      return audio;
+    }
+  }
+}
+{
   function createSoundscapeState() {
     return {
       wind: 0.3,
@@ -37010,10 +37370,17 @@ void main() {
   };
   const audioNowMilliseconds = () => typeof performance < "u" ? performance.now() : Date.now();
   class AudioController {
-    constructor(t) {
+    constructor(t, offline = null) {
       this.ctx = t, this.muted = !1, this.volume = 1, this.ac = null, this.engine = null, this.scape = null, this.state = createSoundscapeState();
       const e = typeof window < "u" ? window : null;
       this._AC = e && (e.AudioContext || e.webkitAudioContext) || null, this.available = !!this._AC, this._want = !1, this._resumeAt = -1e9, this._hidden = typeof document < "u" && !!document.hidden, this._pending = [], this._explicit = new Map(), this._played = new Map(), this._burst = new Map(), this._lastBed = 0, this._bolt = null, this._stroke = null, this._scenarioT = -1e9, this._warned = !1;
+      this.offline = offline;
+      if (offline) {
+        this.available = true;
+        this._attachEngine(offline.context);
+        this._subscribe(t.events);
+        return;
+      }
       const i = t?.params;
       if (i && (i.get("mute") === "1" || i.get("audio") === "0" || i.get("sound") === "0") && (this.muted = !0), !!this.available) try {
         this._onGesture = () => {
@@ -37055,14 +37422,8 @@ void main() {
         return;
       }
       try {
-        const e = this.ctx?.quality?.tier ?? 1;
-        this.engine = new AudioEngine(t, {
-          tier: e,
-          reverb: e > 0,
-          level: this.muted ? 0 : this.volume * AUDIO_MASTER_LEVEL
-        }), this.scape = new Soundscape(this.engine, {
-          tier: e
-        }), this.ac = t, this.muted && t.suspend()?.catch?.(() => {});
+        this._attachEngine(t);
+        this.muted && t.suspend()?.catch?.(() => {});
       } catch (e) {
         console.warn("[audio] could not initialise Web Audio", e);
         try {
@@ -37070,6 +37431,57 @@ void main() {
         } catch {}
         this.available = !1, this.engine = null, this.scape = null, this.ac = null;
       }
+    }
+    _attachEngine(context) {
+      const tier = this.ctx?.quality?.tier ?? 1;
+      this.engine = new AudioEngine(context, {
+        tier,
+        reverb: tier > 0,
+        level: this.muted ? 0 : this.volume * AUDIO_MASTER_LEVEL,
+        offline: this.offline
+      });
+      this.scape = new Soundscape(this.engine, {
+        tier
+      });
+      this.ac = context;
+    }
+    _nowMilliseconds() {
+      return this.offline ? this.offline.time * 1000 : audioNowMilliseconds();
+    }
+    createCapture(options) {
+      const capture = new OfflineAudioCapture(options);
+      const recorder = new AudioController(this.ctx, capture);
+      recorder.engine.master.gain.value = this.volume * AUDIO_MASTER_LEVEL;
+      const update = dt => {
+        recorder._fillState();
+        recorder.scape.update(recorder.state, capture.time, dt);
+        recorder._strokeTick(capture.time);
+      };
+      const close = () => {
+        if (this._capture === recorder) this._capture = null;
+        for (const off of recorder._offs) off();
+        recorder._offs.length = 0;
+      };
+      this._capture = recorder;
+      try {
+        capture.prime(update);
+      } catch (error) {
+        close();
+        throw error;
+      }
+      return {
+        sample(index) {
+          capture.sample(index, dt => {
+            recorder._flush(recorder._nowMilliseconds());
+            update(dt);
+          });
+        },
+        finish() {
+          close();
+          return capture.finish();
+        },
+        close
+      };
     }
     _visibility() {
       this._hidden = !!document.hidden;
@@ -37116,16 +37528,19 @@ void main() {
       } catch {}
       this.ac = null, this.engine = null, this.scape = null;
     }
-    play(t, e) {
-      return this.available ? (this._explicit.set(t, audioNowMilliseconds()), this._play(t, e || {})) : !1;
+    play(t, e, {
+      capture = true
+    } = {}) {
+      if (capture) this._capture?.play(t, e);
+      return this.available ? (this._explicit.set(t, this._nowMilliseconds()), this._play(t, e || {})) : !1;
     }
     _play(t, e) {
       const i = this.engine;
       if (!i || this.muted || this._hidden) return !1;
       try {
         const s = this.ac.state;
-        if (s === "closed" || s !== "running" && audioNowMilliseconds() - this._resumeAt > 600 || !i.has(t)) return !1;
-        const n = audioNowMilliseconds();
+        if (s === "closed" || !this.offline && s !== "running" && this._nowMilliseconds() - this._resumeAt > 600 || !i.has(t)) return !1;
+        const n = this._nowMilliseconds();
         let o = this._burst.get(t);
         for (o || (o = [], this._burst.set(t, o)); o.length && n - o[0] > 40;) o.shift();
         return o.length >= 3 ? !1 : (o.push(n), this._played.set(t, n), i.play(t, e));
@@ -37134,12 +37549,12 @@ void main() {
       }
     }
     _auto(t, e, i = null, s = 0) {
-      !this.engine || this.muted || this._pending.length > 32 || this._pending.push({
+      !this.engine || this.muted || this.offline && i === "ui" || this._pending.length > 32 || this._pending.push({
         name: t,
         opts: e,
         kind: i,
         gapMs: s,
-        t: audioNowMilliseconds()
+        t: this._nowMilliseconds()
       });
     }
     _flush(t) {
@@ -37209,9 +37624,9 @@ void main() {
       }), e("wind:start", () => this._strokeStart()), e("wind:stroke", i => this._strokeMove(i)), e("wind:end", () => this._strokeEnd()), e("tool", () => this._auto("click", {
         volume: 0.35
       }, "ui")), e("scenario", () => {
-        this._scenarioT = audioNowMilliseconds();
+        this._scenarioT = this._nowMilliseconds();
       }), e("weather:change", () => {
-        this._scenarioT = audioNowMilliseconds();
+        this._scenarioT = this._nowMilliseconds();
       });
     }
     _onLightning(t) {
@@ -37222,7 +37637,7 @@ void main() {
         strength: e,
         pan: i
       }), this._bolt = {
-        t: audioNowMilliseconds(),
+        t: this._nowMilliseconds(),
         pan: i,
         s: e,
         thunder: !1
@@ -37232,7 +37647,7 @@ void main() {
       const e = audioClamp(Number(t.delay) || 0, 0, 20),
         i = audioClamp(Number(t.strength) || 1, 0.1, 1.5),
         s = this._bolt;
-      s && !s.thunder && audioNowMilliseconds() - s.t < 400 ? (s.thunder = !0, this._play("rumble", {
+      s && !s.thunder && this._nowMilliseconds() - s.t < 400 ? (s.thunder = !0, this._play("rumble", {
         delay: e,
         strength: i,
         pan: s.pan * 0.6,
@@ -37245,8 +37660,8 @@ void main() {
     }
     _strokeStart() {
       const t = this.engine;
-      if (!(!t || this.muted || this._hidden || this.ac.state !== "running") && !this._stroke) try {
-        const e = this.ac.currentTime,
+      if (!(!t || this.muted || this._hidden || !this.offline && this.ac.state !== "running") && !this._stroke) try {
+        const e = t.now,
           i = t.voice("windstroke", t.sfx, e, 0, 2);
         i.persistent = !0;
         const s = i.noise(t.noise.pink, e),
@@ -37268,7 +37683,7 @@ void main() {
       this._stroke || this._strokeStart();
       const e = this._stroke;
       if (!e) return;
-      const i = this.ac.currentTime,
+      const i = this.engine.now,
         s = audioClamp(Number(t.strength) || 0, 0, 1.3);
       e.g.gain.setTargetAtTime(0.06 + 0.6 * Math.pow(s, 0.85), i, 0.07), e.bp.frequency.setTargetAtTime(320 + 1500 * s, i, 0.09), e.bp.Q.setTargetAtTime(0.8 + 0.8 * s, i, 0.1), e.v.panner && Number.isFinite(t.x) && e.v.panner.pan.setTargetAtTime(this._panAt(t.x, t.z), i, 0.12), e.last = i, e.idle = !1;
     }
@@ -37281,7 +37696,7 @@ void main() {
       if (t) {
         this._stroke = null;
         try {
-          const e = this.ac.currentTime;
+          const e = this.engine.now;
           t.g.gain.setTargetAtTime(0, e, 0.15), t.v.stopAt(e + 1.2);
         } catch {
           t.v.dispose();
@@ -41299,7 +41714,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this._listen(window, "keyup", event => this._key(event, false), true);
       this._listen(this.canvas, "pointerdown", event => this._down(event));
       const stopForControls = event => {
-        if (this.active && event.target?.closest?.(".wg-hud, .wg-photo-actions, .wg-camera-inspector")) this._clearInput();
+        if (this.active && event.target?.closest?.(".wg-hud, .wg-photo-actions, .wg-video-controls, .wg-camera-inspector")) this._clearInput();
       };
       this._listen(window, "pointerdown", stopForControls, true);
       this._listen(window, "focusin", stopForControls, true);
@@ -41367,6 +41782,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     }
     exit() {
       if (!this.active) return;
+      this.ctx.video?.exit();
       this._clearInput();
       this._captureId++;
       this._capturePending = false;
@@ -41402,8 +41818,11 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.yaw = this._rotation.y;
       this.pitch = this._rotation.x;
     }
+    get cameraLocked() {
+      return this.capturing && !this.ctx.video?.recording;
+    }
     selectPreset(name) {
-      if (!this.active || this.capturing) return false;
+      if (!this.active || this.cameraLocked) return false;
       this._clearInput();
       if (!this.ctx.cameraRig.preset(name)) return false;
       this._presetCamera = true;
@@ -41428,6 +41847,12 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.timeRunning = !this.timeRunning;
       this._emit();
     }
+    setCaptureLocked(locked, timeRunning) {
+      this._clearInput();
+      this.capturing = locked;
+      this.timeRunning = timeRunning;
+      this._emit();
+    }
     _clearInput() {
       this.keys.clear();
       this._stopDrag();
@@ -41443,25 +41868,30 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       if (event.code === "KeyP" && !editable && !event.ctrlKey && !event.metaKey && !event.altKey) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (down && !event.repeat) this.active ? this.exit() : this.enter();
+        if (down && !event.repeat && !this.ctx.video?.recording) this.active ? this.exit() : this.enter();
         return;
       }
       if (event.code === "Escape" && (this.active || performance.now() < this._suppressEscapeUntil)) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (down && !event.repeat) this.exit();
+        if (down && !event.repeat) {
+          const {
+            video
+          } = this.ctx;
+          if (video?.recording) video.cancel();else if (video?.active) video.exit();else this.exit();
+        }
         return;
       }
       if (!this.active || editable || event.target?.closest?.('[role="slider"]') || !PHOTO_KEYS.has(event.code)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (down && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      if (down && !this.cameraLocked && !event.ctrlKey && !event.metaKey && !event.altKey) {
         this._takeCameraControl();
         this.keys.add(event.code);
       } else this.keys.delete(event.code);
     }
     _down(event) {
-      if (!this.active || this.capturing) return;
+      if (!this.active || this.cameraLocked) return;
       document.activeElement?.blur?.();
       if (event.button !== 2) return;
       event.preventDefault();
@@ -41474,7 +41904,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.canvas.setPointerCapture(event.pointerId);
     }
     _move(event) {
-      if (!this.active || this.capturing || !this.drag || this.drag.id !== event.pointerId) return;
+      if (!this.active || this.cameraLocked || !this.drag || this.drag.id !== event.pointerId) return;
       this.yaw -= (event.clientX - this.drag.x) * 0.003;
       this.pitch = Math.max(-PHOTO_PITCH_LIMIT, Math.min(PHOTO_PITCH_LIMIT, this.pitch - (event.clientY - this.drag.y) * 0.003));
       this.drag.x = event.clientX;
@@ -41485,7 +41915,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     _wheel(event) {
       if (!this.active) return;
       event.preventDefault();
-      if (this.capturing) return;
+      if (this.cameraLocked) return;
       this._takeCameraControl();
       const {
         camera
@@ -41494,7 +41924,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       camera.updateProjectionMatrix();
     }
     update(dt) {
-      if (!this.active || this.capturing) return;
+      if (!this.active || this.cameraLocked) return;
       if (this._presetCamera) {
         this.ctx.cameraRig.update(dt);
         this._syncAngles();
@@ -41557,6 +41987,191 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
   }
 }
 {
+  const VIDEO_FRAME_RATES = [24, 30, 60];
+  const VIDEO_MAX_SECONDS = 30;
+  const VIDEO_RESOLUTIONS = [1080, 1440, 2160];
+  function videoDimensions(aspect, resolution) {
+    const landscape = aspect >= 1;
+    const maxWidth = resolution * (landscape ? 16 / 9 : 1);
+    const maxHeight = resolution * (landscape ? 1 : 16 / 9);
+    return {
+      width: Math.max(2, Math.round(Math.min(maxWidth, maxHeight * aspect) / 2) * 2),
+      height: Math.max(2, Math.round(Math.min(maxHeight, maxWidth / aspect) / 2) * 2)
+    };
+  }
+  class VideoModeController {
+    constructor(ctx, stepSimulation, renderFrame, restoreViewport) {
+      this.ctx = ctx;
+      this.canvas = ctx.renderer.domElement;
+      this.stepSimulation = stepSimulation;
+      this.renderFrame = renderFrame;
+      this.restoreViewport = restoreViewport;
+      this.active = false;
+      this.job = null;
+      this.download = null;
+    }
+    get recording() {
+      return this.job !== null;
+    }
+    emit(message = "") {
+      const {
+        job,
+        download
+      } = this;
+      this.ctx.events.emit("video:change", {
+        active: this.active,
+        recording: this.recording,
+        phase: job?.phase,
+        finishing: job?.phase === "encoding",
+        completedFrames: job?.completedFrames ?? 0,
+        totalFrames: job?.totalFrames ?? 0,
+        message,
+        downloadUrl: job ? undefined : download?.url,
+        filename: job ? undefined : download?.filename,
+        ...(job?.size ?? download?.size)
+      });
+    }
+    enter() {
+      if (this.active || !this.ctx.photo.active || this.ctx.photo.capturing) return;
+      this.active = true;
+      this.emit();
+    }
+    exit() {
+      if (!this.active) return;
+      this.cancel();
+      this.active = false;
+      this.emit();
+    }
+    async start({
+      fps,
+      totalFrames,
+      resolution = 1440,
+      includeAudio = true
+    }) {
+      if (!this.active || this.recording) return;
+      if (!VIDEO_FRAME_RATES.includes(fps) || !Number.isInteger(totalFrames) || totalFrames < 1 || totalFrames > fps * VIDEO_MAX_SECONDS) {
+        this.emit("请输入有效的帧率和帧数，成片最长 30 秒。");
+        return;
+      }
+      if (!VIDEO_RESOLUTIONS.includes(resolution)) {
+        this.emit("请选择有效的视频分辨率。");
+        return;
+      }
+      const size = videoDimensions(this.ctx.camera.aspect, resolution);
+      const job = {
+        dt: 1 / fps,
+        totalFrames,
+        completedFrames: 0,
+        size,
+        phase: "preparing",
+        pending: false,
+        photoTimeRunning: this.ctx.photo.timeRunning
+      };
+      this.job = job;
+      this.ctx.photo.setCaptureLocked(true, true);
+      this.emit();
+      try {
+        const {
+          width,
+          height
+        } = size;
+        const maxTextureSize = this.ctx.renderer.capabilities.maxTextureSize;
+        if (width > maxTextureSize || height > maxTextureSize) throw new Error("当前显卡无法渲染该分辨率，请选择较低的分辨率。");
+        const encoder = await createVideoEncoder({
+          ...size,
+          fps,
+          includeAudio
+        });
+        if (this.job !== job) {
+          await encoder.close();
+          return;
+        }
+        job.encoder = encoder;
+        if (includeAudio) {
+          if (!this.ctx.audio) throw new Error("山谷音频尚未准备好。");
+          job.audio = this.ctx.audio.createCapture({
+            fps,
+            totalFrames
+          });
+        }
+        job.savedBloom = this.ctx.post.bloom.enabled;
+        job.viewportChanged = true;
+        this.ctx.post.bloom.enabled = true;
+        this.ctx.post.setSize(width, height, 1);
+        this.ctx.camera.aspect = width / height;
+        this.ctx.camera.updateProjectionMatrix();
+        job.phase = "recording";
+        this.emit();
+      } catch (error) {
+        this.fail(job, error);
+      }
+    }
+    captureFrame() {
+      const job = this.job;
+      if (!job || job.pending || job.phase !== "recording") return;
+      job.pending = true;
+      void this.writeFrame(job);
+    }
+    async writeFrame(job) {
+      try {
+        const index = job.completedFrames;
+        this.ctx.photo.update(index === 0 ? 0 : job.dt);
+        if (index > 0) this.stepSimulation(job.dt);
+        this.renderFrame(index === 0 ? 0 : job.dt);
+        job.audio?.sample(index);
+        await job.encoder.addFrame(this.canvas, index);
+        if (this.job !== job) return;
+        job.completedFrames++;
+        if (job.completedFrames < job.totalFrames) {
+          job.pending = false;
+          this.emit();
+          return;
+        }
+        this.stepSimulation(job.dt);
+        job.phase = "encoding";
+        this.emit();
+        const audioBuffer = await job.audio?.finish();
+        if (this.job !== job) return;
+        const blob = await job.encoder.finish(audioBuffer);
+        if (this.job !== job) return;
+        const url = URL.createObjectURL(blob);
+        if (this.download) URL.revokeObjectURL(this.download.url);
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        this.download = {
+          url,
+          filename: `windhaven-${stamp}.webm`,
+          size: job.size
+        };
+        this.finish(job, "视频已生成，可以下载。");
+      } catch (error) {
+        this.fail(job, error);
+      }
+    }
+    finish(job, message) {
+      if (this.job !== job) return;
+      this.job = null;
+      job.audio?.close();
+      if (job.viewportChanged) {
+        this.ctx.post.bloom.enabled = job.savedBloom;
+        this.restoreViewport();
+      }
+      this.ctx.photo.setCaptureLocked(false, job.photoTimeRunning);
+      this.emit(message);
+    }
+    fail(job, error) {
+      if (this.job !== job) return;
+      console.warn("[video] Capture failed", error);
+      this.cancel(error?.message || "视频生成失败，请重试。");
+    }
+    cancel(message = "已取消录制。") {
+      const job = this.job;
+      if (!job) return;
+      this.finish(job, message);
+      void job.encoder?.close().catch(() => {});
+    }
+  }
+}
+{
   function createFollowCameraCollision(ctx) {
     const sample = new ThreeVector3();
     const end = new ThreeVector3();
@@ -41607,7 +42222,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     });
     ctx.selectCameraPreset = requested => {
       const name = CAMERA_PRESET_ALIASES[requested] || requested;
-      if (!Object.hasOwn(CAMERA_PRESETS, name) || ctx.photo?.capturing) return false;
+      if (!Object.hasOwn(CAMERA_PRESETS, name)) return false;
       if (ctx.photo?.active) return ctx.photo.selectPreset(name);
       if (ctx.exploration?.active || ctx.exploration?.pending) {
         const camera = ctx.camera;
@@ -43648,6 +44263,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     ctx.modules.character?.initialize();
     ctx.exploration = new ExplorationController(ctx);
     ctx.photo = new PhotoModeController(ctx);
+    ctx.video = new VideoModeController(ctx, stepSimulation, renderFrame, resizeViewport);
     setupCameraViews(ctx);
     cameraRig.preset(appParams.get("cam") || "overview", true);
     ctx.cameraInspector = new CameraInspector(ctx);
@@ -43712,8 +44328,9 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       resizePending = false;
       if (window.innerWidth < 1 || window.innerHeight < 1) return;
       quality.refreshDpr();
-      if (!ctx.post.setSize(window.innerWidth, window.innerHeight)) return;
+      const resized = ctx.post.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight, camera.updateProjectionMatrix();
+      if (!resized) return;
       for (const moduleInstance of Object.values(ctx.modules)) moduleInstance?.resize?.(window.innerWidth, window.innerHeight);
     }
     window.addEventListener("resize", () => {
@@ -43721,6 +44338,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     }), canvas.addEventListener("webglcontextlost", event => {
       event.preventDefault();
       runtimeErrors.push("WebGL context lost");
+      ctx.video.cancel("图形上下文已中断，录制已停止。");
       console.error("[render] WebGL context lost; waiting for restoration");
     }, !1), canvas.addEventListener("webglcontextrestored", () => location.reload(), !1), quality.onChange = () => {
       resizePending = true;
@@ -43736,6 +44354,10 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       const nowMs = performance.now(),
         frameDeltaSeconds = Math.max(0, (nowMs - previousFrameTimeMs) / 1e3);
       previousFrameTimeMs = nowMs;
+      if (ctx.video.recording) {
+        ctx.video.captureFrame();
+        return;
+      }
       const simulationDeltaSeconds = simulationPaused ? 0 : Math.min(frameDeltaSeconds, 1 / 20);
       !ctx.photo.active && quality.sample(frameDeltaSeconds), resizePending && resizeViewport();
       if (ctx.photo.active) ctx.photo.update(frameDeltaSeconds);
@@ -43753,7 +44375,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         return true;
       },
       simulate(seconds) {
-        if (ctx.photo.active && !ctx.photo.timeRunning) return 0;
+        if (ctx.video.recording || ctx.photo.active && !ctx.photo.timeRunning) return 0;
         const stepCount = Math.round(seconds * 30);
         for (let stepIndex = 0; stepIndex < stepCount; stepIndex++) stepSimulation(1 / 30);
         return stepCount;

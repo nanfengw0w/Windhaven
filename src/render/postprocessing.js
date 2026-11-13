@@ -232,8 +232,7 @@ class PostprocessingPipeline {
         e !== void 0 && (s.uniforms.uBand.value = e),
         i !== void 0 && (s.uniforms.uAmount.value = i));
   }
-  setSize(t, e) {
-    const dpr = this.quality.dpr;
+  setSize(t, e, dpr = this.quality.dpr) {
     if (![t, e, dpr].every(Number.isFinite) || dpr <= 0) return false;
     t = Math.floor(t);
     e = Math.floor(e);

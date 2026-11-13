@@ -68,7 +68,6 @@ class CameraControls {
   }
 
   selectPreset(id) {
-    if (this.ctx.photo?.capturing) return;
     const selected = this.ctx.selectCameraPreset
       ? this.ctx.selectCameraPreset(id)
       : this.ctx.cameraRig.preset(id);
@@ -113,7 +112,7 @@ class CameraControls {
       const active = id === this.selected;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", String(active));
-      button.disabled = !!this.ctx.photo?.capturing;
+      button.disabled = !!this.ctx.photo?.cameraLocked;
     }
   }
 }

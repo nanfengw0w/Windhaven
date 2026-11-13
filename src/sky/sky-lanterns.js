@@ -14,22 +14,31 @@ const MODEL_URL = new URL(
   "../../assets/sky-lantern/aholo-kongming.glb",
   import.meta.url,
 );
+const GLOW_URL = new URL(
+  "../../assets/sky-lantern/aholo-kongming.glow.webp",
+  import.meta.url,
+);
 // Same emissive-atlas window-glow language as the imported buildings, but
 // deliberately much dimmer: these are large, close paper props, not windows.
+// A separately painted glow map (tooling/window-glow-painter.html) takes over
+// when present; the base paper texture is only a fallback.
 const LANTERN_GLOW_INTENSITY = 0.38;
+const LANTERN_PAINTED_GLOW_INTENSITY = 0.6;
 const LANTERN_GLOW_COLOR = 0xffe2c0;
 
-function createLanternMaterial(source) {
+function createLanternMaterial(source, paintedGlow = null) {
   // Use the same emissive-atlas treatment as the imported buildings' window
-  // glow, but much dimmer and tinted like paper. The base texture doubles as
-  // the glow atlas, so dark seams and the frame stay dark while the paper
-  // carries the light.
+  // glow. A painted mask is sparse and hand-authored; without one, the base
+  // paper texture doubles as the glow atlas at a lower fallback intensity.
+  const glowMap = paintedGlow || source.map;
   const material = new Ry.MeshStandardMaterial({
     color: source.color,
     map: source.map,
-    emissiveMap: source.map,
-    emissive: new Ry.Color(LANTERN_GLOW_COLOR),
-    emissiveIntensity: LANTERN_GLOW_INTENSITY,
+    emissiveMap: glowMap,
+    emissive: new Ry.Color(paintedGlow ? 0xffffff : LANTERN_GLOW_COLOR),
+    emissiveIntensity: paintedGlow
+      ? LANTERN_PAINTED_GLOW_INTENSITY
+      : LANTERN_GLOW_INTENSITY,
     alphaMap: source.alphaMap,
     alphaTest: source.alphaTest,
     side: source.side,
@@ -78,7 +87,7 @@ function createLanternMaterial(source) {
   return material;
 }
 
-function instanceLanternModel(scene, opacity, flame) {
+function instanceLanternModel(scene, opacity, flame, paintedGlow = null) {
   scene.updateMatrixWorld(true);
   const bounds = new Ry.Box3().setFromObject(scene, true);
   const center = bounds.getCenter(new Ry.Vector3());
@@ -101,8 +110,8 @@ function instanceLanternModel(scene, opacity, flame) {
     geometry.setAttribute("aLanternOpacity", opacity);
     geometry.setAttribute("aLanternFlame", flame);
     const material = Array.isArray(object.material)
-      ? object.material.map(createLanternMaterial)
-      : createLanternMaterial(object.material);
+      ? object.material.map((source) => createLanternMaterial(source, paintedGlow))
+      : createLanternMaterial(object.material, paintedGlow);
     const mesh = new Ry.InstancedMesh(geometry, material, opacity.count);
     mesh.instanceMatrix.setUsage(Ry.DynamicDrawUsage);
     mesh.frustumCulled = false;
@@ -150,6 +159,22 @@ function createFlightSlots(ctx) {
   });
 }
 
+async function loadPaintedGlowTexture() {
+  try {
+    const response = await fetch(GLOW_URL.href, { cache: "no-cache" });
+    if (!response.ok) return null;
+    const bitmap = await createImageBitmap(await response.blob());
+    const texture = new Ry.Texture(bitmap);
+    texture.flipY = false;
+    texture.colorSpace = Ry.SRGBColorSpace;
+    texture.needsUpdate = true;
+    return texture;
+  } catch {
+    // The painter output is optional; fall back to the paper texture.
+    return null;
+  }
+}
+
 class SkyLanterns {
   constructor(ctx, group) {
     this.ctx = ctx;
@@ -168,9 +193,10 @@ class SkyLanterns {
   async load() {
     this.loading = true;
     try {
-      const { scene } = await new CharacterGLTFLoader().loadAsync(
-        MODEL_URL.href,
-      );
+      const [{ scene }, paintedGlow] = await Promise.all([
+        new CharacterGLTFLoader().loadAsync(MODEL_URL.href),
+        loadPaintedGlowTexture(),
+      ]);
       const slots = createFlightSlots(this.ctx);
       const opacity = new Ry.InstancedBufferAttribute(
         new Float32Array(slots.length),
@@ -180,7 +206,7 @@ class SkyLanterns {
         new Float32Array(slots.length),
         1,
       ).setUsage(Ry.DynamicDrawUsage);
-      const parts = instanceLanternModel(scene, opacity, flame);
+      const parts = instanceLanternModel(scene, opacity, flame, paintedGlow);
       this.group.add(...parts);
       this.slots = slots;
       this.opacity = opacity;

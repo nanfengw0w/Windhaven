@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>模型发光涂抹工具</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #14170f;
+        color: #e8e2cd;
+        font: 13px/1.5 system-ui, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: #1d2117;
+        border-bottom: 1px solid #333a2a;
+        flex-wrap: wrap;
+      }
+      header b { color: #f5ce82; font-size: 14px; }
+      select, button {
+        background: #2a3324;
+        color: #e8e2cd;
+        border: 1px solid #55624a;
+        border-radius: 4px;
+        padding: 4px 10px;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:hover { background: #39452f; }
+      button.active { background: #6b5a2a; border-color: #f5ce82; }
+      input[type="range"] { width: 110px; }
+      input[type="color"] {
+        width: 34px; height: 26px; padding: 0;
+        border: 1px solid #55624a; border-radius: 4px; background: none;
+      }
+      main { flex: 1; display: flex; min-height: 0; }
+      #paintPane {
+        position: relative;
+        flex: 0 0 auto;
+        display: flex; align-items: center; justify-content: center;
+        background: #0d100a;
+        border-right: 1px solid #333a2a;
+        padding: 10px;
+      }
+      #modelPane { flex: 1; position: relative; min-width: 0; }
+      #modelPane canvas { display: block; }
+      #texCanvas {
+        cursor: crosshair;
+        image-rendering: pixelated;
+        width: min(calc(100vh - 130px), 46vw);
+        height: auto;
+        aspect-ratio: 1;
+      }
+      #brushCursor {
+        position: absolute;
+        border: 1px solid #f5ce82cc;
+        border-radius: 50%;
+        pointer-events: none;
+        display: none;
+      }
+      #hint {
+        padding: 5px 12px;
+        background: #1d2117;
+        border-top: 1px solid #333a2a;
+        color: #9aa886;
+      }
+      #hint b { color: #d8cfa8; }
+      #status { margin-left: auto; color: #f5ce82; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <b>模型发光涂抹</b>
+      <label>模型 <select id="modelSelect"></select></label>
+      <button id="toolBrush" class="active">画笔</button>
+      <button id="toolEraser">橡皮</button>
+      <button id="undoBtn" title="Ctrl+Z">撤销</button>
+      <button id="clearBtn">清空</button>
+      <label>笔刷 <input type="range" id="brushSize" min="2" max="40" value="10" /></label>
+      <label>颜色 <input type="color" id="brushColor" value="#ffcd82" /></label>
+      <label>亮度 <input type="range" id="dimLevel" min="10" max="90" value="45" /></label>
+      <button id="exportBtn">导出 glow.webp</button>
+      <span id="status"></span>
+    </header>
+    <main>
+      <div id="paintPane">
+        <canvas id="texCanvas" width="1024" height="1024"></canvas>
+        <div id="brushCursor"></div>
+      </div>
+      <div id="modelPane"></div>
+    </main>
+    <div id="hint">
+      <b>右侧直接在模型上涂抹</b>（左键涂 / Alt+左键擦，<b>右键拖拽</b>旋转视角、滚轮缩放）；
+      左侧贴图可大面积补涂。窗位找不准时先清空，再对模型表面涂。<b>[ ]</b> 调笔刷、<b>Ctrl+Z</b> 撤销。
+      导出后把下载的 <b>&lt;模型&gt;.glow.webp</b> 放回对应目录：导入建筑放 assets/imported-models/，孔明灯放 assets/sky-lantern/，刷新页面生效。
+    </div>
+
+    <script type="module">
+      import { Ry as THREE } from "/src/vendor/three-runtime.js";
+      import { CharacterGLTFLoader } from "/src/character/gltf-loader.js";
+
+      const GLOW_SIZE = 1024;
+      const ASSET_DIR = "/assets/imported-models";
+      const LANTERN_DIR = "/assets/sky-lantern";
+      const IMPORTED_MODELS = [
+        "house-long",
+        "house-inn",
+        "house-tall",
+        "cottage",
+        "clocktower",
+        "station",
+        "coach",
+        "locomotive",
+      ];
+      const MODELS = [
+        {
+          id: "aholo-kongming",
+          label: "孔明灯（Aholo GLB）",
+          kind: "glb",
+          url: `${LANTERN_DIR}/aholo-kongming.glb`,
+          glowUrl: `${LANTERN_DIR}/aholo-kongming.glow.webp`,
+        },
+        ...IMPORTED_MODELS.map((id) => ({
+          id,
+          label: id,
+          kind: "mesh",
+          meshUrl: `${ASSET_DIR}/${id}.mesh`,
+          textureUrl: `${ASSET_DIR}/${id}.webp`,
+          glowUrl: `${ASSET_DIR}/${id}.glow.webp`,
+        })),
+      ];
+
+      const modelSelect = document.getElementById("modelSelect");
+      const texCanvas = document.getElementById("texCanvas");
+      const texCtx = texCanvas.getContext("2d");
+      const modelPane = document.getElementById("modelPane");
+      const brushCursor = document.getElementById("brushCursor");
+      const statusLine = document.getElementById("status");
+      const dimLevel = document.getElementById("dimLevel");
+
+      // The glow map is painted and exported in canvas space (row 0 = top),
+      // which matches the runtime flipY=false convention.
+      const glowCanvas = document.createElement("canvas");
+      glowCanvas.width = glowCanvas.height = GLOW_SIZE;
+      const glowCtx = glowCanvas.getContext("2d", { willReadFrequently: true });
+
+      const glowTexture = new THREE.CanvasTexture(glowCanvas);
+      glowTexture.flipY = false;
+      glowTexture.colorSpace = THREE.SRGBColorSpace;
+
+      let modelId = MODELS[0].id;
+      let diffuseImage = null;
+      let tool = "brush";
+      let brushSize = 10;
+      let painting = false;
+      let strokeSurface = null;
+      let erasing = false;
+      let lastPoint = null;
+      let dirty = false;
+      let panelDirty = false;
+      const undoStack = [];
+
+      for (const definition of MODELS) {
+        const option = document.createElement("option");
+        option.value = definition.id;
+        option.textContent = definition.label;
+        modelSelect.append(option);
+      }
+
+      function setStatus(text) {
+        statusLine.textContent = text;
+      }
+
+      function pushUndo() {
+        undoStack.push(glowCtx.getImageData(0, 0, GLOW_SIZE, GLOW_SIZE));
+        if (undoStack.length > 10) undoStack.shift();
+      }
+
+      function undo() {
+        const snapshot = undoStack.pop();
+        if (!snapshot) return;
+        glowCtx.putImageData(snapshot, 0, 0);
+        dirty = true;
+        redrawTexturePanel();
+      }
+
+      function clearGlow() {
+        pushUndo();
+        glowCtx.clearRect(0, 0, GLOW_SIZE, GLOW_SIZE);
+        dirty = true;
+        redrawTexturePanel();
+      }
+
+      function parseImportedMesh(buffer) {
+        const header = new DataView(buffer);
+        if (buffer.byteLength < 16 || header.getUint32(0, false) !== 0x57474d53)
+          throw new Error("不是 WGMS 网格");
+        const vertexCount = header.getUint32(8, true);
+        const indexCount = header.getUint32(12, true);
+        const positions = new Float32Array(buffer, 16, vertexCount * 3);
+        const normals = new Float32Array(buffer, 16 + vertexCount * 12, vertexCount * 3);
+        const uvs = new Float32Array(buffer, 16 + vertexCount * 24, vertexCount * 2);
+        const indices = new Uint32Array(buffer, 16 + vertexCount * 32, indexCount);
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+        geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+        geometry.computeBoundingBox();
+        geometry.computeBoundingSphere();
+        return geometry;
+      }
+
+      // --- 3D preview ---
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      modelPane.append(renderer.domElement);
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0d08);
+      const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
+      scene.add(new THREE.HemisphereLight(0x8fa0b8, 0x2a3020, 0.55));
+      const key = new THREE.DirectionalLight(0xfff2dd, 0.9);
+      key.position.set(2, 3, 2.5);
+      scene.add(key);
+
+      const orbit = { theta: 0.8, phi: 1.1, radius: 3 };
+      const orbitTarget = new THREE.Vector3();
+      let modelMesh = null;
+
+      function updateCamera() {
+        orbit.phi = Math.max(0.08, Math.min(3.05, orbit.phi));
+        const sinPhi = Math.sin(orbit.phi);
+        camera.position.set(
+          orbitTarget.x +
+            orbit.radius * sinPhi * Math.sin(orbit.theta),
+          orbitTarget.y + orbit.radius * Math.cos(orbit.phi),
+          orbitTarget.z +
+            orbit.radius * sinPhi * Math.cos(orbit.theta),
+        );
+        camera.lookAt(orbitTarget);
+      }
+
+      function resize3D() {
+        const width = modelPane.clientWidth;
+        const height = modelPane.clientHeight;
+        if (!width || !height) return;
+        renderer.setSize(width, height);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+      }
+      window.addEventListener("resize", resize3D);
+
+      modelPane.addEventListener("contextmenu", (event) => event.preventDefault());
+      modelPane.addEventListener("mousedown", (event) => {
+        // Left button paints on the model surface; right button orbits.
+        if (event.button === 2) {
+          const move = (moveEvent) => {
+            orbit.theta -= moveEvent.movementX * 0.006;
+            orbit.phi -= moveEvent.movementY * 0.006;
+            updateCamera();
+          };
+          const up = () => {
+            window.removeEventListener("mousemove", move);
+            window.removeEventListener("mouseup", up);
+          };
+          window.addEventListener("mousemove", move);
+          window.addEventListener("mouseup", up);
+          return;
+        }
+        if (event.button !== 0 || !modelMesh) return;
+        pushUndo();
+        painting = true;
+        strokeSurface = "model";
+        erasing = event.altKey || tool === "eraser";
+        paintOnModel(event);
+      });
+      window.addEventListener("mousemove", (event) => {
+        if (painting && event.target === renderer.domElement) paintOnModel(event);
+      });
+
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+
+      function paintOnModel(event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.set(
+          ((event.clientX - rect.left) / rect.width) * 2 - 1,
+          -((event.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        raycaster.setFromCamera(pointer, camera);
+        const [hit] = raycaster.intersectObject(modelMesh, true);
+        if (!hit || !hit.uv) return;
+        stamp(
+          { x: hit.uv.x * GLOW_SIZE, y: hit.uv.y * GLOW_SIZE },
+          erasing
+        );
+      }
+
+      modelPane.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        orbit.radius *= 1 + Math.sign(event.deltaY) * 0.12;
+        orbit.radius = Math.max(0.4, Math.min(30, orbit.radius));
+        updateCamera();
+      }, { passive: false });
+
+      function disposePreview() {
+        if (!modelMesh) return;
+        scene.remove(modelMesh);
+        modelMesh.traverse((object) => {
+          if (!object.isMesh) return;
+          object.geometry?.dispose?.();
+          const materials = Array.isArray(object.material)
+            ? object.material
+            : [object.material];
+          for (const material of materials) {
+            if (!material) continue;
+            if (material.map && material.map !== glowTexture)
+              material.map.dispose?.();
+            material.dispose?.();
+          }
+        });
+        modelMesh = null;
+      }
+
+      async function loadModel(id) {
+        const definition =
+          MODELS.find((model) => model.id === id) || MODELS[0];
+        modelId = definition.id;
+        modelSelect.value = definition.id;
+        setStatus("加载中…");
+        let preview = null;
+        let texture = null;
+        let center = new THREE.Vector3();
+        let radius = 1;
+
+        if (definition.kind === "glb") {
+          const gltf = await new CharacterGLTFLoader().loadAsync(
+            definition.url,
+          );
+          preview = gltf.scene;
+          preview.traverse((object) => {
+            if (!object.isMesh) return;
+            const materials = Array.isArray(object.material)
+              ? object.material
+              : [object.material];
+            for (const material of materials)
+              if (material?.map && !texture) texture = material.map;
+          });
+          if (!texture) throw new Error("孔明灯 GLB 没有基础贴图");
+          texture.flipY = false;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          preview.traverse((object) => {
+            if (!object.isMesh) return;
+            object.material = new THREE.MeshStandardMaterial({
+              map: texture,
+              emissiveMap: glowTexture,
+              emissive: new THREE.Color(0xffffff),
+              emissiveIntensity: 2.2,
+              roughness: 0.9,
+            });
+          });
+          const bounds = new THREE.Box3().setFromObject(preview);
+          const sphere = bounds.getBoundingSphere(new THREE.Sphere());
+          bounds.getCenter(center);
+          preview.position.sub(center);
+          orbitTarget.set(0, 0, 0);
+          radius = sphere.radius * 2.6;
+        } else {
+          const [meshResponse, loadedTexture] = await Promise.all([
+            fetch(definition.meshUrl).then((response) => response.arrayBuffer()),
+            new THREE.TextureLoader().loadAsync(definition.textureUrl),
+          ]);
+          const geometry = parseImportedMesh(meshResponse);
+          loadedTexture.flipY = false;
+          loadedTexture.colorSpace = THREE.SRGBColorSpace;
+          texture = loadedTexture;
+          const material = new THREE.MeshStandardMaterial({
+            map: texture,
+            emissiveMap: glowTexture,
+            emissive: new THREE.Color(0xffffff),
+            emissiveIntensity: 2.2,
+            roughness: 0.9,
+          });
+          preview = new THREE.Mesh(geometry, material);
+          geometry.boundingBox.getCenter(center);
+          orbitTarget.copy(center);
+          radius = geometry.boundingSphere.radius * 2.6;
+        }
+
+        disposePreview();
+        modelMesh = preview;
+        scene.add(modelMesh);
+        orbit.radius = Math.max(0.4, radius);
+        orbit.theta = 0.8;
+        orbit.phi = 1.1;
+        updateCamera();
+
+        glowCtx.clearRect(0, 0, GLOW_SIZE, GLOW_SIZE);
+        undoStack.length = 0;
+        try {
+          const existing = await new THREE.TextureLoader().loadAsync(
+            definition.glowUrl,
+          );
+          const image = existing.image;
+          glowCtx.drawImage(image, 0, 0, GLOW_SIZE, GLOW_SIZE);
+          existing.dispose();
+          // Generated glow files are opaque black-background RGB; key the
+          // background out so the diffuse stays visible underneath.
+          const frame = glowCtx.getImageData(0, 0, GLOW_SIZE, GLOW_SIZE);
+          const channel = frame.data;
+          for (let index = 0; index < channel.length; index += 4) {
+            if (
+              channel[index] < 12 &&
+              channel[index + 1] < 12 &&
+              channel[index + 2] < 12
+            )
+              channel[index + 3] = 0;
+          }
+          glowCtx.putImageData(frame, 0, 0);
+          setStatus(`已载入现有 glow 图（${definition.id}）`);
+        } catch {
+          setStatus("空白 glow 图（该模型当前无灯光）");
+        }
+        diffuseImage = texture.image;
+        dirty = true;
+        redrawTexturePanel();
+        resize3D();
+      }
+
+      // --- Texture painting panel ---
+      function redrawTexturePanel() {
+        texCtx.clearRect(0, 0, GLOW_SIZE, GLOW_SIZE);
+        if (diffuseImage) {
+          texCtx.save();
+          texCtx.filter = `brightness(${dimLevel.value}%)`;
+          texCtx.drawImage(diffuseImage, 0, 0, GLOW_SIZE, GLOW_SIZE);
+          texCtx.restore();
+        }
+        texCtx.drawImage(glowCanvas, 0, 0);
+      }
+
+      function stamp(point, erase) {
+        const radius = brushSize / 2;
+        glowCtx.save();
+        if (erase) {
+          glowCtx.globalCompositeOperation = "destination-out";
+          glowCtx.beginPath();
+          glowCtx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+          glowCtx.fillStyle = "#000";
+          glowCtx.fill();
+        } else {
+          const gradient = glowCtx.createRadialGradient(
+            point.x, point.y, radius * 0.25,
+            point.x, point.y, radius
+          );
+          const color = document.getElementById("brushColor").value;
+          gradient.addColorStop(0, color);
+          gradient.addColorStop(1, color + "00");
+          glowCtx.fillStyle = gradient;
+          glowCtx.beginPath();
+          glowCtx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+          glowCtx.fill();
+        }
+        glowCtx.restore();
+        dirty = true;
+        panelDirty = true;
+      }
+
+      function eventPoint(event) {
+        const rect = texCanvas.getBoundingClientRect();
+        return {
+          x: ((event.clientX - rect.left) / rect.width) * GLOW_SIZE,
+          y: ((event.clientY - rect.top) / rect.height) * GLOW_SIZE,
+        };
+      }
+
+      texCanvas.addEventListener("mousedown", (event) => {
+        if (event.button !== 0) return;
+        pushUndo();
+        painting = true;
+        strokeSurface = "tex";
+        erasing = event.altKey || tool === "eraser";
+        lastPoint = eventPoint(event);
+        stamp(lastPoint, erasing);
+      });
+      window.addEventListener("mousemove", (event) => {
+        if (!painting) return;
+        if (strokeSurface === "tex") {
+          if (event.target !== texCanvas) return;
+          const point = eventPoint(event);
+          const dx = point.x - lastPoint.x;
+          const dy = point.y - lastPoint.y;
+          const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / (brushSize / 3)));
+          for (let index = 1; index <= steps; index++)
+            stamp(
+              {
+                x: lastPoint.x + (dx * index) / steps,
+                y: lastPoint.y + (dy * index) / steps,
+              },
+              erasing
+            );
+          lastPoint = point;
+          return;
+        }
+        if (strokeSurface === "model" && event.target === renderer.domElement)
+          paintOnModel(event);
+      });
+      window.addEventListener("mouseup", () => {
+        painting = false;
+        strokeSurface = null;
+      });
+      texCanvas.addEventListener("mousemove", (event) => {
+        const rect = texCanvas.getBoundingClientRect();
+        const scale = rect.width / GLOW_SIZE;
+        brushCursor.style.display = "block";
+        brushCursor.style.width = brushCursor.style.height = `${brushSize * scale}px`;
+        brushCursor.style.left = `${event.clientX - rect.left - (brushSize * scale) / 2 + rect.left - paintPane.getBoundingClientRect().left}px`;
+        brushCursor.style.top = `${event.clientY - (brushSize * scale) / 2 - paintPane.getBoundingClientRect().top}px`;
+      });
+      texCanvas.addEventListener("mouseleave", () => {
+        brushCursor.style.display = "none";
+      });
+
+      // --- Controls ---
+      document.getElementById("toolBrush").addEventListener("click", (event) => {
+        tool = "brush";
+        event.target.classList.add("active");
+        document.getElementById("toolEraser").classList.remove("active");
+      });
+      document.getElementById("toolEraser").addEventListener("click", (event) => {
+        tool = "eraser";
+        event.target.classList.add("active");
+        document.getElementById("toolBrush").classList.remove("active");
+      });
+      document.getElementById("undoBtn").addEventListener("click", undo);
+      document.getElementById("clearBtn").addEventListener("click", clearGlow);
+      document.getElementById("brushSize").addEventListener("input", (event) => {
+        brushSize = Number(event.target.value);
+      });
+      dimLevel.addEventListener("input", redrawTexturePanel);
+      modelSelect.addEventListener("change", (event) => {
+        loadModel(event.target.value).catch((error) => {
+          console.error(error);
+          setStatus(`加载失败：${error.message || error}`);
+        });
+      });
+      document.getElementById("exportBtn").addEventListener("click", () => {
+        // Flatten onto black so the exported file matches the opaque RGB
+        // convention of the offline pipeline.
+        const flat = document.createElement("canvas");
+        flat.width = flat.height = GLOW_SIZE;
+        flat.getContext("2d").fillStyle = "#000";
+        flat.getContext("2d").fillRect(0, 0, GLOW_SIZE, GLOW_SIZE);
+        flat.getContext("2d").drawImage(glowCanvas, 0, 0);
+        flat.toBlob((blob) => {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = `${modelId}.glow.webp`;
+          link.click();
+          URL.revokeObjectURL(link.href);
+          setStatus(`已导出 ${modelId}.glow.webp`);
+        }, "image/webp", 0.9);
+      });
+      window.addEventListener("keydown", (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+          event.preventDefault();
+          undo();
+        }
+        if (event.key === "[") {
+          brushSize = Math.max(2, brushSize - 2);
+          document.getElementById("brushSize").value = brushSize;
+        }
+        if (event.key === "]") {
+          brushSize = Math.min(40, brushSize + 2);
+          document.getElementById("brushSize").value = brushSize;
+        }
+      });
+
+      // --- Render loop ---
+      function frame() {
+        if (dirty && modelMesh) {
+          glowTexture.needsUpdate = true;
+          dirty = false;
+        }
+        if (panelDirty) {
+          redrawTexturePanel();
+          panelDirty = false;
+        }
+        renderer.render(scene, camera);
+        requestAnimationFrame(frame);
+      }
+
+      const requestedModel = new URLSearchParams(location.search).get("model");
+      const initialModel = MODELS.some((model) => model.id === requestedModel)
+        ? requestedModel
+        : MODELS[0].id;
+      loadModel(initialModel).catch((error) => {
+        console.error(error);
+        setStatus(`加载失败：${error.message || error}`);
+      });
+      resize3D();
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

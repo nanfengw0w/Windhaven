@@ -24510,15 +24510,18 @@ void main() {
 }
 {
   const MODEL_URL = new URL("../../assets/sky-lantern/aholo-kongming.glb", import.meta.url);
+  const GLOW_URL = new URL("../../assets/sky-lantern/aholo-kongming.glow.webp", import.meta.url);
   const LANTERN_GLOW_INTENSITY = 0.38;
+  const LANTERN_PAINTED_GLOW_INTENSITY = 0.6;
   const LANTERN_GLOW_COLOR = 0xffe2c0;
-  function createLanternMaterial(source) {
+  function createLanternMaterial(source, paintedGlow = null) {
+    const glowMap = paintedGlow || source.map;
     const material = new Ry.MeshStandardMaterial({
       color: source.color,
       map: source.map,
-      emissiveMap: source.map,
-      emissive: new Ry.Color(LANTERN_GLOW_COLOR),
-      emissiveIntensity: LANTERN_GLOW_INTENSITY,
+      emissiveMap: glowMap,
+      emissive: new Ry.Color(paintedGlow ? 0xffffff : LANTERN_GLOW_COLOR),
+      emissiveIntensity: paintedGlow ? LANTERN_PAINTED_GLOW_INTENSITY : LANTERN_GLOW_INTENSITY,
       alphaMap: source.alphaMap,
       alphaTest: source.alphaTest,
       side: source.side,
@@ -24546,7 +24549,7 @@ void main() {
     material.customProgramCacheKey = () => "sky-lantern-window-glow-v1";
     return material;
   }
-  function instanceLanternModel(scene, opacity, flame) {
+  function instanceLanternModel(scene, opacity, flame, paintedGlow = null) {
     scene.updateMatrixWorld(true);
     const bounds = new Ry.Box3().setFromObject(scene, true);
     const center = bounds.getCenter(new Ry.Vector3());
@@ -24565,7 +24568,7 @@ void main() {
       geometry.applyMatrix4(transform.multiplyMatrices(normalize, object.matrixWorld));
       geometry.setAttribute("aLanternOpacity", opacity);
       geometry.setAttribute("aLanternFlame", flame);
-      const material = Array.isArray(object.material) ? object.material.map(createLanternMaterial) : createLanternMaterial(object.material);
+      const material = Array.isArray(object.material) ? object.material.map(source => createLanternMaterial(source, paintedGlow)) : createLanternMaterial(object.material, paintedGlow);
       const mesh = new Ry.InstancedMesh(geometry, material, opacity.count);
       mesh.instanceMatrix.setUsage(Ry.DynamicDrawUsage);
       mesh.frustumCulled = false;
@@ -24603,6 +24606,22 @@ void main() {
       };
     });
   }
+  async function loadPaintedGlowTexture() {
+    try {
+      const response = await fetch(GLOW_URL.href, {
+        cache: "no-cache"
+      });
+      if (!response.ok) return null;
+      const bitmap = await createImageBitmap(await response.blob());
+      const texture = new Ry.Texture(bitmap);
+      texture.flipY = false;
+      texture.colorSpace = Ry.SRGBColorSpace;
+      texture.needsUpdate = true;
+      return texture;
+    } catch {
+      return null;
+    }
+  }
   class SkyLanterns {
     constructor(ctx, group) {
       this.ctx = ctx;
@@ -24620,13 +24639,13 @@ void main() {
     async load() {
       this.loading = true;
       try {
-        const {
+        const [{
           scene
-        } = await new CharacterGLTFLoader().loadAsync(MODEL_URL.href);
+        }, paintedGlow] = await Promise.all([new CharacterGLTFLoader().loadAsync(MODEL_URL.href), loadPaintedGlowTexture()]);
         const slots = createFlightSlots(this.ctx);
         const opacity = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
         const flame = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
-        const parts = instanceLanternModel(scene, opacity, flame);
+        const parts = instanceLanternModel(scene, opacity, flame, paintedGlow);
         this.group.add(...parts);
         this.slots = slots;
         this.opacity = opacity;

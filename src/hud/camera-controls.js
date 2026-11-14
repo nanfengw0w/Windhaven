@@ -46,14 +46,12 @@ class CameraControls {
             class: "wg-camera-mark",
             "aria-hidden": "true",
           }),
+          // Keep the narrow list to one line per destination. The full
+          // description remains available as the button title on hover.
           createHudElement("span", { class: "wg-camera-copy" }, [
             createHudElement("span", {
               class: "wg-camera-name",
               text: preset.label || id,
-            }),
-            createHudElement("span", {
-              class: "wg-camera-detail",
-              text: description,
             }),
           ]),
         ],

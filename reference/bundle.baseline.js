@@ -35320,9 +35320,6 @@ void main() {
         }, [createHudElement("span", {
           class: "wg-camera-name",
           text: preset.label || id
-        }), createHudElement("span", {
-          class: "wg-camera-detail",
-          text: description
         })])]);
         button.addEventListener("click", () => this.selectPreset(id));
         this.buttons.set(id, button);

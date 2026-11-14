@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T15:03:46.957Z",
+  "generatedAt": "2026-11-14T15:06:21.235Z",
   "generator": "tooling/build-baseline.mjs",
   "moduleCount": 231,
   "statementCount": 2526,
-  "sha256": "9410a935ea4b85d1a32cb4d34c302ddaf801c55f8fd2fb14c22b30fea0db5df5"
+  "sha256": "206ae45d25ad0ff443d42fd184ff2ea3e216b5c96638c36d5655737642a0fe8b"
 }

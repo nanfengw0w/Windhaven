@@ -161,6 +161,23 @@ class LifeSystem {
     const east = this.birdsEast?.findCameraBird(from, airborneOnly, maxDistance);
     return !east || (west && west.distance <= east.distance) ? west : east;
   }
+  findCameraBirdAfter(current, from, airborneOnly = false) {
+    if (!current) return this.findCameraBird(from, airborneOnly);
+    const west = this.birds;
+    const east = this.birdsEast;
+    const same =
+      current.flock === west ? west : current.flock === east ? east : null;
+    const other = same === west ? east : west;
+    const next = same?.findCameraBirdAfter(current.index, from, airborneOnly);
+    if (next && (next.flock !== current.flock || next.index !== current.index))
+      return next;
+    return (
+      other?.findCameraBird(from, airborneOnly) ??
+      other?.findCameraBirdAfter(-1, from, false) ??
+      same?.findCameraBirdAfter(-1, from, false) ??
+      current
+    );
+  }
   _updateEnv(t) {
     const { world: e, wind: i, fields: s } = this.ctx,
       n = this.env,

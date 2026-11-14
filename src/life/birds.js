@@ -296,6 +296,25 @@ let BirdFlock = class {
     }
     return nearest;
   }
+  findCameraBirdAfter(index, from, airborneOnly = false) {
+    if (!this.mesh.visible) return null;
+    const start = Number.isInteger(index) ? index : -1;
+    for (let step = 1; step <= this.N; step++) {
+      const candidate = (((start + step) % this.N) + this.N) % this.N;
+      if (airborneOnly && this.state[candidate] !== BIRD_FLYING) continue;
+      return {
+        flock: this,
+        index: candidate,
+        distance: Math.hypot(
+          this.px[candidate] - from.x,
+          this.py[candidate] - from.y,
+          this.pz[candidate] - from.z,
+        ),
+      };
+    }
+    return null;
+  }
+
   readCameraPose(index, pose) {
     if (!this.mesh.visible) return false;
     pose.position.set(this.px[index], this.py[index], this.pz[index]);

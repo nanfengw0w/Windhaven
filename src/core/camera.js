@@ -128,7 +128,10 @@ class CameraRig {
     name = CAMERA_PRESET_ALIASES[name] || name;
     const preset = CAMERA_PRESETS[name];
     if (!preset) return false;
-    if (name === "bird" && this.followingBird && !immediate) return true;
+    if (name === "bird" && this.followingBird && !immediate) {
+      this._selectNextBird();
+      return true;
+    }
     const start = this._cameraTransition();
     this.activePreset = name;
     this.overview = name === "overview";
@@ -149,6 +152,30 @@ class CameraRig {
     this._transition = immediate ? null : start;
     if (immediate) this.update(0);
     this._emit();
+    return true;
+  }
+
+  _selectNextBird() {
+    const life = this.ctx?.modules.life;
+    if (!life) return false;
+    const current = this._birdSubject;
+    const next = life.findCameraBirdAfter(current, this.camera.position, false);
+    if (!next) return false;
+    if (
+      current &&
+      next.flock === current.flock &&
+      next.index === current.index
+    )
+      return false;
+    this._birdSubject = next;
+    this._birdYaw = null;
+    this._birdPitch = 0;
+    this._birdRoll = 0;
+    const pose = this._birdPose;
+    if (next.flock.readCameraPose(next.index, pose))
+      this._birdPreviousPosition.copy(pose.position);
+    this._transition = this._cameraTransition(BIRD_HANDOFF_SECONDS);
+    this.poke();
     return true;
   }
 
@@ -293,12 +320,11 @@ class CameraRig {
     const { camera, ctx, _birdPose: pose } = this;
     const life = ctx?.modules.life;
     const previous = this._birdSubject;
-    const hadPose = previous?.flock.readCameraPose(previous.index, pose);
-    if (!hadPose || pose.perched) {
-      const from = hadPose ? pose.position : camera.position;
+    if (!previous) {
       this._birdSubject =
-        life?.findCameraBird(from, true, hadPose ? 2.4 : Infinity) ??
-        (hadPose ? previous : life?.findCameraBird(from, false));
+        life?.findCameraBird(camera.position, true, Infinity) ??
+        life?.findCameraBird(camera.position, false) ??
+        null;
     }
     const subject = this._birdSubject;
     if (!subject || !subject.flock.readCameraPose(subject.index, pose)) {

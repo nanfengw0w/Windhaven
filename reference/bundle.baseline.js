@@ -5341,7 +5341,10 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       name = CAMERA_PRESET_ALIASES[name] || name;
       const preset = CAMERA_PRESETS[name];
       if (!preset) return false;
-      if (name === "bird" && this.followingBird && !immediate) return true;
+      if (name === "bird" && this.followingBird && !immediate) {
+        this._selectNextBird();
+        return true;
+      }
       const start = this._cameraTransition();
       this.activePreset = name;
       this.overview = name === "overview";
@@ -5362,6 +5365,23 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this._transition = immediate ? null : start;
       if (immediate) this.update(0);
       this._emit();
+      return true;
+    }
+    _selectNextBird() {
+      const life = this.ctx?.modules.life;
+      if (!life) return false;
+      const current = this._birdSubject;
+      const next = life.findCameraBirdAfter(current, this.camera.position, false);
+      if (!next) return false;
+      if (current && next.flock === current.flock && next.index === current.index) return false;
+      this._birdSubject = next;
+      this._birdYaw = null;
+      this._birdPitch = 0;
+      this._birdRoll = 0;
+      const pose = this._birdPose;
+      if (next.flock.readCameraPose(next.index, pose)) this._birdPreviousPosition.copy(pose.position);
+      this._transition = this._cameraTransition(BIRD_HANDOFF_SECONDS);
+      this.poke();
       return true;
     }
     adoptCamera(manual = false) {
@@ -5455,10 +5475,8 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       } = this;
       const life = ctx?.modules.life;
       const previous = this._birdSubject;
-      const hadPose = previous?.flock.readCameraPose(previous.index, pose);
-      if (!hadPose || pose.perched) {
-        const from = hadPose ? pose.position : camera.position;
-        this._birdSubject = life?.findCameraBird(from, true, hadPose ? 2.4 : Infinity) ?? (hadPose ? previous : life?.findCameraBird(from, false));
+      if (!previous) {
+        this._birdSubject = life?.findCameraBird(camera.position, true, Infinity) ?? life?.findCameraBird(camera.position, false) ?? null;
       }
       const subject = this._birdSubject;
       if (!subject || !subject.flock.readCameraPose(subject.index, pose)) {
@@ -26685,6 +26703,20 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
       }
       return nearest;
     }
+    findCameraBirdAfter(index, from, airborneOnly = false) {
+      if (!this.mesh.visible) return null;
+      const start = Number.isInteger(index) ? index : -1;
+      for (let step = 1; step <= this.N; step++) {
+        const candidate = ((start + step) % this.N + this.N) % this.N;
+        if (airborneOnly && this.state[candidate] !== BIRD_FLYING) continue;
+        return {
+          flock: this,
+          index: candidate,
+          distance: Math.hypot(this.px[candidate] - from.x, this.py[candidate] - from.y, this.pz[candidate] - from.z)
+        };
+      }
+      return null;
+    }
     readCameraPose(index, pose) {
       if (!this.mesh.visible) return false;
       pose.position.set(this.px[index], this.py[index], this.pz[index]);
@@ -29516,6 +29548,16 @@ void main() {
       const west = this.birds?.findCameraBird(from, airborneOnly, maxDistance);
       const east = this.birdsEast?.findCameraBird(from, airborneOnly, maxDistance);
       return !east || west && west.distance <= east.distance ? west : east;
+    }
+    findCameraBirdAfter(current, from, airborneOnly = false) {
+      if (!current) return this.findCameraBird(from, airborneOnly);
+      const west = this.birds;
+      const east = this.birdsEast;
+      const same = current.flock === west ? west : current.flock === east ? east : null;
+      const other = same === west ? east : west;
+      const next = same?.findCameraBirdAfter(current.index, from, airborneOnly);
+      if (next && (next.flock !== current.flock || next.index !== current.index)) return next;
+      return other?.findCameraBird(from, airborneOnly) ?? other?.findCameraBirdAfter(-1, from, false) ?? same?.findCameraBirdAfter(-1, from, false) ?? current;
     }
     _updateEnv(t) {
       const {

@@ -69,6 +69,12 @@ const CAMERA_PRESETS = {
     follow: true,
     fov: 50,
   },
+  bird: {
+    label: "跟随小鸟",
+    description: "跟随 · 贴近飞行，随转弯侧倾",
+    radius: 0.34,
+    fov: 68,
+  },
 };
 
 const CAMERA_PRESET_ALIASES = {

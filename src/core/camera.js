@@ -4,9 +4,21 @@ import { LANDSCAPE_BOUNDS } from "./config.js";
 import { CAMERA_PRESETS, CAMERA_PRESET_ALIASES } from "./camera-presets.js";
 
 const CAMERA_TRANSITION_SECONDS = 3;
+const BIRD_HANDOFF_SECONDS = 2.1;
+const BIRD_YAW_DAMPING = 4.6;
+const BIRD_PITCH_DAMPING = 5.2;
+const BIRD_ROLL_DAMPING = 3.6;
+const BIRD_POSITION_DAMPING = 13;
+const BIRD_ROTATION_DAMPING = 10;
 
 function nearestCameraAngle(from, to) {
   return from + Math.atan2(Math.sin(to - from), Math.cos(to - from));
+}
+
+function cameraTransitionBlend(transition, dt) {
+  transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+  const fraction = transition.elapsed / transition.duration;
+  return fraction ** 3 * (fraction * (fraction * 6 - 15) + 10);
 }
 
 function copyCameraTransition(transition) {
@@ -48,6 +60,13 @@ class CameraRig {
     this._defaultNear = camera.near;
     this._nearGoal = camera.near;
     this._followYawOffset = 0;
+    this._birdSubject = null;
+    this._birdPose = { position: new ThreeVector3() };
+    this._birdPreviousPosition = new ThreeVector3();
+    this._birdForward = new ThreeVector3();
+    this._birdYaw = null;
+    this._birdPitch = 0;
+    this._birdRoll = 0;
     this._transition = null;
     this._offset = new ThreeVector3();
     this._desired = new ThreeVector3();
@@ -70,6 +89,14 @@ class CameraRig {
     return this.activePreset === "follow";
   }
 
+  get followingBird() {
+    return this.activePreset === "bird";
+  }
+
+  get followsSubject() {
+    return this.following || this.followingBird;
+  }
+
   get transitioning() {
     return this._transition !== null;
   }
@@ -77,19 +104,16 @@ class CameraRig {
   _emit() {
     this.ctx?.events?.emit("camera:change", {
       preset: this.activePreset,
-      following: this.following,
+      following: this.followsSubject,
     });
   }
 
-  preset(name, immediate = false) {
-    name = CAMERA_PRESET_ALIASES[name] || name;
-    const preset = CAMERA_PRESETS[name];
-    if (!preset) return false;
+  _cameraTransition(duration = CAMERA_TRANSITION_SECONDS) {
     const delta = this._offset.copy(this.camera.position).sub(this.target);
     const distance = Math.max(delta.length(), 0.01);
-    const start = {
+    return {
       elapsed: 0,
-      duration: CAMERA_TRANSITION_SECONDS,
+      duration,
       theta: Math.atan2(delta.x, delta.z),
       phi: Math.acos(clamp(delta.y / distance, -1, 1)),
       radius: distance,
@@ -98,11 +122,23 @@ class CameraRig {
       quaternion: this.camera.quaternion.toArray(),
       fov: this.camera.fov,
     };
+  }
+
+  preset(name, immediate = false) {
+    name = CAMERA_PRESET_ALIASES[name] || name;
+    const preset = CAMERA_PRESETS[name];
+    if (!preset) return false;
+    if (name === "bird" && this.followingBird && !immediate) return true;
+    const start = this._cameraTransition();
     this.activePreset = name;
     this.overview = name === "overview";
     this._baseFov = preset.fov ?? 40;
     this._aspect = null;
     this._followYawOffset = 0;
+    this._birdSubject = null;
+    this._birdYaw = null;
+    this._birdPitch = 0;
+    this._birdRoll = 0;
     this.goal.theta = nearestCameraAngle(start.theta, preset.theta ?? 0);
     this.goal.phi = preset.phi ?? 1.15;
     this.goal.radius = preset.radius ?? 0.85;
@@ -155,6 +191,7 @@ class CameraRig {
   }
 
   rotate(dx, dy) {
+    if (this.followingBird) this.adoptCamera(true);
     this._interrupt();
     this.goal.theta -= dx * 0.0052;
     this.goal.phi = clamp(
@@ -167,6 +204,10 @@ class CameraRig {
   }
 
   zoom(scale) {
+    if (this.followingBird) {
+      this.goal.radius = clamp(this.goal.radius * scale, 0.18, 0.9);
+      return;
+    }
     this._interrupt();
     this.goal.radius = clamp(
       this.goal.radius * scale,
@@ -178,7 +219,7 @@ class CameraRig {
 
   pan(dx, dy) {
     this._interrupt();
-    if (this.following) this.adoptCamera();
+    if (this.followsSubject) this.adoptCamera();
     this._manual();
     const scale = this.radius * (this.fit || 1) * 0.0012;
     const right = new ThreeVector3().setFromMatrixColumn(this.camera.matrix, 0);
@@ -206,6 +247,10 @@ class CameraRig {
   _manual() {
     if (this.activePreset === null) return;
     this.activePreset = null;
+    this._birdSubject = null;
+    this._birdYaw = null;
+    this._birdPitch = 0;
+    this._birdRoll = 0;
     // Preserve the framing when taking over a fitted overview.
     this._emit();
   }
@@ -219,7 +264,7 @@ class CameraRig {
   }
 
   setDrift(enabled) {
-    if (this.enabledDrift && !enabled && !this.following)
+    if (this.enabledDrift && !enabled && !this.followsSubject)
       this.goal.theta = this.theta;
     this.enabledDrift = !!enabled;
     this.poke();
@@ -244,14 +289,107 @@ class CameraRig {
     );
   }
 
+  _updateBirdCamera(dt) {
+    const { camera, ctx, _birdPose: pose } = this;
+    const life = ctx?.modules.life;
+    const previous = this._birdSubject;
+    const hadPose = previous?.flock.readCameraPose(previous.index, pose);
+    if (!hadPose || pose.perched) {
+      const from = hadPose ? pose.position : camera.position;
+      this._birdSubject =
+        life?.findCameraBird(from, true, hadPose ? 2.4 : Infinity) ??
+        (hadPose ? previous : life?.findCameraBird(from, false));
+    }
+    const subject = this._birdSubject;
+    if (!subject || !subject.flock.readCameraPose(subject.index, pose)) {
+      this._transition = null;
+      return;
+    }
+    // A weather preset can relocate the same bird instantly. Blend that jump
+    // like a handoff while normal flight keeps the camera close to the bird.
+    const jumped =
+      previous &&
+      (subject !== previous ||
+        this._birdPreviousPosition.distanceToSquared(pose.position) > 0.8 ** 2);
+    if (jumped) this._transition = this._cameraTransition(BIRD_HANDOFF_SECONDS);
+    this._birdPreviousPosition.copy(pose.position);
+
+    // The bird itself can flick its heading when it changes goal or avoids an
+    // obstacle. Filter the pose used by the camera so the view turns like a
+    // camera operator following a subject, not like a copy of the bird's yaw.
+    if (jumped || this._birdYaw === null || dt === 0) {
+      this._birdYaw = pose.yaw;
+      this._birdPitch = pose.pitch;
+      this._birdRoll = pose.roll;
+    } else {
+      this._birdYaw = damp(
+        this._birdYaw,
+        nearestCameraAngle(this._birdYaw, pose.yaw),
+        BIRD_YAW_DAMPING,
+        dt,
+      );
+      this._birdPitch = damp(
+        this._birdPitch,
+        pose.pitch,
+        BIRD_PITCH_DAMPING,
+        dt,
+      );
+      this._birdRoll = damp(this._birdRoll, pose.roll, BIRD_ROLL_DAMPING, dt);
+    }
+
+    const horizontal = Math.cos(this._birdPitch);
+    const forward = this._birdForward.set(
+      Math.sin(this._birdYaw) * horizontal,
+      -Math.sin(this._birdPitch),
+      Math.cos(this._birdYaw) * horizontal,
+    );
+    this.radius = dt ? damp(this.radius, this.goal.radius, 8, dt) : this.goal.radius;
+    const view = this._viewCamera;
+    view.position.copy(pose.position).addScaledVector(forward, -this.radius);
+    view.position.y += 0.11;
+    view.position.y = Math.max(view.position.y, this._birdCameraFloor(view.position));
+    this.goalTarget.copy(pose.position).addScaledVector(forward, 0.85);
+    view.lookAt(this.goalTarget);
+    // A camera looks down local -Z while the bird faces local +Z.
+    view.rotateZ(-this._birdRoll * 0.72);
+
+    const transition = this._transition;
+    if (transition) {
+      const blend = cameraTransitionBlend(transition, dt);
+      camera.position.fromArray(transition.position).lerp(view.position, blend);
+      camera.quaternion.fromArray(transition.quaternion).slerp(view.quaternion, blend);
+      camera.fov = transition.fov + (this._fovGoal - transition.fov) * blend;
+      if (transition.elapsed === transition.duration) this._transition = null;
+    } else {
+      camera.position.lerp(
+        view.position,
+        dt ? 1 - Math.exp(-dt * BIRD_POSITION_DAMPING) : 1,
+      );
+      camera.quaternion.slerp(
+        view.quaternion,
+        dt ? 1 - Math.exp(-dt * BIRD_ROTATION_DAMPING) : 1,
+      );
+      camera.fov = dt ? damp(camera.fov, this._fovGoal, 5, dt) : this._fovGoal;
+    }
+    camera.position.y = Math.max(camera.position.y, this._birdCameraFloor(camera.position));
+    this.target.copy(this.goalTarget);
+    this.fit = 1;
+    camera.near = this._nearGoal;
+  }
+
+  _birdCameraFloor({ x, z }) {
+    const { terrain, modules, world } = this.ctx;
+    return Math.max(terrain.height(x, z), modules.water?.level ?? world.lakeLevel) + 0.085;
+  }
+
   _updateFit() {
     const aspect = this.camera.aspect;
     this._nearGoal =
-      this.following || this.goal.radius < 2 ? 0.008 : this._defaultNear;
+      this.followsSubject || this.goal.radius < 2 ? 0.008 : this._defaultNear;
     if (aspect === this._aspect) return;
     this._aspect = aspect;
     this._fovGoal = Math.min(78, this._baseFov + Math.max(0, 1 - aspect) * 16);
-    if (this.following) {
+    if (this.followsSubject) {
       this._fitGoal = 1;
     } else if (this.overview) {
       const extent = Math.hypot(LANDSCAPE_BOUNDS.halfW, LANDSCAPE_BOUNDS.halfD);
@@ -285,10 +423,7 @@ class CameraRig {
 
   _updateTransition(dt) {
     const transition = this._transition;
-    transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
-    const fraction = transition.elapsed / transition.duration;
-    const blend =
-      fraction * fraction * fraction * (fraction * (fraction * 6 - 15) + 10);
+    const blend = cameraTransitionBlend(transition, dt);
     this.fit = this._fitGoal;
     this.theta =
       transition.theta +
@@ -312,8 +447,8 @@ class CameraRig {
       .slerp(this._viewCamera.quaternion, blend);
     this.camera.fov = transition.fov + (this._fovGoal - transition.fov) * blend;
     // A zero-step update must not jump a free photo view or finish its flight.
-    if (fraction === 0) this.camera.position.fromArray(transition.position);
-    if (fraction === 1) {
+    if (transition.elapsed === 0) this.camera.position.fromArray(transition.position);
+    if (transition.elapsed === transition.duration) {
       this.goal.theta = this.theta;
       this._transition = null;
     }
@@ -328,6 +463,13 @@ class CameraRig {
     this._updateFit();
     const oldFov = this.camera.fov;
     const oldNear = this.camera.near;
+    if (this.followingBird) {
+      this._updateBirdCamera(dt);
+      if (oldFov !== this.camera.fov || oldNear !== this.camera.near)
+        this.camera.updateProjectionMatrix();
+      this.camera.updateMatrixWorld();
+      return;
+    }
     let transitionBlend = 1;
     if (this._transition) {
       transitionBlend = this._updateTransition(dt);
@@ -413,17 +555,21 @@ class CameraRig {
       goalTarget: this.goalTarget.toArray(),
       goal: { ...this.goal },
       transition: copyCameraTransition(this._transition),
+      birdSubject: this._birdSubject,
+      birdPreviousPosition: this._birdPreviousPosition.toArray(),
     };
   }
 
   restoreState(state) {
     if (!state) return;
-    const { target, goalTarget, goal, transition, ...scalars } = state;
+    const { target, goalTarget, goal, transition, birdSubject, birdPreviousPosition, ...scalars } = state;
     Object.assign(this, scalars);
     this.target.fromArray(target);
     this.goalTarget.fromArray(goalTarget);
     Object.assign(this.goal, goal);
     this._transition = copyCameraTransition(transition);
+    this._birdSubject = birdSubject;
+    this._birdPreviousPosition.fromArray(birdPreviousPosition);
     this._emit();
   }
 }

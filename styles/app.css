@@ -1662,7 +1662,7 @@ body.ready #veil {
 .wg-hud .wg-dock > .wg-camera-card {
   display: flex;
   flex-direction: column;
-  max-height: min(420px, calc(100dvh - 390px));
+  max-height: none;
   min-height: 126px;
   touch-action: pan-y;
 }
@@ -1691,10 +1691,7 @@ body.ready #veil {
   flex-direction: column;
   gap: 2px;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #c5ad784d transparent;
+  overflow: visible;
 }
 
 .wg-hud .wg-camera-preset {
@@ -1703,8 +1700,8 @@ body.ready #veil {
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 38px;
-  padding: 6px 7px;
+  min-height: 34px;
+  padding: 5px 7px;
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
@@ -1787,6 +1784,21 @@ body.ready #veil {
 .wg-camera-preset:disabled {
   opacity: 0.45;
   cursor: default;
+}
+
+/* Keep every camera destination visible on short viewports; drop the second
+   line of copy before reintroducing a scrollbar. */
+@media (max-height: 700px) {
+  .wg-hud .wg-camera-preset {
+    min-height: 30px;
+    padding: 4px 7px;
+  }
+  .wg-camera-detail {
+    display: none;
+  }
+  .wg-camera-list {
+    gap: 1px;
+  }
 }
 
 .wg-hud .wg-dock > .wg-climate-card.is-collapsed {
@@ -2177,7 +2189,7 @@ body.ready #veil {
     bottom: calc(var(--gut) + var(--sab) + var(--tool-h) + 24px);
   }
   .wg-hud .wg-dock > .wg-camera-card:not(.is-collapsed) {
-    max-height: min(420px, calc(100dvh - 450px));
+    max-height: none;
   }
 }
 
@@ -2194,7 +2206,7 @@ body.ready #veil {
     grid-row: 1 / 3;
   }
   .wg-hud .wg-dock > .wg-camera-card:not(.is-collapsed) {
-    max-height: min(420px, calc(100dvh - 130px));
+    max-height: none;
   }
   .wg-hud .wg-dock > .wg-season-card {
     --climate-card-w: 104px;
@@ -2768,7 +2780,7 @@ body.video-recording.no-ui > .wg-video-controls:not([hidden]) {
     flex-direction: column;
   }
   body.photo-active .wg-hud .wg-dock > .wg-camera-card:not(.is-collapsed) {
-    max-height: min(420px, calc(100dvh - 560px));
+    max-height: none;
   }
 }
 @media (max-width: 440px) {
@@ -2786,7 +2798,7 @@ body.video-recording.no-ui > .wg-video-controls:not([hidden]) {
     max-height: calc(100dvh - 250px - var(--sat) - var(--sab));
   }
   body.photo-active .wg-hud .wg-dock > .wg-camera-card:not(.is-collapsed) {
-    max-height: min(420px, calc(100dvh - 600px));
+    max-height: none;
   }
 }
 

@@ -281,6 +281,30 @@ let BirdFlock = class {
   hide() {
     this.mesh.visible = !1;
   }
+  findCameraBird(from, airborneOnly, maxDistance) {
+    if (!this.mesh.visible) return null;
+    let nearest = null;
+    for (let index = 0; index < this.N; index++) {
+      if (airborneOnly && this.state[index] !== BIRD_FLYING) continue;
+      const distance = Math.hypot(
+        this.px[index] - from.x,
+        this.py[index] - from.y,
+        this.pz[index] - from.z,
+      );
+      if (distance <= maxDistance && (!nearest || distance < nearest.distance))
+        nearest = { flock: this, index, distance };
+    }
+    return nearest;
+  }
+  readCameraPose(index, pose) {
+    if (!this.mesh.visible) return false;
+    pose.position.set(this.px[index], this.py[index], this.pz[index]);
+    pose.yaw = this.yaw[index];
+    pose.pitch = this.pitch[index];
+    pose.roll = this.roll[index];
+    pose.perched = this.state[index] === BIRD_PERCHED;
+    return true;
+  }
   _buildPerches() {
     const previous = this.perches;
     const perches = [];
@@ -746,8 +770,12 @@ let BirdFlock = class {
       const F = Math.hypot(this.vx[m], this.vz[m]);
       if (F > 0.05) {
         let vt = Math.atan2(this.vx[m], this.vz[m]) - this.yaw[m];
-        ((vt = Math.atan2(Math.sin(vt), Math.cos(vt))),
-          (this.yaw[m] += vt * Math.min(1, t * 10)));
+        vt = Math.atan2(Math.sin(vt), Math.cos(vt));
+        // Cap heading changes so a new goal or a scatter cannot snap a bird
+        // (and therefore the follow camera) through a large angle in one step.
+        const maxTurnRate = w === BIRD_LANDING ? 5 : 3.2;
+        const turn = vt * Math.min(1, t * 10);
+        this.yaw[m] += clamp(turn, -maxTurnRate * t, maxTurnRate * t);
         const gt =
           (R * this.vz[m] - z * this.vx[m]) /
           Math.max(t, 0.001) /

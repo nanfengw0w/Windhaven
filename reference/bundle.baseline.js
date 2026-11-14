@@ -5206,6 +5206,12 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       description: "跟随 · 陪旅人漫步",
       follow: true,
       fov: 50
+    },
+    bird: {
+      label: "跟随小鸟",
+      description: "跟随 · 贴近飞行，随转弯侧倾",
+      radius: 0.34,
+      fov: 68
     }
   };
   const CAMERA_PRESET_ALIASES = {
@@ -5220,8 +5226,19 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
 }
 {
   const CAMERA_TRANSITION_SECONDS = 3;
+  const BIRD_HANDOFF_SECONDS = 2.1;
+  const BIRD_YAW_DAMPING = 4.6;
+  const BIRD_PITCH_DAMPING = 5.2;
+  const BIRD_ROLL_DAMPING = 3.6;
+  const BIRD_POSITION_DAMPING = 13;
+  const BIRD_ROTATION_DAMPING = 10;
   function nearestCameraAngle(from, to) {
     return from + Math.atan2(Math.sin(to - from), Math.cos(to - from));
+  }
+  function cameraTransitionBlend(transition, dt) {
+    transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+    const fraction = transition.elapsed / transition.duration;
+    return fraction ** 3 * (fraction * (fraction * 6 - 15) + 10);
   }
   function copyCameraTransition(transition) {
     return transition ? {
@@ -5263,6 +5280,15 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this._defaultNear = camera.near;
       this._nearGoal = camera.near;
       this._followYawOffset = 0;
+      this._birdSubject = null;
+      this._birdPose = {
+        position: new ThreeVector3()
+      };
+      this._birdPreviousPosition = new ThreeVector3();
+      this._birdForward = new ThreeVector3();
+      this._birdYaw = null;
+      this._birdPitch = 0;
+      this._birdRoll = 0;
       this._transition = null;
       this._offset = new ThreeVector3();
       this._desired = new ThreeVector3();
@@ -5281,24 +5307,27 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
     get following() {
       return this.activePreset === "follow";
     }
+    get followingBird() {
+      return this.activePreset === "bird";
+    }
+    get followsSubject() {
+      return this.following || this.followingBird;
+    }
     get transitioning() {
       return this._transition !== null;
     }
     _emit() {
       this.ctx?.events?.emit("camera:change", {
         preset: this.activePreset,
-        following: this.following
+        following: this.followsSubject
       });
     }
-    preset(name, immediate = false) {
-      name = CAMERA_PRESET_ALIASES[name] || name;
-      const preset = CAMERA_PRESETS[name];
-      if (!preset) return false;
+    _cameraTransition(duration = CAMERA_TRANSITION_SECONDS) {
       const delta = this._offset.copy(this.camera.position).sub(this.target);
       const distance = Math.max(delta.length(), 0.01);
-      const start = {
+      return {
         elapsed: 0,
-        duration: CAMERA_TRANSITION_SECONDS,
+        duration,
         theta: Math.atan2(delta.x, delta.z),
         phi: Math.acos(clamp(delta.y / distance, -1, 1)),
         radius: distance,
@@ -5307,11 +5336,22 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
         quaternion: this.camera.quaternion.toArray(),
         fov: this.camera.fov
       };
+    }
+    preset(name, immediate = false) {
+      name = CAMERA_PRESET_ALIASES[name] || name;
+      const preset = CAMERA_PRESETS[name];
+      if (!preset) return false;
+      if (name === "bird" && this.followingBird && !immediate) return true;
+      const start = this._cameraTransition();
       this.activePreset = name;
       this.overview = name === "overview";
       this._baseFov = preset.fov ?? 40;
       this._aspect = null;
       this._followYawOffset = 0;
+      this._birdSubject = null;
+      this._birdYaw = null;
+      this._birdPitch = 0;
+      this._birdRoll = 0;
       this.goal.theta = nearestCameraAngle(start.theta, preset.theta ?? 0);
       this.goal.phi = preset.phi ?? 1.15;
       this.goal.radius = preset.radius ?? 0.85;
@@ -5352,19 +5392,24 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this.idle = 0;
     }
     rotate(dx, dy) {
+      if (this.followingBird) this.adoptCamera(true);
       this._interrupt();
       this.goal.theta -= dx * 0.0052;
       this.goal.phi = clamp(this.goal.phi - dy * 0.0045, this.following ? 0.4 : this.limits.minPhi, this.following ? 1.48 : this.limits.maxPhi);
       if (this.following) this._followYawOffset -= dx * 0.0052;else this._manual();
     }
     zoom(scale) {
+      if (this.followingBird) {
+        this.goal.radius = clamp(this.goal.radius * scale, 0.18, 0.9);
+        return;
+      }
       this._interrupt();
       this.goal.radius = clamp(this.goal.radius * scale, this.following ? 0.38 : this.limits.minRadius, this.following ? 2.4 : this.limits.maxRadius);
       if (!this.following) this._manual();
     }
     pan(dx, dy) {
       this._interrupt();
-      if (this.following) this.adoptCamera();
+      if (this.followsSubject) this.adoptCamera();
       this._manual();
       const scale = this.radius * (this.fit || 1) * 0.0012;
       const right = new ThreeVector3().setFromMatrixColumn(this.camera.matrix, 0);
@@ -5377,6 +5422,10 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
     _manual() {
       if (this.activePreset === null) return;
       this.activePreset = null;
+      this._birdSubject = null;
+      this._birdYaw = null;
+      this._birdPitch = 0;
+      this._birdRoll = 0;
       this._emit();
     }
     shake(amount) {
@@ -5386,7 +5435,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this.idle = 0;
     }
     setDrift(enabled) {
-      if (this.enabledDrift && !enabled && !this.following) this.goal.theta = this.theta;
+      if (this.enabledDrift && !enabled && !this.followsSubject) this.goal.theta = this.theta;
       this.enabledDrift = !!enabled;
       this.poke();
     }
@@ -5398,13 +5447,81 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this.goalTarget.set(position.x, actor.swimming && !actor.held && Number.isFinite(actor.waterY) ? Math.max(position.y + 0.13, actor.waterY + 0.07) : position.y + 0.13, position.z);
       this.goal.theta = nearestCameraAngle(this.goal.theta, actor.yaw + this._followYawOffset);
     }
+    _updateBirdCamera(dt) {
+      const {
+        camera,
+        ctx,
+        _birdPose: pose
+      } = this;
+      const life = ctx?.modules.life;
+      const previous = this._birdSubject;
+      const hadPose = previous?.flock.readCameraPose(previous.index, pose);
+      if (!hadPose || pose.perched) {
+        const from = hadPose ? pose.position : camera.position;
+        this._birdSubject = life?.findCameraBird(from, true, hadPose ? 2.4 : Infinity) ?? (hadPose ? previous : life?.findCameraBird(from, false));
+      }
+      const subject = this._birdSubject;
+      if (!subject || !subject.flock.readCameraPose(subject.index, pose)) {
+        this._transition = null;
+        return;
+      }
+      const jumped = previous && (subject !== previous || this._birdPreviousPosition.distanceToSquared(pose.position) > 0.8 ** 2);
+      if (jumped) this._transition = this._cameraTransition(BIRD_HANDOFF_SECONDS);
+      this._birdPreviousPosition.copy(pose.position);
+      if (jumped || this._birdYaw === null || dt === 0) {
+        this._birdYaw = pose.yaw;
+        this._birdPitch = pose.pitch;
+        this._birdRoll = pose.roll;
+      } else {
+        this._birdYaw = damp(this._birdYaw, nearestCameraAngle(this._birdYaw, pose.yaw), BIRD_YAW_DAMPING, dt);
+        this._birdPitch = damp(this._birdPitch, pose.pitch, BIRD_PITCH_DAMPING, dt);
+        this._birdRoll = damp(this._birdRoll, pose.roll, BIRD_ROLL_DAMPING, dt);
+      }
+      const horizontal = Math.cos(this._birdPitch);
+      const forward = this._birdForward.set(Math.sin(this._birdYaw) * horizontal, -Math.sin(this._birdPitch), Math.cos(this._birdYaw) * horizontal);
+      this.radius = dt ? damp(this.radius, this.goal.radius, 8, dt) : this.goal.radius;
+      const view = this._viewCamera;
+      view.position.copy(pose.position).addScaledVector(forward, -this.radius);
+      view.position.y += 0.11;
+      view.position.y = Math.max(view.position.y, this._birdCameraFloor(view.position));
+      this.goalTarget.copy(pose.position).addScaledVector(forward, 0.85);
+      view.lookAt(this.goalTarget);
+      view.rotateZ(-this._birdRoll * 0.72);
+      const transition = this._transition;
+      if (transition) {
+        const blend = cameraTransitionBlend(transition, dt);
+        camera.position.fromArray(transition.position).lerp(view.position, blend);
+        camera.quaternion.fromArray(transition.quaternion).slerp(view.quaternion, blend);
+        camera.fov = transition.fov + (this._fovGoal - transition.fov) * blend;
+        if (transition.elapsed === transition.duration) this._transition = null;
+      } else {
+        camera.position.lerp(view.position, dt ? 1 - Math.exp(-dt * BIRD_POSITION_DAMPING) : 1);
+        camera.quaternion.slerp(view.quaternion, dt ? 1 - Math.exp(-dt * BIRD_ROTATION_DAMPING) : 1);
+        camera.fov = dt ? damp(camera.fov, this._fovGoal, 5, dt) : this._fovGoal;
+      }
+      camera.position.y = Math.max(camera.position.y, this._birdCameraFloor(camera.position));
+      this.target.copy(this.goalTarget);
+      this.fit = 1;
+      camera.near = this._nearGoal;
+    }
+    _birdCameraFloor({
+      x,
+      z
+    }) {
+      const {
+        terrain,
+        modules,
+        world
+      } = this.ctx;
+      return Math.max(terrain.height(x, z), modules.water?.level ?? world.lakeLevel) + 0.085;
+    }
     _updateFit() {
       const aspect = this.camera.aspect;
-      this._nearGoal = this.following || this.goal.radius < 2 ? 0.008 : this._defaultNear;
+      this._nearGoal = this.followsSubject || this.goal.radius < 2 ? 0.008 : this._defaultNear;
       if (aspect === this._aspect) return;
       this._aspect = aspect;
       this._fovGoal = Math.min(78, this._baseFov + Math.max(0, 1 - aspect) * 16);
-      if (this.following) {
+      if (this.followsSubject) {
         this._fitGoal = 1;
       } else if (this.overview) {
         const extent = Math.hypot(LANDSCAPE_BOUNDS.halfW, LANDSCAPE_BOUNDS.halfD);
@@ -5422,9 +5539,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
     }
     _updateTransition(dt) {
       const transition = this._transition;
-      transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
-      const fraction = transition.elapsed / transition.duration;
-      const blend = fraction * fraction * fraction * (fraction * (fraction * 6 - 15) + 10);
+      const blend = cameraTransitionBlend(transition, dt);
       this.fit = this._fitGoal;
       this.theta = transition.theta + (nearestCameraAngle(transition.theta, this.goal.theta) - transition.theta) * blend;
       this.phi = transition.phi + (this.goal.phi - transition.phi) * blend;
@@ -5435,8 +5550,8 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this._viewCamera.lookAt(this.target);
       this.camera.quaternion.fromArray(transition.quaternion).slerp(this._viewCamera.quaternion, blend);
       this.camera.fov = transition.fov + (this._fovGoal - transition.fov) * blend;
-      if (fraction === 0) this.camera.position.fromArray(transition.position);
-      if (fraction === 1) {
+      if (transition.elapsed === 0) this.camera.position.fromArray(transition.position);
+      if (transition.elapsed === transition.duration) {
         this.goal.theta = this.theta;
         this._transition = null;
       }
@@ -5450,6 +5565,12 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this._updateFit();
       const oldFov = this.camera.fov;
       const oldNear = this.camera.near;
+      if (this.followingBird) {
+        this._updateBirdCamera(dt);
+        if (oldFov !== this.camera.fov || oldNear !== this.camera.near) this.camera.updateProjectionMatrix();
+        this.camera.updateMatrixWorld();
+        return;
+      }
       let transitionBlend = 1;
       if (this._transition) {
         transitionBlend = this._updateTransition(dt);
@@ -5500,7 +5621,9 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
         goal: {
           ...this.goal
         },
-        transition: copyCameraTransition(this._transition)
+        transition: copyCameraTransition(this._transition),
+        birdSubject: this._birdSubject,
+        birdPreviousPosition: this._birdPreviousPosition.toArray()
       };
     }
     restoreState(state) {
@@ -5510,6 +5633,8 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
         goalTarget,
         goal,
         transition,
+        birdSubject,
+        birdPreviousPosition,
         ...scalars
       } = state;
       Object.assign(this, scalars);
@@ -5517,6 +5642,8 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this.goalTarget.fromArray(goalTarget);
       Object.assign(this.goal, goal);
       this._transition = copyCameraTransition(transition);
+      this._birdSubject = birdSubject;
+      this._birdPreviousPosition.fromArray(birdPreviousPosition);
       this._emit();
     }
   }
@@ -26544,6 +26671,29 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
     hide() {
       this.mesh.visible = !1;
     }
+    findCameraBird(from, airborneOnly, maxDistance) {
+      if (!this.mesh.visible) return null;
+      let nearest = null;
+      for (let index = 0; index < this.N; index++) {
+        if (airborneOnly && this.state[index] !== BIRD_FLYING) continue;
+        const distance = Math.hypot(this.px[index] - from.x, this.py[index] - from.y, this.pz[index] - from.z);
+        if (distance <= maxDistance && (!nearest || distance < nearest.distance)) nearest = {
+          flock: this,
+          index,
+          distance
+        };
+      }
+      return nearest;
+    }
+    readCameraPose(index, pose) {
+      if (!this.mesh.visible) return false;
+      pose.position.set(this.px[index], this.py[index], this.pz[index]);
+      pose.yaw = this.yaw[index];
+      pose.pitch = this.pitch[index];
+      pose.roll = this.roll[index];
+      pose.perched = this.state[index] === BIRD_PERCHED;
+      return true;
+    }
     _buildPerches() {
       const previous = this.perches;
       const perches = [];
@@ -26851,7 +27001,10 @@ attribute vec4 iFlap;   // phase, amplitude, fold, head tilt
         const F = Math.hypot(this.vx[m], this.vz[m]);
         if (F > 0.05) {
           let vt = Math.atan2(this.vx[m], this.vz[m]) - this.yaw[m];
-          vt = Math.atan2(Math.sin(vt), Math.cos(vt)), this.yaw[m] += vt * Math.min(1, t * 10);
+          vt = Math.atan2(Math.sin(vt), Math.cos(vt));
+          const maxTurnRate = w === BIRD_LANDING ? 5 : 3.2;
+          const turn = vt * Math.min(1, t * 10);
+          this.yaw[m] += clamp(turn, -maxTurnRate * t, maxTurnRate * t);
           const gt = (R * this.vz[m] - z * this.vx[m]) / Math.max(t, 0.001) / (F * F + 0.1);
           this.roll[m] = damp(this.roll[m], clamp(-gt * 0.35, -1, 1), 6, t);
         }
@@ -29358,6 +29511,11 @@ void main() {
     scatterBirds(x, z, strength = 1) {
       this.birds?.scatter(x, z, strength);
       this.birdsEast?.scatter(x, z, strength);
+    }
+    findCameraBird(from, airborneOnly, maxDistance = Infinity) {
+      const west = this.birds?.findCameraBird(from, airborneOnly, maxDistance);
+      const east = this.birdsEast?.findCameraBird(from, airborneOnly, maxDistance);
+      return !east || west && west.distance <= east.distance ? west : east;
     }
     _updateEnv(t) {
       const {
@@ -35086,7 +35244,7 @@ void main() {
   }
 }
 {
-  const CAMERA_CONTROL_ORDER = ["overview", "valley", "town", "lake", "cabin", "waterfall", "summit", "follow"];
+  const CAMERA_CONTROL_ORDER = ["overview", "valley", "town", "lake", "cabin", "waterfall", "summit", "bird", "follow"];
   class CameraControls {
     constructor(ctx, hud) {
       this.ctx = ctx;
@@ -35106,7 +35264,7 @@ void main() {
         if (!preset) continue;
         const description = preset.detail || preset.description || "";
         const button = createHudElement("button", {
-          class: "wg-camera-preset" + (id === "follow" ? " is-follow" : ""),
+          class: "wg-camera-preset" + (id === "follow" || id === "bird" ? " is-follow" : ""),
           type: "button",
           "data-camera": id,
           "aria-pressed": "false",
@@ -35181,6 +35339,7 @@ void main() {
   const CAMERA_INSPECTOR_MODE_LABELS = {
     orbit: "自由观察",
     follow: "跟随旅人",
+    bird: "跟随小鸟",
     exploration: "步行探索",
     photo: "拍照模式"
   };
@@ -35309,7 +35468,7 @@ void main() {
       camera.getWorldDirection(this._direction);
       camera.getWorldQuaternion(this._quaternion);
       this._target.copy(this._position).add(this._direction);
-      const mode = photo?.active ? "photo" : exploration?.active ? "exploration" : cameraRig.following ? "follow" : "orbit";
+      const mode = photo?.active ? "photo" : exploration?.active ? "exploration" : cameraRig.activePreset === "bird" ? "bird" : cameraRig.following ? "follow" : "orbit";
       const preset = mode === "exploration" || mode === "photo" && !photo._presetCamera ? null : cameraRig.activePreset || null;
       const canvas = this.ctx.renderer.domElement;
       const viewport = canvas.getBoundingClientRect();

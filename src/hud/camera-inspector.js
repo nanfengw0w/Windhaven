@@ -6,6 +6,7 @@ const CAMERA_INSPECTOR_INTERVAL = 100;
 const CAMERA_INSPECTOR_MODE_LABELS = {
   orbit: "自由观察",
   follow: "跟随旅人",
+  bird: "跟随小鸟",
   exploration: "步行探索",
   photo: "拍照模式",
 };
@@ -173,9 +174,11 @@ class CameraInspector {
       ? "photo"
       : exploration?.active
         ? "exploration"
-        : cameraRig.following
-          ? "follow"
-          : "orbit";
+        : cameraRig.activePreset === "bird"
+          ? "bird"
+          : cameraRig.following
+            ? "follow"
+            : "orbit";
     const preset =
       mode === "exploration" || (mode === "photo" && !photo._presetCamera)
         ? null

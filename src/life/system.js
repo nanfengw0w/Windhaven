@@ -156,6 +156,11 @@ class LifeSystem {
     this.birds?.scatter(x, z, strength);
     this.birdsEast?.scatter(x, z, strength);
   }
+  findCameraBird(from, airborneOnly, maxDistance = Infinity) {
+    const west = this.birds?.findCameraBird(from, airborneOnly, maxDistance);
+    const east = this.birdsEast?.findCameraBird(from, airborneOnly, maxDistance);
+    return !east || (west && west.distance <= east.distance) ? west : east;
+  }
   _updateEnv(t) {
     const { world: e, wind: i, fields: s } = this.ctx,
       n = this.env,

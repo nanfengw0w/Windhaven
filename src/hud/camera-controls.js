@@ -9,6 +9,7 @@ const CAMERA_CONTROL_ORDER = [
   "cabin",
   "waterfall",
   "summit",
+  "bird",
   "follow",
 ];
 
@@ -31,7 +32,9 @@ class CameraControls {
       const button = createHudElement(
         "button",
         {
-          class: "wg-camera-preset" + (id === "follow" ? " is-follow" : ""),
+          class:
+            "wg-camera-preset" +
+            (id === "follow" || id === "bird" ? " is-follow" : ""),
           type: "button",
           "data-camera": id,
           "aria-pressed": "false",

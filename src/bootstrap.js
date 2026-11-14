@@ -234,13 +234,12 @@ function bootWeatherglass() {
       ctx.weather.update(dt),
       world.update(dt),
       wind.update(dt));
-    // World playback uses the free photo camera while the original camera and
-    // walking actor remain suspended, including an in-progress jump.
-    if (!ctx.photo.active) {
-      ctx.input.update(dt);
-      if (ctx.exploration.active) ctx.exploration.update(dt);
-      else if (!cameraRig.following) cameraRig.update(dt);
-    }
+    ctx.input.update(dt);
+    const sceneCamera =
+      ctx.video.usingSceneControls ||
+      (!ctx.photo.active && !ctx.exploration.active);
+    if (!ctx.photo.active && ctx.exploration.active) ctx.exploration.update(dt);
+    if (sceneCamera && !cameraRig.following) cameraRig.update(dt);
     (profiler.end("sim"), (ctx.precip.sources.length = 0));
     for (const [moduleName] of MODULE_REGISTRY) {
       moduleName === "precipitation" && updateSurfaceFields(dt);
@@ -264,9 +263,9 @@ function bootWeatherglass() {
         profiler.end(moduleName);
       }
     }
+    ctx.input.finishFrame();
     // Follow the actor after its autonomous navigation has advanced this frame.
-    if (!ctx.photo.active && !ctx.exploration.active && cameraRig.following)
-      cameraRig.update(dt);
+    if (sceneCamera && cameraRig.following) cameraRig.update(dt);
     surfaceFieldsUpdated || updateSurfaceFields(dt);
     let totalRainfall = 0,
       totalSnowfall = 0;

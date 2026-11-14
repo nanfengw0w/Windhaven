@@ -42,6 +42,7 @@ class InputController {
         time: 0,
       }),
       (this.active = null),
+      (this.releasePending = false),
       (this.hover = null),
       (this.orbiting = null),
       (this.touches = new Map()),
@@ -54,6 +55,13 @@ class InputController {
       window.addEventListener("pointermove", (i) => this._move(i)),
       window.addEventListener("pointerup", (i) => this._up(i)),
       window.addEventListener("pointercancel", (i) => this._up(i, !0)),
+      e.addEventListener("lostpointercapture", (event) => {
+        if (
+          this.ctx.video?.usingSceneControls &&
+          this.touches.has(event.pointerId)
+        )
+          this._resetPointer();
+      }),
       e.addEventListener("wheel", (i) => this._wheel(i), {
         passive: !1,
       }),
@@ -65,7 +73,10 @@ class InputController {
       e.addEventListener("pointerleave", () => {
         ((this.inside = !1), this.pointer.down || this._setHover(null));
       }),
-      window.addEventListener("keydown", (i) => this._key(i)));
+      window.addEventListener("keydown", (i) => this._key(i)),
+      window.addEventListener("blur", () => {
+        if (this.ctx.video?.usingSceneControls) this._resetPointer();
+      }));
   }
   addHandler(t) {
     return (
@@ -80,20 +91,22 @@ class InputController {
   }
   setEnabled(enabled) {
     if (this.enabled === enabled) return;
-    if (!enabled) {
-      this._cancelActive();
-      this._setHover(null);
-      for (const pointerId of this.touches.keys())
-        if (this.el.hasPointerCapture?.(pointerId))
-          this.el.releasePointerCapture(pointerId);
-      this.touches.clear();
-      this.pinch = null;
-      this.orbiting = null;
-      this.pointer.down = false;
-    }
+    if (!enabled) this._resetPointer();
     this.enabled = enabled;
     this.invalidateHover();
     this._updateCursor();
+  }
+  _resetPointer() {
+    this.releasePending = false;
+    this._cancelActive();
+    for (const pointerId of this.touches.keys())
+      if (this.el.hasPointerCapture?.(pointerId))
+        this.el.releasePointerCapture(pointerId);
+    this.touches.clear();
+    this.pinch = null;
+    this.orbiting = null;
+    this.pointer.down = false;
+    this._setHover(null);
   }
   setTool(t) {
     !TOOL_NAMES.includes(t) ||
@@ -191,6 +204,7 @@ class InputController {
   }
   _down(t) {
     if (!this.enabled) return;
+    this.finishFrame();
     if (
       (this.el.setPointerCapture?.(t.pointerId),
       this.touches.set(t.pointerId, {
@@ -248,7 +262,7 @@ class InputController {
     ((this.orbiting = "orbit"), this._updateCursor());
   }
   _move(t) {
-    if (!this.enabled) return;
+    if (!this.enabled || this.releasePending) return;
     if (
       (this.touches.has(t.pointerId) &&
         this.touches.set(t.pointerId, {
@@ -306,6 +320,8 @@ class InputController {
   }
   _up(t, e = !1) {
     if (!this.enabled) return;
+    const recording = this.ctx.video?.usingSceneControls;
+    if (recording && !this.touches.has(t.pointerId)) return;
     if ((this.touches.delete(t.pointerId), this.pinch)) {
       if (
         this.touches.size < 2 &&
@@ -325,27 +341,47 @@ class InputController {
     }
     const i = this.pointer;
     if (i.down) {
-      if ((this._updatePointer(t), (i.down = !1), this.active)) {
-        try {
-          (e && this.active.handler.onCancel?.(i, this.active.hit),
-            this.active.handler.onUp?.(i, this.active.hit));
-        } catch (s) {
-          console.error(`[input] ${this.active.handler.name}.onUp`, s);
-        }
-        this.active = null;
-      } else
-        !i.moved &&
-          !e &&
-          t.button === 0 &&
-          this.ctx.events.emit("tap", {
-            ray: i.ray.clone(),
-            pointer: {
-              ...i,
-              ndc: i.ndc.clone(),
-            },
-          });
-      ((this.orbiting = null), (this._hoverDirty = !0), this._updateCursor());
+      this._updatePointer(t);
+      // Cloud grabs and similar tools apply their drag target on a simulation
+      // step. Keep the final pointer until that step when recording.
+      if (
+        recording &&
+        !e &&
+        i.moved &&
+        this.active?.handler.releaseAfterSimulation
+      ) {
+        this.releasePending = true;
+        return;
+      }
+      this._releasePointer(t.button, e);
     }
+  }
+  finishFrame() {
+    if (!this.releasePending) return;
+    this.releasePending = false;
+    this._releasePointer(0, false);
+  }
+  _releasePointer(button, cancelled) {
+    const pointer = this.pointer;
+    pointer.down = false;
+    if (this.active) {
+      const { handler, hit } = this.active;
+      try {
+        if (cancelled) handler.onCancel?.(pointer, hit);
+        handler.onUp?.(pointer, hit);
+      } catch (error) {
+        console.error(`[input] ${handler.name}.onUp`, error);
+      }
+      this.active = null;
+    } else if (!pointer.moved && !cancelled && button === 0) {
+      this.ctx.events.emit("tap", {
+        ray: pointer.ray.clone(),
+        pointer: { ...pointer, ndc: pointer.ndc.clone() },
+      });
+    }
+    this.orbiting = null;
+    this.invalidateHover();
+    this._updateCursor();
   }
   _cancelActive() {
     if (this.active) {
@@ -359,7 +395,8 @@ class InputController {
     }
   }
   _wheel(t) {
-    if ((t.preventDefault(), !this.enabled)) return;
+    if (!this.enabled || this.releasePending) return;
+    t.preventDefault();
     this._updatePointer(t);
     const e = this.active || this._pick();
     if (e?.handler.onWheel) {
@@ -412,6 +449,10 @@ class InputController {
   update(t) {
     if (!this.enabled) return;
     const e = this.pointer;
+    if (this.active && this.ctx.video?.usingSceneControls) {
+      this.camera.updateMatrixWorld();
+      this.raycaster.setFromCamera(e.ndc, this.camera);
+    }
     if (
       ((e.time += t),
       e.down &&

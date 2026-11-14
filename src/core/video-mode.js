@@ -1,7 +1,7 @@
 import { createVideoEncoder } from "../render/video-encoder.js";
+import { VIDEO_MAX_SECONDS } from "./config.js";
 
 const VIDEO_FRAME_RATES = [24, 30, 60];
-const VIDEO_MAX_SECONDS = 30;
 const VIDEO_RESOLUTIONS = [1080, 1440, 2160];
 
 function videoDimensions(aspect, resolution) {
@@ -34,6 +34,9 @@ class VideoModeController {
 
   get recording() {
     return this.job !== null;
+  }
+  get usingSceneControls() {
+    return this.job?.phase === "recording";
   }
 
   emit(message = "") {
@@ -74,7 +77,7 @@ class VideoModeController {
       totalFrames < 1 ||
       totalFrames > fps * VIDEO_MAX_SECONDS
     ) {
-      this.emit("请输入有效的帧率和帧数，成片最长 30 秒。");
+      this.emit(`请输入有效的帧率和帧数，成片最长 ${VIDEO_MAX_SECONDS} 秒。`);
       return;
     }
     if (!VIDEO_RESOLUTIONS.includes(resolution)) {
@@ -115,7 +118,9 @@ class VideoModeController {
       this.ctx.post.setSize(width, height, 1);
       this.ctx.camera.aspect = width / height;
       this.ctx.camera.updateProjectionMatrix();
+      this.ctx.photo.beginSceneControls();
       job.phase = "recording";
+      this.ctx.input.setEnabled(true);
       this.emit();
     } catch (error) {
       this.fail(job, error);
@@ -134,7 +139,6 @@ class VideoModeController {
   async writeFrame(job) {
     try {
       const index = job.completedFrames;
-      this.ctx.photo.update(index === 0 ? 0 : job.dt);
       if (index > 0) this.stepSimulation(job.dt);
       this.renderFrame(index === 0 ? 0 : job.dt);
       job.audio?.sample(index);
@@ -149,6 +153,7 @@ class VideoModeController {
       // The final frame occupies one interval, just like the others.
       this.stepSimulation(job.dt);
       job.phase = "encoding";
+      this.ctx.input.setEnabled(false);
       this.emit();
       const audioBuffer = await job.audio?.finish();
       if (this.job !== job) return;
@@ -171,10 +176,12 @@ class VideoModeController {
   finish(job, message) {
     if (this.job !== job) return;
     this.job = null;
+    this.ctx.input.setEnabled(false);
     job.audio?.close();
     if (job.viewportChanged) {
       this.ctx.post.bloom.enabled = job.savedBloom;
       this.restoreViewport();
+      this.ctx.photo.endSceneControls();
     }
     this.ctx.photo.setCaptureLocked(false, job.photoTimeRunning);
     this.emit(message);

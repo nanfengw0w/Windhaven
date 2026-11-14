@@ -2448,8 +2448,22 @@ body.photo-active .wg-exploration-notice {
 body.photo-active .wg-hud {
   --weather-bottom: calc(var(--gut) + var(--sab));
 }
+body.photo-active.video-recording .wg-hud > .wg-bottom {
+  display: flex;
+}
 body.photo-active .wg-hud .wg-dock {
   bottom: calc(var(--gut) + var(--sab));
+}
+@media (max-width: 1100px) {
+  body.photo-active.video-recording .wg-hud {
+    --recording-tools-space: calc(var(--tool-h) + 20px);
+    --weather-bottom: calc(
+      var(--gut) + var(--sab) + var(--recording-tools-space)
+    );
+  }
+  body.photo-active.video-recording .wg-hud .wg-dock {
+    bottom: var(--weather-bottom);
+  }
 }
 .wg-photo-overlay {
   position: fixed;
@@ -2690,11 +2704,24 @@ body.video-recording.no-ui > .wg-video-controls:not([hidden]) {
     overflow-y: auto;
     scrollbar-width: thin;
   }
+  body.photo-active.video-recording .wg-hud .wg-dock,
+  body.photo-active.video-recording .wg-hud .wg-weather-presets {
+    max-height: max(
+      68px,
+      calc(100dvh - 202px - var(--sat) - var(--sab) - var(--recording-tools-space))
+    );
+  }
 }
 @media (max-width: 820px) and (max-height: 380px) {
   .wg-video-controls {
     max-height: calc(
       100dvh - 144px - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px)
+    );
+  }
+  body.video-recording .wg-video-controls {
+    max-height: calc(
+      100dvh - 174px - env(safe-area-inset-top, 0px) -
         env(safe-area-inset-bottom, 0px)
     );
   }
@@ -3236,6 +3263,12 @@ body:has(.wg-settings:not([hidden])) .wg-aholo-edit-modes {
   place-items: center;
   font-size: 15px;
   line-height: 1;
+}
+@media (max-width: 600px), (max-width: 820px) and (max-height: 560px) {
+  .wg-aholo-edit-modes .wg-aholo-btn {
+    gap: 3px;
+    padding-inline: 6px;
+  }
 }
 .wg-aholo-tabs {
   display: grid;

@@ -730,7 +730,7 @@ class LightningSystem {
       if (c > 1.8) continue;
       const h =
         (landmark.y ?? i.terrain.height(landmark.x, landmark.z)) +
-        (landmark.height ?? 0.8) +
+        (landmark.height ?? 0.8) * (landmark.scale ?? 1) +
         0.12;
       const f = h - 0.35 * c;
       f > o && ((o = f), e.set(landmark.x, h, landmark.z));

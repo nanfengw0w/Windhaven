@@ -102,6 +102,7 @@ class PhotoModeController {
     this.active = true;
     this.timeRunning = false;
     this._presetCamera = false;
+    this._cameraNeedsAdoption = exploration.active;
     // Keep the walker's saved overview and vertical velocity intact. The
     // cursor stays free on return; a canvas click recaptures it as usual.
     exploration.releaseCursor();
@@ -138,6 +139,7 @@ class PhotoModeController {
     const { camera } = this.ctx;
     const saved = this._saved;
     this._presetCamera = false;
+    this._cameraNeedsAdoption = this.ctx.exploration.active;
     this.ctx.cameraRig.restoreState(saved.rig);
     camera.rotation.order = saved.rotationOrder;
     camera.position.copy(saved.position);
@@ -152,13 +154,14 @@ class PhotoModeController {
     this.pitch = this._rotation.x;
   }
   get cameraLocked() {
-    return this.capturing && !this.ctx.video?.recording;
+    return this.capturing && !this.ctx.video?.usingSceneControls;
   }
   selectPreset(name) {
     if (!this.active || this.cameraLocked) return false;
     this._clearInput();
     if (!this.ctx.cameraRig.preset(name)) return false;
     this._presetCamera = true;
+    this._cameraNeedsAdoption = false;
     return true;
   }
   _takeCameraControl() {
@@ -186,6 +189,14 @@ class PhotoModeController {
     this.capturing = locked;
     this.timeRunning = timeRunning;
     this._emit();
+  }
+  beginSceneControls() {
+    if (this._cameraNeedsAdoption) this.ctx.cameraRig.adoptCamera(true);
+    this._presetCamera = false;
+    this._cameraNeedsAdoption = false;
+  }
+  endSceneControls() {
+    this._syncAngles();
   }
   _clearInput() {
     this.keys.clear();
@@ -232,6 +243,7 @@ class PhotoModeController {
     }
     if (
       !this.active ||
+      this.ctx.video?.usingSceneControls ||
       editable ||
       event.target?.closest?.('[role="slider"]') ||
       !PHOTO_KEYS.has(event.code)
@@ -251,7 +263,7 @@ class PhotoModeController {
     } else this.keys.delete(event.code);
   }
   _down(event) {
-    if (!this.active || this.cameraLocked) return;
+    if (!this.active || this.capturing) return;
     // The canvas is not focusable; clicking back into the scene must release
     // keyboard focus from the restored climate sliders explicitly.
     document.activeElement?.blur?.();
@@ -264,7 +276,7 @@ class PhotoModeController {
   _move(event) {
     if (
       !this.active ||
-      this.cameraLocked ||
+      this.capturing ||
       !this.drag ||
       this.drag.id !== event.pointerId
     )
@@ -279,11 +291,12 @@ class PhotoModeController {
     );
     this.drag.x = event.clientX;
     this.drag.y = event.clientY;
+    this._cameraNeedsAdoption = true;
     this.ctx.camera.rotation.set(this.pitch, this.yaw, 0, "YXZ");
     this.ctx.camera.updateMatrixWorld();
   }
   _wheel(event) {
-    if (!this.active) return;
+    if (!this.active || this.ctx.video?.usingSceneControls) return;
     event.preventDefault();
     if (this.cameraLocked) return;
     this._takeCameraControl();
@@ -292,10 +305,11 @@ class PhotoModeController {
       15,
       Math.min(100, camera.fov + Math.sign(event.deltaY) * 2),
     );
+    this._cameraNeedsAdoption = true;
     camera.updateProjectionMatrix();
   }
   update(dt) {
-    if (!this.active || this.cameraLocked) return;
+    if (!this.active || this.capturing) return;
     if (this._presetCamera) {
       this.ctx.cameraRig.update(dt);
       this._syncAngles();
@@ -313,6 +327,7 @@ class PhotoModeController {
       .applyQuaternion(camera.quaternion);
     this._direction.y += vertical;
     if (this._direction.lengthSq() > 0) {
+      this._cameraNeedsAdoption = true;
       const fast = this.keys.has("ShiftLeft") || this.keys.has("ShiftRight");
       camera.position.addScaledVector(
         this._direction.normalize(),

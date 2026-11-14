@@ -10,6 +10,9 @@ import { ValleySaves } from "./valley-saves.js";
 
 const TARGET_HEIGHT = 0.82;
 const TRANSFORM_LAYER = 1;
+const MIN_PLACEMENT_SCALE = 0.25;
+const MAX_PLACEMENT_SCALE = 4;
+const SCALE_DOUBLING_DISTANCE = 96;
 const LANTERN_LIGHT_COUNT = 3;
 const ANCHOR_DIRECTIONS = [-1, 0, 1].flatMap((x) =>
   [-1, 0, 1].flatMap((y) =>
@@ -440,6 +443,7 @@ class AholoCreate {
     for (const [mode, label, glyph] of [
       ["translate", "移动", "✥"],
       ["rotate", "旋转", "↻"],
+      ["scale", "缩放", "⤢"],
     ]) {
       const button = el("button", "wg-aholo-btn");
       const icon = el("span", "wg-aholo-edit-icon", glyph);
@@ -1341,11 +1345,16 @@ class AholoCreate {
         controls.pointerDown({ x: pointer.ndc.x, y: pointer.ndc.y, button: 0 });
         if (!controls.dragging) return false;
         const entry = this.selectedEntry;
-        const { position, quaternion } = entry.root;
+        const { position, quaternion, scale } = entry.root;
         this.transformDrag = {
           entry,
           position: position.clone(),
           quaternion: quaternion.clone(),
+          scale: scale.x,
+          scaleGesture:
+            this.transformMode === "scale"
+              ? this._startScaleGesture(entry, pointer)
+              : null,
           surfaceY: this._editSurfaceHeight(position.x, position.z),
         };
         return true;
@@ -1375,7 +1384,9 @@ class AholoCreate {
       ? "点击山谷中的地标即可编辑。"
       : this.transformMode === "rotate"
         ? "拖动圆环旋转地标。"
-        : "拖动箭头移动地标，绿色箭头调节高度。";
+        : this.transformMode === "scale"
+          ? "拖动方块等比缩放地标。"
+          : "拖动箭头移动地标，绿色箭头调节高度。";
   }
 
   _selectPlaced(entry) {
@@ -1464,8 +1475,49 @@ class AholoCreate {
     );
   }
 
+  _startScaleGesture(entry, pointer) {
+    const { root, height } = entry;
+    const bounds = new Ry.Box3().setFromObject(root, true);
+    const bottomOffset = bounds.isEmpty()
+      ? height * 0.5
+      : (root.position.y - bounds.min.y) / root.scale.y;
+    // Drag away from an outer handle to grow, or up/right from the center.
+    const direction = new Ry.Vector2(1, -1);
+    if (this.transformControls.axis !== "XYZ") {
+      const pivot = root
+        .getWorldPosition(new Ry.Vector3())
+        .project(this.camera);
+      const { width, height } =
+        this.ctx.renderer.domElement.getBoundingClientRect();
+      const dx = ((pointer.ndc.x - pivot.x) * width) / 2;
+      const dy = ((pivot.y - pointer.ndc.y) * height) / 2;
+      if (Math.hypot(dx, dy) >= 1) direction.set(dx, dy);
+    }
+    return {
+      x: pointer.x,
+      y: pointer.y,
+      direction: direction.normalize(),
+      bottomOffset,
+    };
+  }
+
   _moveTransform(pointer) {
-    if (!this.transformDrag) return;
+    const drag = this.transformDrag;
+    if (!drag) return;
+    if (drag.scaleGesture) {
+      const { x, y, direction, bottomOffset } = drag.scaleGesture;
+      const distance =
+        (pointer.x - x) * direction.x + (pointer.y - y) * direction.y;
+      const scale = Ry.MathUtils.clamp(
+        drag.scale * 2 ** (distance / SCALE_DOUBLING_DISTANCE),
+        MIN_PLACEMENT_SCALE,
+        MAX_PLACEMENT_SCALE,
+      );
+      drag.entry.root.scale.setScalar(scale);
+      drag.entry.root.position.y =
+        drag.position.y + (scale - drag.scale) * bottomOffset;
+      return;
+    }
     const controls = this.transformControls;
     controls.getHelper().updateMatrixWorld(true);
     controls.pointerMove({ x: pointer.ndc.x, y: pointer.ndc.y, button: -1 });
@@ -1482,29 +1534,36 @@ class AholoCreate {
     const floor = this._editSurfaceHeight(position.x, position.z);
     position.y = Math.max(
       position.y + floor - drag.surfaceY,
-      floor + drag.entry.height * 0.5,
+      floor + drag.entry.height * drag.entry.scale * 0.5,
     );
   }
 
   _finishTransform(commit) {
     if (!this.transformDrag) return;
-    const { entry, position, quaternion } = this.transformDrag;
+    const { entry, position, quaternion, scale } = this.transformDrag;
     this.transformDrag = null;
     this.transformControls.pointerUp(null);
     const { root } = entry;
     if (
       !commit ||
       !root.position.toArray().every(Number.isFinite) ||
-      !root.quaternion.toArray().every(Number.isFinite)
+      !root.quaternion.toArray().every(Number.isFinite) ||
+      !Number.isFinite(root.scale.x)
     ) {
       root.position.copy(position);
       root.quaternion.copy(quaternion);
+      root.scale.setScalar(scale);
       return;
     }
-    if (root.position.equals(position) && root.quaternion.equals(quaternion))
+    if (
+      root.position.equals(position) &&
+      root.quaternion.equals(quaternion) &&
+      root.scale.x === scale
+    )
       return;
     entry.x = root.position.x;
-    entry.y = root.position.y - entry.height * 0.5;
+    entry.scale = root.scale.x;
+    entry.y = root.position.y - entry.height * entry.scale * 0.5;
     entry.z = root.position.z;
     if (this.transformMode === "rotate") {
       entry.pitch = root.rotation.x;
@@ -1517,6 +1576,7 @@ class AholoCreate {
     if (entry.obstacle) {
       entry.obstacle.x = entry.x;
       entry.obstacle.z = entry.z;
+      entry.obstacle.radius = Math.max(0.1, entry.height * entry.scale * 0.16);
     }
     this._savePlacementLayout();
   }
@@ -1706,19 +1766,22 @@ class AholoCreate {
       windYawOffset = 0,
       role,
       height,
+      scale = 1,
     } = placement;
     const root = new Ry.Group();
     const model = template.clone(true);
     model.position.y = -height * 0.5;
     root.add(model);
-    root.position.set(x, y + height * 0.5, z);
+    root.position.set(x, y + height * scale * 0.5, z);
     root.rotation.set(pitch, yaw, roll, "YXZ");
+    root.scale.setScalar(scale);
     this.scene.add(root);
     const entry = {
       ...placement,
       pitch,
       roll,
       windYawOffset,
+      scale,
       id: "aholo-" + root.id,
       root,
       template,
@@ -1733,7 +1796,7 @@ class AholoCreate {
         kind: "circle",
         x,
         z,
-        radius: Math.max(0.1, height * 0.16),
+        radius: Math.max(0.1, height * scale * 0.16),
       };
       navigation.obstacles.push(entry.obstacle);
     }
@@ -1743,7 +1806,7 @@ class AholoCreate {
 
   _placementRecords() {
     return this.placed.map(
-      ({ url, x, y, z, yaw, pitch, roll, windYawOffset, role, height }) => ({
+      ({
         url,
         x,
         y,
@@ -1754,6 +1817,19 @@ class AholoCreate {
         windYawOffset,
         role,
         height,
+        scale,
+      }) => ({
+        url,
+        x,
+        y,
+        z,
+        yaw,
+        pitch,
+        roll,
+        windYawOffset,
+        role,
+        height,
+        scale,
       }),
     );
   }
@@ -1868,10 +1944,45 @@ class AholoCreate {
     const x = ((Math.max(left, -1) + Math.min(right, 1) + 2) * width) / 4;
     const y = ((1 - Math.min(top, 1)) * height) / 2 - 12;
     this.editModes.hidden = false;
-    const insetX = this.editModes.offsetWidth * 0.5 + 8;
-    const insetY = this.editModes.offsetHeight + 8;
-    const leftPx = `${Math.round(Ry.MathUtils.clamp(x, insetX, width - insetX))}px`;
-    const topPx = `${Math.round(Math.max(y, insetY))}px`;
+    const gap = 8;
+    const halfToolbarWidth = this.editModes.offsetWidth * 0.5;
+    const toolbarHeight = this.editModes.offsetHeight;
+    const insetX = halfToolbarWidth + gap;
+    const insetY = toolbarHeight + gap;
+    let toolbarX = Ry.MathUtils.clamp(x, insetX, width - insetX);
+    let toolbarY = Ry.MathUtils.clamp(y, insetY, height - gap);
+    const panel = this.overlay.getBoundingClientRect();
+    if (
+      toolbarX + halfToolbarWidth > panel.left &&
+      toolbarX - halfToolbarWidth < panel.right &&
+      toolbarY > panel.top &&
+      toolbarY - toolbarHeight < panel.bottom
+    ) {
+      const candidates = [
+        [panel.left - halfToolbarWidth - gap, toolbarY],
+        [panel.right + halfToolbarWidth + gap, toolbarY],
+        [toolbarX, panel.top - gap],
+        [toolbarX, panel.bottom + toolbarHeight + gap],
+      ];
+      let nearest = Infinity;
+      for (const [candidateX, candidateY] of candidates) {
+        if (
+          candidateX < insetX ||
+          candidateX > width - insetX ||
+          candidateY < insetY ||
+          candidateY > height - gap
+        )
+          continue;
+        const distance = Math.hypot(candidateX - x, candidateY - y);
+        if (distance < nearest) {
+          nearest = distance;
+          toolbarX = candidateX;
+          toolbarY = candidateY;
+        }
+      }
+    }
+    const leftPx = `${Math.round(toolbarX)}px`;
+    const topPx = `${Math.round(toolbarY)}px`;
     if (this.editModes.style.left !== leftPx)
       this.editModes.style.left = leftPx;
     if (this.editModes.style.top !== topPx) this.editModes.style.top = topPx;

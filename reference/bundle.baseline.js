@@ -4276,6 +4276,7 @@ void main() {
     dayNightSwing: 4.5
   };
   const TOOL_NAMES = ["hand", "wind", "cloud", "fog"];
+  const VIDEO_MAX_SECONDS = 60;
 }
 {
   class EventBus {
@@ -5548,15 +5549,19 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
         alt: !1,
         ctrl: !1,
         time: 0
-      }, this.active = null, this.hover = null, this.orbiting = null, this.touches = new Map(), this.pinch = null, this._lastMoveT = 0, this._hoverDirty = !0;
+      }, this.active = null, this.releasePending = false, this.hover = null, this.orbiting = null, this.touches = new Map(), this.pinch = null, this._lastMoveT = 0, this._hoverDirty = !0;
       const e = this.el;
-      e.style.touchAction = "none", e.addEventListener("pointerdown", i => this._down(i)), window.addEventListener("pointermove", i => this._move(i)), window.addEventListener("pointerup", i => this._up(i)), window.addEventListener("pointercancel", i => this._up(i, !0)), e.addEventListener("wheel", i => this._wheel(i), {
+      e.style.touchAction = "none", e.addEventListener("pointerdown", i => this._down(i)), window.addEventListener("pointermove", i => this._move(i)), window.addEventListener("pointerup", i => this._up(i)), window.addEventListener("pointercancel", i => this._up(i, !0)), e.addEventListener("lostpointercapture", event => {
+        if (this.ctx.video?.usingSceneControls && this.touches.has(event.pointerId)) this._resetPointer();
+      }), e.addEventListener("wheel", i => this._wheel(i), {
         passive: !1
       }), e.addEventListener("contextmenu", i => i.preventDefault()), this.inside = !1, e.addEventListener("pointerenter", () => {
         this.inside = !0;
       }), e.addEventListener("pointerleave", () => {
         this.inside = !1, this.pointer.down || this._setHover(null);
-      }), window.addEventListener("keydown", i => this._key(i));
+      }), window.addEventListener("keydown", i => this._key(i)), window.addEventListener("blur", () => {
+        if (this.ctx.video?.usingSceneControls) this._resetPointer();
+      });
     }
     addHandler(t) {
       return t.priority ?? (t.priority = 0), t.tools ?? (t.tools = ["hand"]), this.handlers.push(t), this.handlers.sort((e, i) => i.priority - e.priority), () => {
@@ -5565,18 +5570,20 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
     }
     setEnabled(enabled) {
       if (this.enabled === enabled) return;
-      if (!enabled) {
-        this._cancelActive();
-        this._setHover(null);
-        for (const pointerId of this.touches.keys()) if (this.el.hasPointerCapture?.(pointerId)) this.el.releasePointerCapture(pointerId);
-        this.touches.clear();
-        this.pinch = null;
-        this.orbiting = null;
-        this.pointer.down = false;
-      }
+      if (!enabled) this._resetPointer();
       this.enabled = enabled;
       this.invalidateHover();
       this._updateCursor();
+    }
+    _resetPointer() {
+      this.releasePending = false;
+      this._cancelActive();
+      for (const pointerId of this.touches.keys()) if (this.el.hasPointerCapture?.(pointerId)) this.el.releasePointerCapture(pointerId);
+      this.touches.clear();
+      this.pinch = null;
+      this.orbiting = null;
+      this.pointer.down = false;
+      this._setHover(null);
     }
     setTool(t) {
       !TOOL_NAMES.includes(t) || t === this.tool || (this._cancelActive(), this.tool = t, this._hoverDirty = !0, this.ctx.events.emit("tool", {
@@ -5639,6 +5646,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
     }
     _down(t) {
       if (!this.enabled) return;
+      this.finishFrame();
       if (this.el.setPointerCapture?.(t.pointerId), this.touches.set(t.pointerId, {
         x: t.clientX,
         y: t.clientY
@@ -5675,7 +5683,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this.orbiting = "orbit", this._updateCursor();
     }
     _move(t) {
-      if (!this.enabled) return;
+      if (!this.enabled || this.releasePending) return;
       if (this.touches.has(t.pointerId) && this.touches.set(t.pointerId, {
         x: t.clientX,
         y: t.clientY
@@ -5718,6 +5726,8 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
     }
     _up(t, e = !1) {
       if (!this.enabled) return;
+      const recording = this.ctx.video?.usingSceneControls;
+      if (recording && !this.touches.has(t.pointerId)) return;
       if (this.touches.delete(t.pointerId), this.pinch) {
         if (this.touches.size < 2 && (this.pinch = null, this.touches.size === 1)) {
           const [s] = [...this.touches.values()],
@@ -5729,22 +5739,46 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       }
       const i = this.pointer;
       if (i.down) {
-        if (this._updatePointer(t), i.down = !1, this.active) {
-          try {
-            e && this.active.handler.onCancel?.(i, this.active.hit), this.active.handler.onUp?.(i, this.active.hit);
-          } catch (s) {
-            console.error(`[input] ${this.active.handler.name}.onUp`, s);
-          }
-          this.active = null;
-        } else !i.moved && !e && t.button === 0 && this.ctx.events.emit("tap", {
-          ray: i.ray.clone(),
+        this._updatePointer(t);
+        if (recording && !e && i.moved && this.active?.handler.releaseAfterSimulation) {
+          this.releasePending = true;
+          return;
+        }
+        this._releasePointer(t.button, e);
+      }
+    }
+    finishFrame() {
+      if (!this.releasePending) return;
+      this.releasePending = false;
+      this._releasePointer(0, false);
+    }
+    _releasePointer(button, cancelled) {
+      const pointer = this.pointer;
+      pointer.down = false;
+      if (this.active) {
+        const {
+          handler,
+          hit
+        } = this.active;
+        try {
+          if (cancelled) handler.onCancel?.(pointer, hit);
+          handler.onUp?.(pointer, hit);
+        } catch (error) {
+          console.error(`[input] ${handler.name}.onUp`, error);
+        }
+        this.active = null;
+      } else if (!pointer.moved && !cancelled && button === 0) {
+        this.ctx.events.emit("tap", {
+          ray: pointer.ray.clone(),
           pointer: {
-            ...i,
-            ndc: i.ndc.clone()
+            ...pointer,
+            ndc: pointer.ndc.clone()
           }
         });
-        this.orbiting = null, this._hoverDirty = !0, this._updateCursor();
       }
+      this.orbiting = null;
+      this.invalidateHover();
+      this._updateCursor();
     }
     _cancelActive() {
       if (this.active) {
@@ -5757,7 +5791,8 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       }
     }
     _wheel(t) {
-      if (t.preventDefault(), !this.enabled) return;
+      if (!this.enabled || this.releasePending) return;
+      t.preventDefault();
       this._updatePointer(t);
       const e = this.active || this._pick();
       if (e?.handler.onWheel) {
@@ -5785,6 +5820,10 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
     update(t) {
       if (!this.enabled) return;
       const e = this.pointer;
+      if (this.active && this.ctx.video?.usingSceneControls) {
+        this.camera.updateMatrixWorld();
+        this.raycaster.setFromCamera(e.ndc, this.camera);
+      }
       if (e.time += t, e.down && (e.holdTime += t, e.stillTime += t, e.vx *= Math.exp(-t * 8), e.vy *= Math.exp(-t * 8)), this.active) try {
         this.active.handler.onFrame?.(e, t, this.active.hit);
       } catch (i) {
@@ -24869,6 +24908,7 @@ void main() {
         name: "sky",
         priority: 50,
         tools: ["hand"],
+        releaseAfterSimulation: true,
         cursor: "grab",
         activeCursor: "grabbing",
         hitTest: s => this.orbs.hitTest(s),
@@ -30417,6 +30457,7 @@ void main() {
       name: "clouds",
       priority: 40,
       tools: ["hand"],
+      releaseAfterSimulation: true,
       cursor: "grab",
       activeCursor: "grabbing",
       hitTest: e => {
@@ -30440,6 +30481,7 @@ void main() {
       name: "clouds-condense",
       priority: 40,
       tools: ["cloud"],
+      releaseAfterSimulation: true,
       cursor: "crosshair",
       activeCursor: "crosshair",
       hitTest: () => ({
@@ -32035,7 +32077,7 @@ void main() {
         if (landmark.role !== "shrine") continue;
         const c = Math.hypot(landmark.x - t.x, landmark.z - t.z);
         if (c > 1.8) continue;
-        const h = (landmark.y ?? i.terrain.height(landmark.x, landmark.z)) + (landmark.height ?? 0.8) + 0.12;
+        const h = (landmark.y ?? i.terrain.height(landmark.x, landmark.z)) + (landmark.height ?? 0.8) * (landmark.scale ?? 1) + 0.12;
         const f = h - 0.35 * c;
         f > o && (o = f, e.set(landmark.x, h, landmark.z));
       }
@@ -35641,7 +35683,6 @@ void main() {
 }
 {
   const VIDEO_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/></svg>';
-  const MAX_VIDEO_SECONDS = 30;
   const videoSeconds = new Intl.NumberFormat("zh-CN", {
     maximumFractionDigits: 3
   });
@@ -35722,7 +35763,7 @@ void main() {
         hidden: true
       }, [this.progressText, this.progress, this.cancelButton, createHudElement("p", {
         class: "wg-video-help",
-        text: "录制中可移动、切换镜头，也可调整季节、时间和天气。"
+        text: "拖动空白处环绕 · 中键平移 · 滚轮缩放"
       })]);
       this.message = createHudElement("p", {
         class: "wg-video-notice",
@@ -35739,7 +35780,7 @@ void main() {
         text: "山谷声音"
       })])]), this.summary, this.startButton, createHudElement("p", {
         class: "wg-video-help",
-        text: "WASD 移动 · Q/E 升降 · 右键环顾 · 滚轮变焦"
+        text: "开始录制后使用山谷的默认操作。"
       })]);
       this.heading = createHudElement("h2", {
         id: "wg-video-heading",
@@ -35779,12 +35820,12 @@ void main() {
     }
     syncSettings(clampFrames = false) {
       const fps = Number(this.fps.value);
-      const max = MAX_VIDEO_SECONDS * fps;
+      const max = VIDEO_MAX_SECONDS * fps;
       this.frames.max = max;
       if (clampFrames && this.frames.valueAsNumber > max) this.frames.value = max;
       const valid = this.frames.validity.valid;
       this.startButton.disabled = !valid;
-      this.summary.textContent = valid ? `成片 ${videoSeconds.format(this.frames.valueAsNumber / fps)} 秒` : `请输入 1–${max} 帧`;
+      this.summary.textContent = valid ? `成片 ${videoSeconds.format(this.frames.valueAsNumber / fps)} 秒 · 上限 ${max} 帧` : `请输入 1–${max} 帧`;
     }
     setState({
       active = false,
@@ -40911,7 +40952,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       });
     }
     get enabled() {
-      return !this.character.disposed && this.character.initialized && !!this.character.model && !this.ctx.exploration?.active && !this.ctx.exploration?.pending && !this.ctx.photo?.active;
+      return !this.character.disposed && this.character.initialized && !!this.character.model && !this.ctx.exploration?.active && !this.ctx.exploration?.pending && (!this.ctx.photo?.active || this.ctx.input.enabled);
     }
     _occluded(ray, distance) {
       const ground = rayToCharacterGround(ray, this.character.navigation, this._ground, false);
@@ -41014,7 +41055,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         y: point.y,
         z: point.z
       };
-      this.marker.visible = !!point;
+      this.marker.visible = !!point && !this.ctx.video?.recording;
       if (point) {
         this.marker.position.copy(point);
         this.marker.position.y += 0.003;
@@ -41770,6 +41811,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.active = true;
       this.timeRunning = false;
       this._presetCamera = false;
+      this._cameraNeedsAdoption = exploration.active;
       exploration.releaseCursor();
       input.setEnabled(false);
       this._saved.focus?.blur?.();
@@ -41805,6 +41847,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       } = this.ctx;
       const saved = this._saved;
       this._presetCamera = false;
+      this._cameraNeedsAdoption = this.ctx.exploration.active;
       this.ctx.cameraRig.restoreState(saved.rig);
       camera.rotation.order = saved.rotationOrder;
       camera.position.copy(saved.position);
@@ -41819,13 +41862,14 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.pitch = this._rotation.x;
     }
     get cameraLocked() {
-      return this.capturing && !this.ctx.video?.recording;
+      return this.capturing && !this.ctx.video?.usingSceneControls;
     }
     selectPreset(name) {
       if (!this.active || this.cameraLocked) return false;
       this._clearInput();
       if (!this.ctx.cameraRig.preset(name)) return false;
       this._presetCamera = true;
+      this._cameraNeedsAdoption = false;
       return true;
     }
     _takeCameraControl() {
@@ -41852,6 +41896,14 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.capturing = locked;
       this.timeRunning = timeRunning;
       this._emit();
+    }
+    beginSceneControls() {
+      if (this._cameraNeedsAdoption) this.ctx.cameraRig.adoptCamera(true);
+      this._presetCamera = false;
+      this._cameraNeedsAdoption = false;
+    }
+    endSceneControls() {
+      this._syncAngles();
     }
     _clearInput() {
       this.keys.clear();
@@ -41882,7 +41934,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         }
         return;
       }
-      if (!this.active || editable || event.target?.closest?.('[role="slider"]') || !PHOTO_KEYS.has(event.code)) return;
+      if (!this.active || this.ctx.video?.usingSceneControls || editable || event.target?.closest?.('[role="slider"]') || !PHOTO_KEYS.has(event.code)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       if (down && !this.cameraLocked && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -41891,7 +41943,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       } else this.keys.delete(event.code);
     }
     _down(event) {
-      if (!this.active || this.cameraLocked) return;
+      if (!this.active || this.capturing) return;
       document.activeElement?.blur?.();
       if (event.button !== 2) return;
       event.preventDefault();
@@ -41904,16 +41956,17 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.canvas.setPointerCapture(event.pointerId);
     }
     _move(event) {
-      if (!this.active || this.cameraLocked || !this.drag || this.drag.id !== event.pointerId) return;
+      if (!this.active || this.capturing || !this.drag || this.drag.id !== event.pointerId) return;
       this.yaw -= (event.clientX - this.drag.x) * 0.003;
       this.pitch = Math.max(-PHOTO_PITCH_LIMIT, Math.min(PHOTO_PITCH_LIMIT, this.pitch - (event.clientY - this.drag.y) * 0.003));
       this.drag.x = event.clientX;
       this.drag.y = event.clientY;
+      this._cameraNeedsAdoption = true;
       this.ctx.camera.rotation.set(this.pitch, this.yaw, 0, "YXZ");
       this.ctx.camera.updateMatrixWorld();
     }
     _wheel(event) {
-      if (!this.active) return;
+      if (!this.active || this.ctx.video?.usingSceneControls) return;
       event.preventDefault();
       if (this.cameraLocked) return;
       this._takeCameraControl();
@@ -41921,10 +41974,11 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         camera
       } = this.ctx;
       camera.fov = Math.max(15, Math.min(100, camera.fov + Math.sign(event.deltaY) * 2));
+      this._cameraNeedsAdoption = true;
       camera.updateProjectionMatrix();
     }
     update(dt) {
-      if (!this.active || this.cameraLocked) return;
+      if (!this.active || this.capturing) return;
       if (this._presetCamera) {
         this.ctx.cameraRig.update(dt);
         this._syncAngles();
@@ -41939,6 +41993,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this._direction.set(sideways, 0, -forward).applyQuaternion(camera.quaternion);
       this._direction.y += vertical;
       if (this._direction.lengthSq() > 0) {
+        this._cameraNeedsAdoption = true;
         const fast = this.keys.has("ShiftLeft") || this.keys.has("ShiftRight");
         camera.position.addScaledVector(this._direction.normalize(), this.speed * (fast ? 3 : 1) * Math.min(0.05, Math.max(0, dt)));
         camera.updateMatrixWorld();
@@ -41988,7 +42043,6 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
 }
 {
   const VIDEO_FRAME_RATES = [24, 30, 60];
-  const VIDEO_MAX_SECONDS = 30;
   const VIDEO_RESOLUTIONS = [1080, 1440, 2160];
   function videoDimensions(aspect, resolution) {
     const landscape = aspect >= 1;
@@ -42012,6 +42066,9 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     }
     get recording() {
       return this.job !== null;
+    }
+    get usingSceneControls() {
+      return this.job?.phase === "recording";
     }
     emit(message = "") {
       const {
@@ -42050,7 +42107,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     }) {
       if (!this.active || this.recording) return;
       if (!VIDEO_FRAME_RATES.includes(fps) || !Number.isInteger(totalFrames) || totalFrames < 1 || totalFrames > fps * VIDEO_MAX_SECONDS) {
-        this.emit("请输入有效的帧率和帧数，成片最长 30 秒。");
+        this.emit(`请输入有效的帧率和帧数，成片最长 ${VIDEO_MAX_SECONDS} 秒。`);
         return;
       }
       if (!VIDEO_RESOLUTIONS.includes(resolution)) {
@@ -42100,7 +42157,9 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         this.ctx.post.setSize(width, height, 1);
         this.ctx.camera.aspect = width / height;
         this.ctx.camera.updateProjectionMatrix();
+        this.ctx.photo.beginSceneControls();
         job.phase = "recording";
+        this.ctx.input.setEnabled(true);
         this.emit();
       } catch (error) {
         this.fail(job, error);
@@ -42115,7 +42174,6 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     async writeFrame(job) {
       try {
         const index = job.completedFrames;
-        this.ctx.photo.update(index === 0 ? 0 : job.dt);
         if (index > 0) this.stepSimulation(job.dt);
         this.renderFrame(index === 0 ? 0 : job.dt);
         job.audio?.sample(index);
@@ -42129,6 +42187,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         }
         this.stepSimulation(job.dt);
         job.phase = "encoding";
+        this.ctx.input.setEnabled(false);
         this.emit();
         const audioBuffer = await job.audio?.finish();
         if (this.job !== job) return;
@@ -42150,10 +42209,12 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     finish(job, message) {
       if (this.job !== job) return;
       this.job = null;
+      this.ctx.input.setEnabled(false);
       job.audio?.close();
       if (job.viewportChanged) {
         this.ctx.post.bloom.enabled = job.savedBloom;
         this.restoreViewport();
+        this.ctx.photo.endSceneControls();
       }
       this.ctx.photo.setCaptureLocked(false, job.photoTimeRunning);
       this.emit(message);
@@ -42223,6 +42284,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     ctx.selectCameraPreset = requested => {
       const name = CAMERA_PRESET_ALIASES[requested] || requested;
       if (!Object.hasOwn(CAMERA_PRESETS, name)) return false;
+      if (ctx.video?.usingSceneControls) return rig.preset(name);
       if (ctx.photo?.active) return ctx.photo.selectPreset(name);
       if (ctx.exploration?.active || ctx.exploration?.pending) {
         const camera = ctx.camera;
@@ -42285,8 +42347,9 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       } = placement;
       const pitch = Object.hasOwn(placement, "pitch") ? placement.pitch : 0;
       const roll = Object.hasOwn(placement, "roll") ? placement.roll : 0;
+      const scale = Object.hasOwn(placement, "scale") ? placement.scale : 1;
       const windYawOffset = Object.hasOwn(placement, "windYawOffset") ? placement.windYawOffset : 0;
-      if (!isModelUrl(url) || ![x, y, z, yaw, pitch, roll, windYawOffset, height].every(Number.isFinite) || height <= 0 || !ROLES.has(role)) {
+      if (!isModelUrl(url) || ![x, y, z, yaw, pitch, roll, windYawOffset, height, scale].every(Number.isFinite) || height <= 0 || scale <= 0 || !ROLES.has(role)) {
         throw new Error("山谷布局包含无效的模型位置。");
       }
       return {
@@ -42299,7 +42362,8 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         roll,
         windYawOffset,
         role,
-        height
+        height,
+        scale
       };
     });
   }
@@ -42498,6 +42562,9 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
 {
   const TARGET_HEIGHT = 0.82;
   const TRANSFORM_LAYER = 1;
+  const MIN_PLACEMENT_SCALE = 0.25;
+  const MAX_PLACEMENT_SCALE = 4;
+  const SCALE_DOUBLING_DISTANCE = 96;
   const LANTERN_LIGHT_COUNT = 3;
   const ANCHOR_DIRECTIONS = [-1, 0, 1].flatMap(x => [-1, 0, 1].flatMap(y => [-1, 0, 1].filter(z => x || y || z).map(z => new Ry.Vector3(x, y, z))));
   const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
@@ -42841,7 +42908,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.editModes.hidden = true;
       this.editModes.setAttribute("role", "group");
       this.editModes.setAttribute("aria-label", "地标操控");
-      for (const [mode, label, glyph] of [["translate", "移动", "✥"], ["rotate", "旋转", "↻"]]) {
+      for (const [mode, label, glyph] of [["translate", "移动", "✥"], ["rotate", "旋转", "↻"], ["scale", "缩放", "⤢"]]) {
         const button = el("button", "wg-aholo-btn");
         const icon = el("span", "wg-aholo-edit-icon", glyph);
         icon.setAttribute("aria-hidden", "true");
@@ -43640,12 +43707,15 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
           const entry = this.selectedEntry;
           const {
             position,
-            quaternion
+            quaternion,
+            scale
           } = entry.root;
           this.transformDrag = {
             entry,
             position: position.clone(),
             quaternion: quaternion.clone(),
+            scale: scale.x,
+            scaleGesture: this.transformMode === "scale" ? this._startScaleGesture(entry, pointer) : null,
             surfaceY: this._editSurfaceHeight(position.x, position.z)
           };
           return true;
@@ -43667,7 +43737,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       for (const button of this.editModes.children) {
         button.setAttribute("aria-pressed", String(button.dataset.transformMode === this.transformMode));
       }
-      this.editHint.textContent = !this.selectedEntry ? "点击山谷中的地标即可编辑。" : this.transformMode === "rotate" ? "拖动圆环旋转地标。" : "拖动箭头移动地标，绿色箭头调节高度。";
+      this.editHint.textContent = !this.selectedEntry ? "点击山谷中的地标即可编辑。" : this.transformMode === "rotate" ? "拖动圆环旋转地标。" : this.transformMode === "scale" ? "拖动方块等比缩放地标。" : "拖动箭头移动地标，绿色箭头调节高度。";
     }
     _selectPlaced(entry) {
       if (entry === this.selectedEntry) return;
@@ -43736,8 +43806,47 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     _editSurfaceHeight(x, z) {
       return Math.max(this.ctx.terrain.height(x, z), this.ctx.world.lakeLevel + 0.035);
     }
+    _startScaleGesture(entry, pointer) {
+      const {
+        root,
+        height
+      } = entry;
+      const bounds = new Ry.Box3().setFromObject(root, true);
+      const bottomOffset = bounds.isEmpty() ? height * 0.5 : (root.position.y - bounds.min.y) / root.scale.y;
+      const direction = new Ry.Vector2(1, -1);
+      if (this.transformControls.axis !== "XYZ") {
+        const pivot = root.getWorldPosition(new Ry.Vector3()).project(this.camera);
+        const {
+          width,
+          height
+        } = this.ctx.renderer.domElement.getBoundingClientRect();
+        const dx = (pointer.ndc.x - pivot.x) * width / 2;
+        const dy = (pivot.y - pointer.ndc.y) * height / 2;
+        if (Math.hypot(dx, dy) >= 1) direction.set(dx, dy);
+      }
+      return {
+        x: pointer.x,
+        y: pointer.y,
+        direction: direction.normalize(),
+        bottomOffset
+      };
+    }
     _moveTransform(pointer) {
-      if (!this.transformDrag) return;
+      const drag = this.transformDrag;
+      if (!drag) return;
+      if (drag.scaleGesture) {
+        const {
+          x,
+          y,
+          direction,
+          bottomOffset
+        } = drag.scaleGesture;
+        const distance = (pointer.x - x) * direction.x + (pointer.y - y) * direction.y;
+        const scale = Ry.MathUtils.clamp(drag.scale * 2 ** (distance / SCALE_DOUBLING_DISTANCE), MIN_PLACEMENT_SCALE, MAX_PLACEMENT_SCALE);
+        drag.entry.root.scale.setScalar(scale);
+        drag.entry.root.position.y = drag.position.y + (scale - drag.scale) * bottomOffset;
+        return;
+      }
       const controls = this.transformControls;
       controls.getHelper().updateMatrixWorld(true);
       controls.pointerMove({
@@ -43757,28 +43866,31 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       position.x = Ry.MathUtils.clamp(position.x, -limitX, limitX);
       position.z = Ry.MathUtils.clamp(position.z, -limitZ, limitZ);
       const floor = this._editSurfaceHeight(position.x, position.z);
-      position.y = Math.max(position.y + floor - drag.surfaceY, floor + drag.entry.height * 0.5);
+      position.y = Math.max(position.y + floor - drag.surfaceY, floor + drag.entry.height * drag.entry.scale * 0.5);
     }
     _finishTransform(commit) {
       if (!this.transformDrag) return;
       const {
         entry,
         position,
-        quaternion
+        quaternion,
+        scale
       } = this.transformDrag;
       this.transformDrag = null;
       this.transformControls.pointerUp(null);
       const {
         root
       } = entry;
-      if (!commit || !root.position.toArray().every(Number.isFinite) || !root.quaternion.toArray().every(Number.isFinite)) {
+      if (!commit || !root.position.toArray().every(Number.isFinite) || !root.quaternion.toArray().every(Number.isFinite) || !Number.isFinite(root.scale.x)) {
         root.position.copy(position);
         root.quaternion.copy(quaternion);
+        root.scale.setScalar(scale);
         return;
       }
-      if (root.position.equals(position) && root.quaternion.equals(quaternion)) return;
+      if (root.position.equals(position) && root.quaternion.equals(quaternion) && root.scale.x === scale) return;
       entry.x = root.position.x;
-      entry.y = root.position.y - entry.height * 0.5;
+      entry.scale = root.scale.x;
+      entry.y = root.position.y - entry.height * entry.scale * 0.5;
       entry.z = root.position.z;
       if (this.transformMode === "rotate") {
         entry.pitch = root.rotation.x;
@@ -43791,6 +43903,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       if (entry.obstacle) {
         entry.obstacle.x = entry.x;
         entry.obstacle.z = entry.z;
+        entry.obstacle.radius = Math.max(0.1, entry.height * entry.scale * 0.16);
       }
       this._savePlacementLayout();
     }
@@ -43988,20 +44101,23 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         roll = 0,
         windYawOffset = 0,
         role,
-        height
+        height,
+        scale = 1
       } = placement;
       const root = new Ry.Group();
       const model = template.clone(true);
       model.position.y = -height * 0.5;
       root.add(model);
-      root.position.set(x, y + height * 0.5, z);
+      root.position.set(x, y + height * scale * 0.5, z);
       root.rotation.set(pitch, yaw, roll, "YXZ");
+      root.scale.setScalar(scale);
       this.scene.add(root);
       const entry = {
         ...placement,
         pitch,
         roll,
         windYawOffset,
+        scale,
         id: "aholo-" + root.id,
         root,
         template
@@ -44016,7 +44132,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
           kind: "circle",
           x,
           z,
-          radius: Math.max(0.1, height * 0.16)
+          radius: Math.max(0.1, height * scale * 0.16)
         };
         navigation.obstacles.push(entry.obstacle);
       }
@@ -44034,7 +44150,8 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         roll,
         windYawOffset,
         role,
-        height
+        height,
+        scale
       }) => ({
         url,
         x,
@@ -44045,7 +44162,8 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         roll,
         windYawOffset,
         role,
-        height
+        height,
+        scale
       }));
     }
     _clearPlacements() {
@@ -44147,10 +44265,29 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       const x = (Math.max(left, -1) + Math.min(right, 1) + 2) * width / 4;
       const y = (1 - Math.min(top, 1)) * height / 2 - 12;
       this.editModes.hidden = false;
-      const insetX = this.editModes.offsetWidth * 0.5 + 8;
-      const insetY = this.editModes.offsetHeight + 8;
-      const leftPx = `${Math.round(Ry.MathUtils.clamp(x, insetX, width - insetX))}px`;
-      const topPx = `${Math.round(Math.max(y, insetY))}px`;
+      const gap = 8;
+      const halfToolbarWidth = this.editModes.offsetWidth * 0.5;
+      const toolbarHeight = this.editModes.offsetHeight;
+      const insetX = halfToolbarWidth + gap;
+      const insetY = toolbarHeight + gap;
+      let toolbarX = Ry.MathUtils.clamp(x, insetX, width - insetX);
+      let toolbarY = Ry.MathUtils.clamp(y, insetY, height - gap);
+      const panel = this.overlay.getBoundingClientRect();
+      if (toolbarX + halfToolbarWidth > panel.left && toolbarX - halfToolbarWidth < panel.right && toolbarY > panel.top && toolbarY - toolbarHeight < panel.bottom) {
+        const candidates = [[panel.left - halfToolbarWidth - gap, toolbarY], [panel.right + halfToolbarWidth + gap, toolbarY], [toolbarX, panel.top - gap], [toolbarX, panel.bottom + toolbarHeight + gap]];
+        let nearest = Infinity;
+        for (const [candidateX, candidateY] of candidates) {
+          if (candidateX < insetX || candidateX > width - insetX || candidateY < insetY || candidateY > height - gap) continue;
+          const distance = Math.hypot(candidateX - x, candidateY - y);
+          if (distance < nearest) {
+            nearest = distance;
+            toolbarX = candidateX;
+            toolbarY = candidateY;
+          }
+        }
+      }
+      const leftPx = `${Math.round(toolbarX)}px`;
+      const topPx = `${Math.round(toolbarY)}px`;
       if (this.editModes.style.left !== leftPx) this.editModes.style.left = leftPx;
       if (this.editModes.style.top !== topPx) this.editModes.style.top = topPx;
     }
@@ -44281,10 +44418,10 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       surfaceFieldsUpdated = !1, ctx.time += dt;
       const simulationTime = ctx.time;
       profiler.tick(), profiler.begin("sim"), ctx.weather.update(dt), world.update(dt), wind.update(dt);
-      if (!ctx.photo.active) {
-        ctx.input.update(dt);
-        if (ctx.exploration.active) ctx.exploration.update(dt);else if (!cameraRig.following) cameraRig.update(dt);
-      }
+      ctx.input.update(dt);
+      const sceneCamera = ctx.video.usingSceneControls || !ctx.photo.active && !ctx.exploration.active;
+      if (!ctx.photo.active && ctx.exploration.active) ctx.exploration.update(dt);
+      if (sceneCamera && !cameraRig.following) cameraRig.update(dt);
       profiler.end("sim"), ctx.precip.sources.length = 0;
       for (const [moduleName] of MODULE_REGISTRY) {
         moduleName === "precipitation" && updateSurfaceFields(dt);
@@ -44299,7 +44436,8 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
           profiler.end(moduleName);
         }
       }
-      if (!ctx.photo.active && !ctx.exploration.active && cameraRig.following) cameraRig.update(dt);
+      ctx.input.finishFrame();
+      if (sceneCamera && cameraRig.following) cameraRig.update(dt);
       surfaceFieldsUpdated || updateSurfaceFields(dt);
       let totalRainfall = 0,
         totalSnowfall = 0;

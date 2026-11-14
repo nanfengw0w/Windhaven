@@ -51,6 +51,7 @@ class SkySystem {
       name: "sky",
       priority: 50,
       tools: ["hand"],
+      releaseAfterSimulation: true,
       cursor: "grab",
       activeCursor: "grabbing",
       hitTest: (s) => this.orbs.hitTest(s),

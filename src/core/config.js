@@ -57,6 +57,7 @@ const TEMPERATURE_CONFIG = {
   dayNightSwing: 4.5,
 };
 const TOOL_NAMES = ["hand", "wind", "cloud", "fog"];
+const VIDEO_MAX_SECONDS = 60;
 export {
   CELESTIAL_ORBIT,
   CLOUD_LAYER_HEIGHTS,
@@ -67,6 +68,7 @@ export {
   TEMPERATURE_CONFIG,
   TERRARIUM_BOUNDS,
   TOOL_NAMES,
+  VIDEO_MAX_SECONDS,
   WATER_LEVEL_CONFIG,
   rotateCelestialDirection,
 };

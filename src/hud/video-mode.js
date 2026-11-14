@@ -1,8 +1,8 @@
+import { VIDEO_MAX_SECONDS } from "../core/config.js";
 import { createHudElement, parseHudMarkup } from "./dom.js";
 
 const VIDEO_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10 6-3v10l-6-3"/></svg>';
-const MAX_VIDEO_SECONDS = 30;
 const videoSeconds = new Intl.NumberFormat("zh-CN", {
   maximumFractionDigits: 3,
 });
@@ -93,7 +93,7 @@ class VideoControls {
         this.cancelButton,
         createHudElement("p", {
           class: "wg-video-help",
-          text: "录制中可移动、切换镜头，也可调整季节、时间和天气。",
+          text: "拖动空白处环绕 · 中键平移 · 滚轮缩放",
         }),
       ],
     );
@@ -116,7 +116,7 @@ class VideoControls {
       this.startButton,
       createHudElement("p", {
         class: "wg-video-help",
-        text: "WASD 移动 · Q/E 升降 · 右键环顾 · 滚轮变焦",
+        text: "开始录制后使用山谷的默认操作。",
       }),
     ]);
     this.heading = createHudElement("h2", {
@@ -179,13 +179,13 @@ class VideoControls {
 
   syncSettings(clampFrames = false) {
     const fps = Number(this.fps.value);
-    const max = MAX_VIDEO_SECONDS * fps;
+    const max = VIDEO_MAX_SECONDS * fps;
     this.frames.max = max;
     if (clampFrames && this.frames.valueAsNumber > max) this.frames.value = max;
     const valid = this.frames.validity.valid;
     this.startButton.disabled = !valid;
     this.summary.textContent = valid
-      ? `成片 ${videoSeconds.format(this.frames.valueAsNumber / fps)} 秒`
+      ? `成片 ${videoSeconds.format(this.frames.valueAsNumber / fps)} 秒 · 上限 ${max} 帧`
       : `请输入 1–${max} 帧`;
   }
 

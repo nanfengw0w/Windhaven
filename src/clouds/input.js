@@ -12,6 +12,7 @@ function registerCloudInput(system) {
     name: "clouds",
     priority: 40,
     tools: ["hand"],
+    releaseAfterSimulation: true,
     cursor: "grab",
     activeCursor: "grabbing",
     hitTest: (e) => {
@@ -46,6 +47,7 @@ function registerCloudInput(system) {
       name: "clouds-condense",
       priority: 40,
       tools: ["cloud"],
+      releaseAfterSimulation: true,
       cursor: "crosshair",
       activeCursor: "crosshair",
       hitTest: () => ({

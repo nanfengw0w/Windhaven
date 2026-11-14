@@ -44,20 +44,34 @@ function copyPlacements(placements) {
     const { url, x, y, z, yaw, role, height } = placement;
     const pitch = Object.hasOwn(placement, "pitch") ? placement.pitch : 0;
     const roll = Object.hasOwn(placement, "roll") ? placement.roll : 0;
+    const scale = Object.hasOwn(placement, "scale") ? placement.scale : 1;
     const windYawOffset = Object.hasOwn(placement, "windYawOffset")
       ? placement.windYawOffset
       : 0;
     if (
       !isModelUrl(url) ||
-      ![x, y, z, yaw, pitch, roll, windYawOffset, height].every(
+      ![x, y, z, yaw, pitch, roll, windYawOffset, height, scale].every(
         Number.isFinite,
       ) ||
       height <= 0 ||
+      scale <= 0 ||
       !ROLES.has(role)
     ) {
       throw new Error("山谷布局包含无效的模型位置。");
     }
-    return { url, x, y, z, yaw, pitch, roll, windYawOffset, role, height };
+    return {
+      url,
+      x,
+      y,
+      z,
+      yaw,
+      pitch,
+      roll,
+      windYawOffset,
+      role,
+      height,
+      scale,
+    };
   });
 }
 

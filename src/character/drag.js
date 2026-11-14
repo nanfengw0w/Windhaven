@@ -99,7 +99,7 @@ class CharacterDrag {
       !!this.character.model &&
       !this.ctx.exploration?.active &&
       !this.ctx.exploration?.pending &&
-      !this.ctx.photo?.active
+      (!this.ctx.photo?.active || this.ctx.input.enabled)
     );
   }
 
@@ -218,7 +218,7 @@ class CharacterDrag {
         }
       : null;
     if (point) drag.displayPosition = { x: point.x, y: point.y, z: point.z };
-    this.marker.visible = !!point;
+    this.marker.visible = !!point && !this.ctx.video?.recording;
     if (point) {
       this.marker.position.copy(point);
       this.marker.position.y += 0.003;

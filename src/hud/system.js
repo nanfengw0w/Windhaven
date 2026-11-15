@@ -117,7 +117,7 @@ class HudSystem {
     (t.events.on("hud:hint", (u) => this._hint(u?.text, u?.ms)),
       t.events.on("key", (u) => this._key(u || {})),
       t.events.on("scenario", () => this.slow()));
-    const f = () => this.coach.start(2600);
+    const f = () => this.coach.start(1800);
     if (document.body.classList.contains("ready")) f();
     else {
       const u = new MutationObserver(() => {

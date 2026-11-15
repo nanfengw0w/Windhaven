@@ -1212,9 +1212,22 @@ body.ready #veil {
 .wg-coach-main {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   padding: 3px 4px 3px 0;
   min-width: 0;
+}
+.wg-coach-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--ink-3);
+  font: 500 9px/1.2 var(--font);
+  letter-spacing: 0.12em;
+}
+.wg-coach-kicker span:last-child {
+  color: var(--brass);
+  letter-spacing: 0.06em;
 }
 .wg-coach .wg-toast-text {
   font-family: var(--serif);

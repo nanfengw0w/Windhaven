@@ -34844,32 +34844,37 @@ void main() {
   }
 }
 {
-  const COACH_STORAGE_KEY = "weatherglass.coach.v1";
+  const COACH_STORAGE_KEY = "weatherglass.coach.v2";
   const COACH_STEPS = [{
     id: "grab",
     icon: "hand",
-    text: "Grab a cloud and drag it across the sky"
+    text: "抓住一朵云，拖着它划过天空"
   }, {
     id: "squeeze",
     icon: "rain",
-    text: "Hold still on a cloud to squeeze out rain"
+    text: "在云上停住，挤出雨水"
   }, {
     id: "storm",
     icon: "spark",
-    text: "Shake a cloud hard to build a storm"
+    text: "用力摇动云朵，制造雷暴"
   }, {
     id: "wind",
     icon: "wind",
-    text: "Pick the Wind tool and sweep across the meadow",
-    alt: "Now sweep across the meadow"
+    text: "选择「风」工具，扫过草地",
+    alt: "现在扫过草地"
   }, {
     id: "sun",
     icon: "summer",
-    text: "Drag the sun to change the time of day"
+    text: "拖动太阳，改变时间"
   }, {
     id: "season",
     icon: "autumn",
-    text: "Turn the season dial"
+    text: "转动季节转盘"
+  }, {
+    id: "aholo",
+    icon: "spark",
+    text: "打开 Aholo，把一张照片变成山谷地标",
+    target: ctx => ctx.aholoCreate?.launch
   }];
   class ToastManager {
     constructor(t) {
@@ -34951,7 +34956,7 @@ void main() {
         tool: i
       }) => {
         COACH_STEPS[this.current]?.id === "wind" && (this._setText(i === "wind" ? COACH_STEPS[this.current].alt : COACH_STEPS[this.current].text), this._highlight(i === "wind" ? null : this.hud.toolbar?.button("wind")));
-      }), e("season", () => this._mark("season")), e("sky:grab", () => {
+      }), e("season", () => this._mark("season")), e("aholo:open", () => this._mark("aholo")), e("sky:grab", () => {
         this.sunAccum += 0.01;
       }), e("scenario", () => {
         this.lastScenario = hudNow(), this.lastTod = this.ctx.world.timeOfDay;
@@ -34989,13 +34994,21 @@ void main() {
       this.current = t, this._show(COACH_STEPS[t], t);
     }
     _finish(t) {
-      this.done = !0, this.current = -1, this._save(), this._highlight(null), this._closeEl(), t && setTimeout(() => this.toasts.toast("That’s the whole world — press U to hide the controls", 4800, {
-        icon: "eye"
+      this.done = !0, this.current = -1, this._save(), this._highlight(null), this._closeEl(), t && setTimeout(() => this.toasts.toast("基础操作完成。用 Aholo 造一个属于你的地标吧。", 5200, {
+        icon: "spark"
       }), 500);
     }
     _show(t, e) {
       this._closeEl();
-      const i = createHudElement("span", {
+      this._highlight(null);
+      const k = createHudElement("span", {
+          class: "wg-coach-kicker"
+        }, [createHudElement("span", {
+          text: "快速上手"
+        }), createHudElement("span", {
+          text: `${e + 1} / ${COACH_STEPS.length}`
+        })]),
+        i = createHudElement("span", {
           class: "wg-coach-dots",
           "aria-hidden": "true"
         }, COACH_STEPS.map((l, c) => createHudElement("i", {
@@ -35008,14 +35021,14 @@ void main() {
         n = createHudElement("button", {
           class: "wg-coach-btn",
           type: "button",
-          "aria-label": "Next tip",
-          title: "Next tip"
+          "aria-label": "下一步",
+          title: "下一步"
         }, [parseHudMarkup(HUD_ICONS.next)]),
         o = createHudElement("button", {
           class: "wg-coach-btn",
           type: "button",
-          "aria-label": "Dismiss tips",
-          title: "Dismiss tips"
+          "aria-label": "跳过新手教程",
+          title: "跳过新手教程"
         }, [parseHudMarkup(HUD_ICONS.close)]),
         a = createHudElement("div", {
           class: "wg-toast wg-coach",
@@ -35024,13 +35037,13 @@ void main() {
           class: "wg-toast-ico wg-coach-ico"
         }, [parseHudMarkup(HUD_ICONS[t.icon] || HUD_ICONS.spark), parseHudMarkup(HUD_ICONS.check)]), createHudElement("span", {
           class: "wg-coach-main"
-        }, [s, i]), n, o]);
+        }, [k, s, i]), n, o]);
       if (n.addEventListener("click", () => {
         this.busy || (this.seen.add(t.id), this._save(), this._closeEl(), this._highlight(null), setTimeout(() => this._next(), 300));
       }), o.addEventListener("click", () => this._finish(!1)), this.textEl = s, this.el = a, this.toasts.el.append(a), requestAnimationFrame(() => requestAnimationFrame(() => a.classList.add("is-in"))), t.id === "wind") {
         const l = this.ctx.input?.tool === "wind";
         l && this._setText(t.alt), this._highlight(l ? null : this.hud.toolbar?.button("wind"));
-      } else t.id === "season" && this._highlight(this.hud.seasonTarget());
+      } else if (t.id === "season") this._highlight(this.hud.seasonTarget());else if (typeof t.target === "function") this._highlight(t.target(this.ctx));
     }
     _setText(t) {
       this.textEl && this.textEl.textContent !== t && (this.textEl.textContent = t);
@@ -36133,7 +36146,7 @@ void main() {
         this.mq.addEventListener?.("change", u), u();
       } catch {}
       t.events.on("hud:hint", u => this._hint(u?.text, u?.ms)), t.events.on("key", u => this._key(u || {})), t.events.on("scenario", () => this.slow());
-      const f = () => this.coach.start(2600);
+      const f = () => this.coach.start(1800);
       if (document.body.classList.contains("ready")) f();else {
         const u = new MutationObserver(() => {
           document.body.classList.contains("ready") && (u.disconnect(), f());
@@ -43307,6 +43320,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.overlay.classList.add("is-open");
       document.body.classList.add("aholo-open");
       this.launch.setAttribute("aria-expanded", "true");
+      this.ctx.events?.emit?.("aholo:open", {});
       this.setTab(this.tab);
       const focusTarget = this.tab === "text" ? this.promptInput : this.closeButton;
       focusTarget.focus({

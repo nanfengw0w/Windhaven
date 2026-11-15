@@ -685,6 +685,7 @@ class AholoCreate {
     this.overlay.classList.add("is-open");
     document.body.classList.add("aholo-open");
     this.launch.setAttribute("aria-expanded", "true");
+    this.ctx.events?.emit?.("aholo:open", {});
     this.setTab(this.tab);
     const focusTarget =
       this.tab === "text" ? this.promptInput : this.closeButton;

@@ -4905,7 +4905,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       canEncodeAudio,
       canEncodeVideo
     } = await import("mediabunny");
-    const bitrate = Math.round(Math.min(90e6, Math.max(8e6, width * height * fps * 0.19)));
+    const bitrate = Math.round(Math.min(120e6, Math.max(16e6, width * height * fps * 0.35)));
     const quality = new Quality({
       bitrate
     });

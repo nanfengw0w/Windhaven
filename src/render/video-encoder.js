@@ -30,8 +30,11 @@ async function createVideoEncoder({
     canEncodeAudio,
     canEncodeVideo,
   } = await import("mediabunny");
+  // 0.19 bpp looked soft in foliage and water after VP9 4:2:0 compression.
+  // Give the encoder enough headroom for fine detail while keeping the cap
+  // compatible with common 4K VP9 encoders.
   const bitrate = Math.round(
-    Math.min(90e6, Math.max(8e6, width * height * fps * 0.19)),
+    Math.min(120e6, Math.max(16e6, width * height * fps * 0.35)),
   );
   const quality = new Quality({ bitrate });
   const codecOptions = {

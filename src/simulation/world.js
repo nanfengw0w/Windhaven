@@ -8,6 +8,9 @@ import {
 } from "../core/config.js";
 import { clamp, damp, lerp, smoothstep } from "../core/math.js";
 const SEASON_NAMES = ["Spring", "Summer", "Autumn", "Winter"];
+// A full day takes 2.5 minutes; one season takes 24 seconds (96s per year).
+const DAY_CYCLE_SECONDS = 150;
+const SEASON_CYCLE_SECONDS = 24;
 const SEASONAL_PALETTE = {
   grass: [
     [0.33, 0.6, 0.2],
@@ -82,10 +85,10 @@ class WorldState {
     ((this.season = 0.25),
       (this.seasonTarget = null),
       (this.seasonCycle = false),
-      (this.seasonSpeed = 1 / 45),
+      (this.seasonSpeed = 1 / SEASON_CYCLE_SECONDS),
       (this.timeOfDay = 0.4),
       (this.dayCycle = !1),
-      (this.daySpeed = 1 / 300),
+      (this.daySpeed = 1 / DAY_CYCLE_SECONDS),
       (this.tempOffset = 0),
       (this.humidity = 0.5),
       (this.storminess = 0),

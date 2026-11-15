@@ -8654,6 +8654,8 @@ ${topModules}`;
 }
 {
   const SEASON_NAMES = ["Spring", "Summer", "Autumn", "Winter"];
+  const DAY_CYCLE_SECONDS = 150;
+  const SEASON_CYCLE_SECONDS = 24;
   const SEASONAL_PALETTE = {
     grass: [[0.33, 0.6, 0.2], [0.33, 0.5, 0.15], [0.6, 0.5, 0.2], [0.46, 0.42, 0.3]],
     grassDry: [[0.52, 0.62, 0.25], [0.62, 0.58, 0.26], [0.7, 0.52, 0.24], [0.55, 0.5, 0.4]],
@@ -8698,7 +8700,7 @@ ${topModules}`;
   const LIGHTNING_HAZE_COLOR = createWorldColor(0.8, 0.84, 1);
   class WorldState {
     constructor() {
-      this.season = 0.25, this.seasonTarget = null, this.seasonCycle = false, this.seasonSpeed = 1 / 45, this.timeOfDay = 0.4, this.dayCycle = !1, this.daySpeed = 1 / 300, this.tempOffset = 0, this.humidity = 0.5, this.storminess = 0, this.cloudCover = 0, this.rainfall = 0, this.snowfall = 0, this.meteorShower = false, this.flash = 0, this.waterRise = 0, this.fogAmount = 0, this.groundWetness = 0, this.snowCover = 0, this.windEnergy = 0, this.elapsed = 0, this.sunDir = new ThreeVector3(0, 1, 0), this.moonDir = new ThreeVector3(0, -1, 0), this.lightDir = new ThreeVector3(0, 1, 0), this.sunPosition = new ThreeVector3(), this.moonPosition = new ThreeVector3(), this.sunElevation = 0, this.day = 1, this.night = 0, this.golden = 0, this.lightColor = createWorldColor(1, 1, 1), this.lightIntensity = 3, this.skyColor = createWorldColor(0.6, 0.75, 1), this.groundColor = createWorldColor(0.35, 0.3, 0.2), this.ambientIntensity = 1, this.hazeColor = createWorldColor(0.75, 0.83, 0.95), this.roomColor = createWorldColor(0.07, 0.065, 0.06), this.seasonal = {
+      this.season = 0.25, this.seasonTarget = null, this.seasonCycle = false, this.seasonSpeed = 1 / SEASON_CYCLE_SECONDS, this.timeOfDay = 0.4, this.dayCycle = !1, this.daySpeed = 1 / DAY_CYCLE_SECONDS, this.tempOffset = 0, this.humidity = 0.5, this.storminess = 0, this.cloudCover = 0, this.rainfall = 0, this.snowfall = 0, this.meteorShower = false, this.flash = 0, this.waterRise = 0, this.fogAmount = 0, this.groundWetness = 0, this.snowCover = 0, this.windEnergy = 0, this.elapsed = 0, this.sunDir = new ThreeVector3(0, 1, 0), this.moonDir = new ThreeVector3(0, -1, 0), this.lightDir = new ThreeVector3(0, 1, 0), this.sunPosition = new ThreeVector3(), this.moonPosition = new ThreeVector3(), this.sunElevation = 0, this.day = 1, this.night = 0, this.golden = 0, this.lightColor = createWorldColor(1, 1, 1), this.lightIntensity = 3, this.skyColor = createWorldColor(0.6, 0.75, 1), this.groundColor = createWorldColor(0.35, 0.3, 0.2), this.ambientIntensity = 1, this.hazeColor = createWorldColor(0.75, 0.83, 0.95), this.roomColor = createWorldColor(0.07, 0.065, 0.06), this.seasonal = {
         grass: createWorldColor(0, 0, 0),
         grassDry: createWorldColor(0, 0, 0),
         foliage: createWorldColor(0, 0, 0),

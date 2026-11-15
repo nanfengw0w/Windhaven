@@ -14,6 +14,10 @@ const SETTINGS_QUALITY_LABELS = {
   medium: "中画质",
   low: "低画质",
 };
+const CYCLE_SPEED_MIN = 0.25;
+const CYCLE_SPEED_MAX = 8;
+const CYCLE_SPEED_STEP = 0.25;
+const formatCycleSpeed = (value) => `${Math.round(value * 100) / 100}×`;
 
 class SettingsPanel {
   constructor(ctx, hud, root) {
@@ -135,6 +139,25 @@ class SettingsPanel {
       hud.markUse("temp");
       this.slow();
     });
+    const cycles = this.section(content, "时间与季节");
+    this.daySpeedControl = this.speedRange(
+      cycles,
+      "日流速",
+      "windhaven.cycle.dayScale",
+      (value) => ctx.world.setDaySpeedScale(value),
+    );
+    this.seasonSpeedControl = this.speedRange(
+      cycles,
+      "季流速",
+      "windhaven.cycle.seasonScale",
+      (value) => ctx.world.setSeasonSpeedScale(value),
+    );
+    cycles.append(
+      createHudElement("p", {
+        class: "wg-setting-help",
+        text: "1× 时一天 2.5 分钟、一个季节 24 秒；拖动即时生效。",
+      }),
+    );
     const controls = this.section(content, "左下角控件");
     this.controlChecks = {};
     for (const [name, label] of [
@@ -155,7 +178,7 @@ class SettingsPanel {
     }
     this.note = createHudElement("p", {
       class: "wg-settings-note",
-      text: "视角调整即时生效；画质更改需要重新载入。",
+      text: "视角和流速调整即时生效；画质更改需要重新载入。",
       "aria-live": "polite",
     });
     this.applyButton = createHudElement("button", {
@@ -207,6 +230,44 @@ class SettingsPanel {
     );
     return select;
   }
+  speedRange(parent, label, storageKey, apply) {
+    const stored = Number(hudStorage.get(storageKey, 1));
+    const initial = Number.isFinite(stored)
+      ? Math.min(CYCLE_SPEED_MAX, Math.max(CYCLE_SPEED_MIN, stored))
+      : 1;
+    const input = createHudElement("input", {
+      type: "range",
+      min: CYCLE_SPEED_MIN,
+      max: CYCLE_SPEED_MAX,
+      step: CYCLE_SPEED_STEP,
+      "aria-label": label + "倍率",
+    });
+    const output = createHudElement("output");
+    const text = new CachedText(output);
+    input.value = String(initial);
+    text.set(formatCycleSpeed(initial));
+    apply(initial);
+    parent.append(
+      createHudElement("label", { class: "wg-setting-range" }, [
+        createHudElement("span", { class: "wg-setting-range-head" }, [
+          createHudElement("span", { text: label }),
+          output,
+        ]),
+        input,
+      ]),
+    );
+    input.addEventListener("input", () => {
+      const value = Math.min(
+        CYCLE_SPEED_MAX,
+        Math.max(CYCLE_SPEED_MIN, Number(input.value) || 1),
+      );
+      apply(value);
+      hudStorage.set(storageKey, value);
+      text.set(formatCycleSpeed(value));
+      input.setAttribute("aria-valuetext", formatCycleSpeed(value));
+    });
+    return { input, text };
+  }
   saveWorldParameters(params) {
     const world = this.ctx.world;
     const values = {
@@ -241,7 +302,7 @@ class SettingsPanel {
   updatePending() {
     this.applyButton.disabled = this.quality.value === this.currentQuality;
     this.note.textContent = this.applyButton.disabled
-      ? "视角调整即时生效；画质更改需要重新载入。"
+      ? "视角和流速调整即时生效；画质更改需要重新载入。"
       : "应用画质将重新载入，并保留当前季节、时间和播放状态。";
   }
   toggle() {
@@ -265,6 +326,14 @@ class SettingsPanel {
     if (document.activeElement !== this.temperature)
       this.temperature.value = String(offset);
     this.temperatureText.set((offset > 0 ? "+" : "") + offset + " °C");
+    const dayScale = this.ctx.world.daySpeedScale;
+    const seasonScale = this.ctx.world.seasonSpeedScale;
+    if (document.activeElement !== this.daySpeedControl.input)
+      this.daySpeedControl.input.value = String(dayScale);
+    if (document.activeElement !== this.seasonSpeedControl.input)
+      this.seasonSpeedControl.input.value = String(seasonScale);
+    this.daySpeedControl.text.set(formatCycleSpeed(dayScale));
+    this.seasonSpeedControl.text.set(formatCycleSpeed(seasonScale));
     for (const [name, input] of Object.entries(this.controlChecks)) {
       input.checked = !this.hud.climatePanels[name].collapsed;
     }

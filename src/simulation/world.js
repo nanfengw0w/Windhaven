@@ -11,6 +11,8 @@ const SEASON_NAMES = ["Spring", "Summer", "Autumn", "Winter"];
 // A full day takes 2.5 minutes; one season takes 24 seconds (96s per year).
 const DAY_CYCLE_SECONDS = 150;
 const SEASON_CYCLE_SECONDS = 24;
+const CYCLE_SPEED_SCALE_MIN = 0.25;
+const CYCLE_SPEED_SCALE_MAX = 8;
 const SEASONAL_PALETTE = {
   grass: [
     [0.33, 0.6, 0.2],
@@ -138,6 +140,32 @@ class WorldState {
   }
   get seasonName() {
     return SEASON_NAMES[Math.round(this.season) & 3];
+  }
+  get daySpeedScale() {
+    return this.daySpeed * DAY_CYCLE_SECONDS;
+  }
+  get seasonSpeedScale() {
+    return this.seasonSpeed * SEASON_CYCLE_SECONDS;
+  }
+  setDaySpeedScale(scale) {
+    const value = Number(scale);
+    this.daySpeed =
+      (1 / DAY_CYCLE_SECONDS) *
+      clamp(
+        Number.isFinite(value) ? value : 1,
+        CYCLE_SPEED_SCALE_MIN,
+        CYCLE_SPEED_SCALE_MAX,
+      );
+  }
+  setSeasonSpeedScale(scale) {
+    const value = Number(scale);
+    this.seasonSpeed =
+      (1 / SEASON_CYCLE_SECONDS) *
+      clamp(
+        Number.isFinite(value) ? value : 1,
+        CYCLE_SPEED_SCALE_MIN,
+        CYCLE_SPEED_SCALE_MAX,
+      );
   }
   setSeasonTarget(t) {
     let i = (((t % 4) + 4) % 4) - this.season;

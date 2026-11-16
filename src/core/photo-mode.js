@@ -179,8 +179,10 @@ class PhotoModeController {
     this._syncAngles();
   }
   toggleTime() {
-    if (!this.active || this.capturing) return;
+    if (!this.active || this.cameraLocked) return;
     this.timeRunning = !this.timeRunning;
+    if (this.ctx.video?.usingSceneControls)
+      this.ctx.input.setCameraOnly(!this.timeRunning);
     this._emit();
   }
 

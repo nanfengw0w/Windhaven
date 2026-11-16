@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>积雪对照 · 风栖谷</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./snow-comparison.css" />
+  </head>
+  <body>
+    <main class="comparison-workspace">
+      <header class="comparison-header">
+        <div class="comparison-heading">
+          <a class="comparison-home" href="/">← 风栖谷</a>
+          <h1>积雪对照</h1>
+        </div>
+        <div class="comparison-tools" role="group" aria-label="对照设置">
+          <div class="model-control">
+            <label for="model-select">模型</label>
+            <select id="model-select" disabled>
+              <option>正在加载</option>
+            </select>
+          </div>
+          <div class="snow-control">
+            <label for="snow-amount">积雪程度</label>
+            <output id="snow-value" for="snow-amount">100%</output>
+            <input
+              id="snow-amount"
+              type="range"
+              min="0"
+              max="100"
+              value="100"
+            />
+          </div>
+          <div class="comparison-actions">
+            <button id="reset-view" type="button">重置视角</button>
+            <button id="clean-view" type="button" title="按 Esc 或双击返回界面">
+              隐藏界面
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div id="comparison-stage" class="comparison-stage">
+        <canvas id="comparison-canvas" aria-hidden="true"></canvas>
+        <section
+          id="original-view"
+          class="comparison-view"
+          aria-labelledby="original-label"
+          aria-describedby="comparison-hint"
+          tabindex="0"
+        >
+          <h2 id="original-label" class="view-label">原始模型</h2>
+        </section>
+        <section
+          id="snow-view"
+          class="comparison-view"
+          aria-labelledby="snow-label"
+          aria-describedby="comparison-hint"
+          tabindex="0"
+        >
+          <h2 id="snow-label" class="view-label">积雪后</h2>
+        </section>
+        <p id="comparison-status" role="status">加载模型中…</p>
+      </div>
+
+      <p id="comparison-hint" class="comparison-hint">
+        拖动旋转 · 滚轮缩放 · 两侧视角同步
+      </p>
+    </main>
+    <script type="module" src="./snow-comparison.js"></script>
+  </body>
+</html>

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>稻草人风动对照</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#ece7dc;font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;color:#1a1815}
+  #stage{position:fixed;inset:0}
+  header{position:absolute;left:34px;top:28px;z-index:3}
+  h1{margin:0;font:400 30px/1.1 "Noto Serif SC","Songti SC","SimSun",serif;letter-spacing:.03em}
+  p{margin:8px 0 0;font-size:12px;color:#6f685d;letter-spacing:.05em}
+  .labels{position:absolute;left:8%;right:8%;top:20%;display:flex;justify-content:space-between;pointer-events:none;z-index:3}
+  .label{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#6c655a}
+  .legend{position:absolute;left:34px;right:34px;bottom:25px;display:flex;gap:20px;border-top:1px solid #bdb4a5;padding-top:8px;font-size:10px;color:#615b51;letter-spacing:.05em}
+  .legend b{color:#b53a2e;font-weight:500;margin-right:5px}
+  #note{position:absolute;right:34px;top:30px;font-size:10px;color:#81786b;text-align:right;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<header>
+  <h1>稻草人风动对照</h1>
+  <p>左侧为原始模型，右侧为顶点形变后的同一模型</p>
+</header>
+<div class="labels"><div class="label">原始模型</div><div class="label">形变后 / 固定弯曲值</div></div>
+<div id="note">Bend 0.18 / 0.05 · Flutter 0.72<br>彩色点与红线 = 形变节点 / 骨架<br>同一网格 · 同一贴图 · 不同 shader</div>
+<div class="legend">
+  <span><b>P0</b>根部</span>
+  <span><b>P1</b>支点</span>
+  <span><b>P2</b>胸</span>
+  <span><b>P3</b>头</span>
+  <span><b>P4 / P5</b>袖</span>
+  <span><b>P6</b>下摆</span>
+  <span><b>P7</b>帽檐</span>
+  <span>红线 = 形变骨架</span>
+</div>
+<script type="module">
+import { Ry as THREE } from "/src/vendor/three-runtime.js";
+import { loadToolModel } from "/tooling/model-catalog.js";
+import { bindScarecrowMotion } from "/src/props/scarecrow-material.js";
+
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xECE7DC);
+scene.fog = new THREE.Fog(0xECE7DC, 10, 17);
+
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, .1, 30);
+camera.position.set(0, 1.8, 6.2);
+camera.lookAt(0, 1.05, 0);
+
+scene.add(new THREE.HemisphereLight(0xfff7e4, 0x6f7465, 2.2));
+const key = new THREE.DirectionalLight(0xffe1b4, 3.4);
+key.position.set(-3, 5, 4);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x9eb9c6, 1.3);
+rim.position.set(3, 3, -4);
+scene.add(rim);
+
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(4.5, 64),
+  new THREE.MeshStandardMaterial({ color: 0xd8d1c2, roughness: 1 }),
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const definition = {
+  id: "scarecrow",
+  kind: "mesh",
+  meshUrl: "/assets/imported-models/scarecrow.mesh",
+  textureUrl: "/assets/imported-models/scarecrow.webp",
+};
+const model = await loadToolModel(definition);
+model.geometry.computeBoundingBox();
+const bounds = model.geometry.boundingBox.clone();
+const size = bounds.getSize(new THREE.Vector3());
+const center = bounds.getCenter(new THREE.Vector3());
+const targetHeight = 2.15;
+const scale = targetHeight / size.y;
+const asset = { bounds, size };
+
+function makeFigure(x, deformed) {
+  const clone = model.clone();
+  const material = model.material.clone();
+  clone.material = material;
+  clone.scale.setScalar(scale);
+  clone.position.set(
+    x - center.x * scale,
+    -bounds.min.y * scale,
+    -center.z * scale,
+  );
+  clone.castShadow = true;
+  clone.receiveShadow = true;
+  if (deformed) {
+    const uniforms = {
+      uScarecrowBend: { value: new THREE.Vector2(0.18, 0.05) },
+      uScarecrowFlutter: { value: 0.72 },
+      uScarecrowTime: { value: 1.35 },
+    };
+    bindScarecrowMotion(material, asset, uniforms);
+  }
+  scene.add(clone);
+  return clone;
+}
+
+
+const origin = new THREE.Vector3(center.x, bounds.min.y, center.z);
+const nodeDefs = [
+  ["P0", 0, 0.02, 0],
+  ["P1", 0, 0.42, 0],
+  ["P2", 0, 0.62, 0],
+  ["P3", 0, 0.82, 0],
+  ["P4", -0.38, 0.58, 0],
+  ["P5", 0.38, 0.58, 0],
+  ["P6", 0, 0.30, 0],
+  ["P7", 0, 0.80, 0.12],
+];
+
+function toLocal(p) {
+  return new THREE.Vector3(
+    origin.x + p[1] * size.y,
+    origin.y + p[2] * size.y,
+    origin.z + p[3] * size.y,
+  );
+}
+
+function bendPoint(p) {
+  const q = p.clone();
+  const pivot = new THREE.Vector3(0, 0.42, 0);
+  q.sub(pivot);
+  let x = q.x, y = q.y, z = q.z;
+  const cx = Math.cos(0.18), sx = Math.sin(0.18);
+  [x, y] = [cx * x + sx * y, -sx * x + cx * y];
+  const cz = Math.cos(0.05), sz = Math.sin(0.05);
+  [y, z] = [cz * y - sz * z, sz * y + cz * z];
+  return q.set(x, y, z).add(pivot);
+}
+
+function makeLabel(text) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 96; canvas.height = 48;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "rgba(236,231,220,.72)";
+  ctx.fillRect(0, 0, 96, 48);
+  ctx.fillStyle = "#221f1a";
+  ctx.font = "500 24px 'Noto Sans SC', sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(text, 48, 25);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(size.y * 0.10, size.y * 0.05, 1);
+  sprite.renderOrder = 1000;
+  return sprite;
+}
+
+function addNodes(figure, bent) {
+  const positions = new Map();
+  for (const def of nodeDefs) {
+    let p = toLocal(def);
+    if (bent) {
+      const normalized = new THREE.Vector3(def[1], def[2], def[3]);
+      const moved = bendPoint(normalized);
+      const rest = normalized;
+      const weight = def[0] === "P0" || def[0] === "P1" ? 0 : def[0] === "P6" ? 0.13 : 1;
+      const finalPoint = rest.clone().lerp(moved, weight);
+      p = new THREE.Vector3(
+        origin.x + finalPoint.x * size.y,
+        origin.y + finalPoint.y * size.y,
+        origin.z + finalPoint.z * size.y,
+      );
+    }
+    positions.set(def[0], p);
+  }
+
+  const boneMaterial = new THREE.LineBasicMaterial({ color: 0xb53a2e, depthTest: false, transparent: true, opacity: 0.95 });
+  const bones = [
+    ["P0", "P1"], ["P1", "P2"], ["P2", "P3"],
+    ["P2", "P4"], ["P2", "P5"], ["P1", "P6"], ["P3", "P7"],
+  ];
+  for (const [a, b] of bones) {
+    const geometry = new THREE.BufferGeometry().setFromPoints([positions.get(a), positions.get(b)]);
+    const line = new THREE.Line(geometry, boneMaterial);
+    line.renderOrder = 999;
+    figure.add(line);
+  }
+
+  for (const [name, p] of positions) {
+    const marker = new THREE.Mesh(
+      new THREE.SphereGeometry(size.y * 0.014, 12, 8),
+      new THREE.MeshBasicMaterial({ color: 0xb53a2e, depthTest: false }),
+    );
+    marker.position.copy(p);
+    marker.renderOrder = 1001;
+    figure.add(marker);
+    if (["P1", "P2", "P3", "P4", "P5", "P6", "P7"].includes(name)) {
+      const label = makeLabel(name);
+      const offsets = {
+        P1: [-0.18, 0.02], P2: [0.14, 0.03], P3: [-0.16, 0.05],
+        P4: [-0.12, 0.03], P5: [0.12, 0.03], P6: [-0.14, -0.02], P7: [0.15, 0.05],
+      };
+      const [ox, oy] = offsets[name] ?? [0, 0.04];
+      label.position.copy(p).add(new THREE.Vector3(ox * size.y, oy * size.y, 0));
+      figure.add(label);
+    }
+  }
+}
+
+
+const leftFigure = makeFigure(-1.25, false);
+addNodes(leftFigure, false);
+const rightFigure = makeFigure(1.25, true);
+addNodes(rightFigure, true);
+
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+animate();
+window.__ready = true;
+</script>
+</body>
+</html>

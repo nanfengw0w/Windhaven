@@ -17,6 +17,7 @@ class InputController {
       (this.handlers = []),
       (this.raycaster = new ThreeRaycaster()),
       (this.enabled = !0),
+      (this.cameraOnly = false),
       (this.pointer = {
         x: 0,
         y: 0,
@@ -96,6 +97,12 @@ class InputController {
     this.invalidateHover();
     this._updateCursor();
   }
+  setCameraOnly(enabled) {
+    if (this.cameraOnly === enabled) return;
+    this.cameraOnly = enabled;
+    this._resetPointer();
+    this.invalidateHover();
+  }
   _resetPointer() {
     this.releasePending = false;
     this._cancelActive();
@@ -154,6 +161,7 @@ class InputController {
       this.raycaster.setFromCamera(i.ndc, this.camera));
   }
   _pick() {
+    if (this.cameraOnly) return null;
     let t = null;
     for (const e of this.handlers) {
       if ((e.tools !== "*" && !e.tools.includes(this.tool)) || e.enabled === !1)
@@ -193,7 +201,7 @@ class InputController {
     this._updateCursor();
   }
   _updateCursor() {
-    let t = this.tool === "hand" ? "default" : "crosshair";
+    let t = this.cameraOnly || this.tool === "hand" ? "default" : "crosshair";
     (this.orbiting
       ? (t = "grabbing")
       : this.active
@@ -373,7 +381,12 @@ class InputController {
         console.error(`[input] ${handler.name}.onUp`, error);
       }
       this.active = null;
-    } else if (!pointer.moved && !cancelled && button === 0) {
+    } else if (
+      !this.cameraOnly &&
+      !pointer.moved &&
+      !cancelled &&
+      button === 0
+    ) {
       this.ctx.events.emit("tap", {
         ray: pointer.ray.clone(),
         pointer: { ...pointer, ndc: pointer.ndc.clone() },

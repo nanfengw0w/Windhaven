@@ -5671,7 +5671,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
   const inputCameraPlane = new ThreePlane();
   class InputController {
     constructor(t) {
-      this.ctx = t, this.el = t.renderer.domElement, this.camera = t.camera, this.tool = "hand", this.handlers = [], this.raycaster = new ThreeRaycaster(), this.enabled = !0, this.pointer = {
+      this.ctx = t, this.el = t.renderer.domElement, this.camera = t.camera, this.tool = "hand", this.handlers = [], this.raycaster = new ThreeRaycaster(), this.enabled = !0, this.cameraOnly = false, this.pointer = {
         x: 0,
         y: 0,
         ndc: new ThreeVector2(),
@@ -5720,6 +5720,12 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this.invalidateHover();
       this._updateCursor();
     }
+    setCameraOnly(enabled) {
+      if (this.cameraOnly === enabled) return;
+      this.cameraOnly = enabled;
+      this._resetPointer();
+      this.invalidateHover();
+    }
     _resetPointer() {
       this.releasePending = false;
       this._cancelActive();
@@ -5755,6 +5761,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       i.dx = s - i.x, i.dy = n - i.y, i.x = s, i.y = n, i.ndc.set(s / e.width * 2 - 1, -(n / e.height) * 2 + 1), i.pointerType = t.pointerType || "mouse", i.pressure = t.pressure || (i.down ? 0.5 : 0), i.shift = t.shiftKey, i.alt = t.altKey, i.ctrl = t.ctrlKey || t.metaKey, this.camera.updateMatrixWorld(), this.raycaster.setFromCamera(i.ndc, this.camera);
     }
     _pick() {
+      if (this.cameraOnly) return null;
       let t = null;
       for (const e of this.handlers) {
         if (e.tools !== "*" && !e.tools.includes(this.tool) || e.enabled === !1) continue;
@@ -5786,7 +5793,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
       this._updateCursor();
     }
     _updateCursor() {
-      let t = this.tool === "hand" ? "default" : "crosshair";
+      let t = this.cameraOnly || this.tool === "hand" ? "default" : "crosshair";
       this.orbiting ? t = "grabbing" : this.active ? t = this.active.handler.activeCursor || this.active.handler.cursor || t : this.hover && (t = this.hover.handler.cursor || t), this.el.style.cursor !== t && (this.el.style.cursor = t);
     }
     _down(t) {
@@ -5912,7 +5919,7 @@ float opaqueSceneDistance(vec2 fragmentPosition) {
           console.error(`[input] ${handler.name}.onUp`, error);
         }
         this.active = null;
-      } else if (!pointer.moved && !cancelled && button === 0) {
+      } else if (!this.cameraOnly && !pointer.moved && !cancelled && button === 0) {
         this.ctx.events.emit("tap", {
           ray: pointer.ray.clone(),
           pointer: {
@@ -35411,6 +35418,7 @@ void main() {
       hud.createClimateCard("camera", "镜头位置", this.el);
       ctx.events.on("camera:change", () => this.slow());
       ctx.events.on("photo:change", () => this.slow());
+      ctx.events.on("video:change", () => this._syncLock());
       ctx.events.on("exploration:change", () => this.slow());
       this.slow();
     }
@@ -35444,14 +35452,20 @@ void main() {
         block: "nearest"
       });
     }
+    _syncLock() {
+      const locked = Boolean(this.ctx.photo?.cameraLocked);
+      if (this.locked === locked) return;
+      this.locked = locked;
+      for (const button of this.buttons.values()) button.disabled = locked;
+    }
     slow() {
       this.selected = this.ctx.cameraRig.activePreset !== undefined ? this.ctx.cameraRig.activePreset : this.selected || this.ctx.params.get("cam") || "overview";
       for (const [id, button] of this.buttons) {
         const active = id === this.selected;
         button.classList.toggle("is-active", active);
         button.setAttribute("aria-pressed", String(active));
-        button.disabled = !!this.ctx.photo?.cameraLocked;
       }
+      this._syncLock();
     }
   }
 }
@@ -36025,6 +36039,7 @@ void main() {
         class: "wg-photo-action is-primary"
       });
       this.closeButton = videoAction("返回拍照");
+      this.timeButton = videoAction("继续时间");
       this.cancelButton = videoAction("取消录制");
       this.download = createHudElement("a", {
         class: "wg-photo-action is-primary wg-video-download",
@@ -36074,10 +36089,13 @@ void main() {
         hidden: true
       }, [createHudElement("div", {
         class: "wg-video-head"
-      }, [this.heading, this.closeButton]), this.settings, this.progressPane, this.message, this.download]);
+      }, [this.heading, createHudElement("div", {
+        class: "wg-video-head-actions"
+      }, [this.timeButton, this.closeButton])]), this.settings, this.progressPane, this.message, this.download]);
       document.body.append(this.overlay);
       this.button.addEventListener("click", () => this.ctx.video?.enter());
       this.closeButton.addEventListener("click", () => this.ctx.video?.exit());
+      this.timeButton.addEventListener("click", () => this.ctx.photo?.toggleTime());
       this.cancelButton.addEventListener("click", () => this.ctx.video?.cancel());
       this.fps.addEventListener("change", () => this.syncSettings(true));
       this.frames.addEventListener("input", () => this.syncSettings());
@@ -36096,6 +36114,11 @@ void main() {
       }
       this.overlay.addEventListener("contextmenu", event => event.preventDefault());
       ctx.events.on("video:change", state => this.setState(state));
+      ctx.events.on("photo:change", ({
+        timeRunning
+      }) => {
+        this.timeButton.textContent = timeRunning ? "暂停时间" : "继续时间";
+      });
       this.syncSettings();
     }
     syncSettings(clampFrames = false) {
@@ -36133,6 +36156,7 @@ void main() {
       this.overlay.hidden = !active;
       this.settings.hidden = recording;
       this.closeButton.hidden = recording;
+      this.timeButton.disabled = recording && phase !== "recording";
       this.progressPane.hidden = !recording;
       this.progress.max = totalFrames || 1;
       this.progress.value = completedFrames;
@@ -42167,8 +42191,9 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this._syncAngles();
     }
     toggleTime() {
-      if (!this.active || this.capturing) return;
+      if (!this.active || this.cameraLocked) return;
       this.timeRunning = !this.timeRunning;
+      if (this.ctx.video?.usingSceneControls) this.ctx.input.setCameraOnly(!this.timeRunning);
       this._emit();
     }
     setCaptureLocked(locked, timeRunning) {
@@ -42454,8 +42479,10 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     async writeFrame(job) {
       try {
         const index = job.completedFrames;
-        if (index > 0) this.stepSimulation(job.dt);
-        this.renderFrame(index === 0 ? 0 : job.dt);
+        const dt = index === 0 ? 0 : job.dt;
+        const timeRunning = this.ctx.photo.timeRunning;
+        if (dt) this.stepSimulation(dt);
+        this.renderFrame(timeRunning ? dt : 0);
         job.audio?.sample(index);
         await job.encoder.addFrame(this.canvas, index);
         if (this.job !== job) return;
@@ -42465,7 +42492,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
           this.emit();
           return;
         }
-        this.stepSimulation(job.dt);
+        if (timeRunning && this.ctx.photo.timeRunning) this.stepSimulation(job.dt);
         job.phase = "encoding";
         this.ctx.input.setEnabled(false);
         this.emit();
@@ -42490,6 +42517,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       if (this.job !== job) return;
       this.job = null;
       this.ctx.input.setEnabled(false);
+      this.ctx.input.setCameraOnly(false);
       job.audio?.close();
       if (job.viewportChanged) {
         this.ctx.post.bloom.enabled = job.savedBloom;
@@ -42732,23 +42760,25 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
 {
   const THUMBNAIL_SIZE = 192;
   const CACHE_LIMIT = 64;
-  function disposeModel(model) {
+  function disposeModel(...models) {
     const resources = new Set();
     const images = new Set();
-    model.traverse(object => {
-      if (object.geometry) resources.add(object.geometry);
-      if (object.skeleton) resources.add(object.skeleton);
-      const materials = Array.isArray(object.material) ? object.material : [object.material];
-      for (const material of materials) {
-        if (!material || resources.has(material)) continue;
-        resources.add(material);
-        for (const value of Object.values(material)) {
-          if (!value?.isTexture) continue;
-          resources.add(value);
-          if (value.image?.close) images.add(value.image);
+    for (const model of models) {
+      model.traverse(object => {
+        if (object.geometry) resources.add(object.geometry);
+        if (object.skeleton) resources.add(object.skeleton);
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        for (const material of materials) {
+          if (!material || resources.has(material)) continue;
+          resources.add(material);
+          for (const value of Object.values(material)) {
+            if (!value?.isTexture) continue;
+            resources.add(value);
+            if (value.image?.close) images.add(value.image);
+          }
         }
-      }
-    });
+      });
+    }
     for (const resource of resources) resource.dispose();
     for (const image of images) image.close();
   }
@@ -42837,6 +42867,39 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         disposeModel(model);
       }
     }
+  }
+}
+{
+  function patchAholoWeatherMaterial(material, uniforms) {
+    if (material.userData.aholoWeather) return;
+    material.userData.aholoWeather = true;
+    const previous = material.onBeforeCompile;
+    material.onBeforeCompile = (shader, renderer) => {
+      if (typeof previous === "function") previous.call(material, shader, renderer);
+      Object.assign(shader.uniforms, uniforms);
+      shader.fragmentShader = COMMON_GLSL + shader.fragmentShader.replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
+        vec3 aholoWorldPos = cameraPosition - vViewPosition * mat3(viewMatrix);
+        vec3 aholoWorldNormal = transformNormalByInverseViewMatrix(nonPerturbedNormal, viewMatrix);
+        vec3 aholoFaceNormal = cross(dFdx(vViewPosition), dFdy(vViewPosition));
+        float aholoFaceUp = transformNormalByInverseViewMatrix(aholoFaceNormal, viewMatrix).y;
+        // Keep smoothed corners from carrying snow down the actual side faces.
+        float aholoUp = min(aholoWorldNormal.y, aholoFaceUp + 0.12);
+        float aholoGrain = wgNoise3(aholoWorldPos * 43.0);
+        float aholoCatch = smoothstep(0.38, 0.86, aholoUp + (aholoGrain - 0.5) * 0.12);
+        float aholoSnow = smoothstep(0.18, 0.8, snowCover(aholoWorldPos.xz, aholoWorldNormal) * aholoCatch);
+        vec4 aholoGround = groundAt(aholoWorldPos.xz);
+        float aholoFrost = aholoGround.w * smoothstep(-0.3, 0.7, aholoUp) * 0.4 * (1.0 - aholoSnow);
+        vec3 aholoSnowColor = vec3(0.64, 0.68, 0.72) * mix(0.95, 1.05, aholoGrain);
+        diffuseColor.rgb *= mix(1.0, 0.64, aholoGround.y * 0.72);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.78, 0.83, 0.9), aholoFrost);
+        diffuseColor.rgb = mix(diffuseColor.rgb, aholoSnowColor, aholoSnow * 0.94);
+        roughnessFactor = mix(roughnessFactor, max(roughnessFactor, 0.9), aholoFrost);
+        roughnessFactor = mix(roughnessFactor, 0.84, aholoSnow);
+        metalnessFactor *= 1.0 - aholoSnow;
+        normal = normalize(mix(normal, nonPerturbedNormal, aholoSnow * 0.7));`);
+    };
+    material.customProgramCacheKey = () => "aholo-weather-3";
+    material.needsUpdate = true;
   }
 }
 {
@@ -43757,7 +43820,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
           if ("transmission" in material) material.transmission = 0;
           material.envMapIntensity = 0.7;
           material.needsUpdate = true;
-          if (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial) this._patchWeatherMaterial(material);
+          if (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial) patchAholoWeatherMaterial(material, this.ctx.uniforms);
         }
       });
       const wrapper = new Ry.Group();
@@ -43788,37 +43851,6 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         root: wrapper,
         height: targetHeight
       };
-    }
-    _patchWeatherMaterial(material) {
-      if (material.userData.aholoWeather) return;
-      material.userData.aholoWeather = true;
-      const previous = material.onBeforeCompile;
-      material.onBeforeCompile = (shader, renderer) => {
-        if (typeof previous === "function") previous.call(material, shader, renderer);
-        Object.assign(shader.uniforms, this.ctx.uniforms);
-        shader.fragmentShader = COMMON_GLSL + shader.fragmentShader.replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
-        vec3 aholoWorldPos = cameraPosition - vViewPosition * mat3(viewMatrix);
-        vec3 aholoWorldNormal = transformNormalByInverseViewMatrix(nonPerturbedNormal, viewMatrix);
-        vec3 aholoFaceNormal = cross(dFdx(vViewPosition), dFdy(vViewPosition));
-        float aholoFaceUp = transformNormalByInverseViewMatrix(aholoFaceNormal, viewMatrix).y;
-        // Keep smoothed corners from carrying snow down the actual side faces.
-        float aholoUp = min(aholoWorldNormal.y, aholoFaceUp + 0.12);
-        float aholoGrain = wgNoise3(aholoWorldPos * 43.0);
-        float aholoCatch = smoothstep(0.38, 0.86, aholoUp + (aholoGrain - 0.5) * 0.12);
-        float aholoSnow = smoothstep(0.18, 0.8, snowCover(aholoWorldPos.xz, aholoWorldNormal) * aholoCatch);
-        vec4 aholoGround = groundAt(aholoWorldPos.xz);
-        float aholoFrost = aholoGround.w * smoothstep(-0.3, 0.7, aholoUp) * 0.4 * (1.0 - aholoSnow);
-        vec3 aholoSnowColor = vec3(0.64, 0.68, 0.72) * mix(0.95, 1.05, aholoGrain);
-        diffuseColor.rgb *= mix(1.0, 0.64, aholoGround.y * 0.72);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.78, 0.83, 0.9), aholoFrost);
-        diffuseColor.rgb = mix(diffuseColor.rgb, aholoSnowColor, aholoSnow * 0.94);
-        roughnessFactor = mix(roughnessFactor, max(roughnessFactor, 0.9), aholoFrost);
-        roughnessFactor = mix(roughnessFactor, 0.84, aholoSnow);
-        metalnessFactor *= 1.0 - aholoSnow;
-        normal = normalize(mix(normal, nonPerturbedNormal, aholoSnow * 0.7));`);
-      };
-      material.customProgramCacheKey = () => "aholo-weather-3";
-      material.needsUpdate = true;
     }
     _modelCard(title, subtitle, result) {
       const card = el("button", "wg-aholo-example");
@@ -44695,7 +44727,10 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       surfaceFields.update(dt), profiler.end("fields"), surfaceFieldsUpdated = !0;
     }
     function stepSimulation(dt) {
-      if (ctx.photo.active && !ctx.photo.timeRunning) return;
+      if (ctx.photo.active && !ctx.photo.timeRunning) {
+        if (ctx.video.usingSceneControls) cameraRig.update(dt);
+        return;
+      }
       surfaceFieldsUpdated = !1, ctx.time += dt;
       const simulationTime = ctx.time;
       profiler.tick(), profiler.begin("sim"), ctx.weather.update(dt), world.update(dt), wind.update(dt);

@@ -314,4 +314,10 @@ function disposeImportedModels(models) {
   models.clear();
 }
 
-export { loadImportedModels, disposeImportedModels, parseImportedMesh };
+export {
+  MODEL_ASSETS,
+  bindImportedWeather,
+  loadImportedModels,
+  disposeImportedModels,
+  parseImportedMesh,
+};

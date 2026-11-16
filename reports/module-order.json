@@ -228,6 +228,7 @@
   "core/camera-views.js",
   "generation/valley-saves.js",
   "generation/model-thumbnails.js",
+  "generation/aholo-weather-material.js",
   "generation/aholo-create.js",
   "bootstrap.js"
 ]

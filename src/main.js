@@ -158,5 +158,6 @@ import "./core/video-mode.js";
 import "./core/camera-views.js";
 import "./generation/valley-saves.js";
 import "./generation/model-thumbnails.js";
+import "./generation/aholo-weather-material.js";
 import "./generation/aholo-create.js";
 import "./bootstrap.js";

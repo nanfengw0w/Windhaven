@@ -226,7 +226,10 @@ function bootWeatherglass() {
   function stepSimulation(dt) {
     // Photography freezes state rather than running zero-delta updates, some
     // of which snap targets, rebuild particles or consume random numbers.
-    if (ctx.photo.active && !ctx.photo.timeRunning) return;
+    if (ctx.photo.active && !ctx.photo.timeRunning) {
+      if (ctx.video.usingSceneControls) cameraRig.update(dt);
+      return;
+    }
     ((surfaceFieldsUpdated = !1), (ctx.time += dt));
     const simulationTime = ctx.time;
     (profiler.tick(),

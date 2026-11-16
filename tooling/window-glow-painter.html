@@ -83,7 +83,7 @@
   <body>
     <header>
       <b>模型发光涂抹</b>
-      <label>模型 <select id="modelSelect"></select></label>
+      <label>模型 <select id="modelSelect" disabled></select></label>
       <button id="toolBrush" class="active">画笔</button>
       <button id="toolEraser">橡皮</button>
       <button id="undoBtn" title="Ctrl+Z">撤销</button>
@@ -91,7 +91,7 @@
       <label>笔刷 <input type="range" id="brushSize" min="2" max="40" value="10" /></label>
       <label>颜色 <input type="color" id="brushColor" value="#ffcd82" /></label>
       <label>亮度 <input type="range" id="dimLevel" min="10" max="90" value="45" /></label>
-      <button id="exportBtn">导出 glow.webp</button>
+      <button id="exportBtn" disabled>导出 glow.webp</button>
       <span id="status"></span>
     </header>
     <main>
@@ -104,47 +104,21 @@
     <div id="hint">
       <b>右侧直接在模型上涂抹</b>（左键涂 / Alt+左键擦，<b>右键拖拽</b>旋转视角、滚轮缩放）；
       左侧贴图可大面积补涂。窗位找不准时先清空，再对模型表面涂。<b>[ ]</b> 调笔刷、<b>Ctrl+Z</b> 撤销。
-      导出后把下载的 <b>&lt;模型&gt;.glow.webp</b> 放回对应目录：导入建筑放 assets/imported-models/，孔明灯放 assets/sky-lantern/，刷新页面生效。
+      <span id="exportHint"></span>
     </div>
 
     <script type="module">
       import { Ry as THREE } from "/src/vendor/three-runtime.js";
-      import { CharacterGLTFLoader } from "/src/character/gltf-loader.js";
+      import { loadToolModel, loadToolModels } from "./model-catalog.js";
 
       const GLOW_SIZE = 1024;
-      const ASSET_DIR = "/assets/imported-models";
-      const LANTERN_DIR = "/assets/sky-lantern";
-      const IMPORTED_MODELS = [
-        "house-long",
-        "house-inn",
-        "house-tall",
-        "cottage",
-        "clocktower",
-        "station",
-        "coach",
-        "locomotive",
-      ];
-      const MODELS = [
-        {
-          id: "aholo-kongming",
-          label: "孔明灯（Aholo GLB）",
-          kind: "glb",
-          url: `${LANTERN_DIR}/aholo-kongming.glb`,
-          glowUrl: `${LANTERN_DIR}/aholo-kongming.glow.webp`,
-        },
-        ...IMPORTED_MODELS.map((id) => ({
-          id,
-          label: id,
-          kind: "mesh",
-          meshUrl: `${ASSET_DIR}/${id}.mesh`,
-          textureUrl: `${ASSET_DIR}/${id}.webp`,
-          glowUrl: `${ASSET_DIR}/${id}.glow.webp`,
-        })),
-      ];
 
       const modelSelect = document.getElementById("modelSelect");
+      const exportBtn = document.getElementById("exportBtn");
+      const exportHint = document.getElementById("exportHint");
       const texCanvas = document.getElementById("texCanvas");
       const texCtx = texCanvas.getContext("2d");
+      const paintPane = document.getElementById("paintPane");
       const modelPane = document.getElementById("modelPane");
       const brushCursor = document.getElementById("brushCursor");
       const statusLine = document.getElementById("status");
@@ -160,7 +134,10 @@
       glowTexture.flipY = false;
       glowTexture.colorSpace = THREE.SRGBColorSpace;
 
-      let modelId = MODELS[0].id;
+      const textureLoader = new THREE.TextureLoader();
+      let models = [];
+      let loadedModel = null;
+      let loading = false;
       let diffuseImage = null;
       let tool = "brush";
       let brushSize = 10;
@@ -172,11 +149,18 @@
       let panelDirty = false;
       const undoStack = [];
 
-      for (const definition of MODELS) {
-        const option = document.createElement("option");
-        option.value = definition.id;
-        option.textContent = definition.label;
-        modelSelect.append(option);
+      function renderModelOptions() {
+        for (const [group, label] of [
+          ["project", "项目原有模型"],
+          ["generated", "Aholo 生成模型"],
+        ]) {
+          const options = models.filter((model) => model.group === group);
+          if (!options.length) continue;
+          const list = document.createElement("optgroup");
+          list.label = label;
+          for (const { id, label } of options) list.append(new Option(label, id));
+          modelSelect.append(list);
+        }
       }
 
       function setStatus(text) {
@@ -189,6 +173,7 @@
       }
 
       function undo() {
+        if (loading) return;
         const snapshot = undoStack.pop();
         if (!snapshot) return;
         glowCtx.putImageData(snapshot, 0, 0);
@@ -197,30 +182,11 @@
       }
 
       function clearGlow() {
+        if (loading || !modelMesh) return;
         pushUndo();
         glowCtx.clearRect(0, 0, GLOW_SIZE, GLOW_SIZE);
         dirty = true;
         redrawTexturePanel();
-      }
-
-      function parseImportedMesh(buffer) {
-        const header = new DataView(buffer);
-        if (buffer.byteLength < 16 || header.getUint32(0, false) !== 0x57474d53)
-          throw new Error("不是 WGMS 网格");
-        const vertexCount = header.getUint32(8, true);
-        const indexCount = header.getUint32(12, true);
-        const positions = new Float32Array(buffer, 16, vertexCount * 3);
-        const normals = new Float32Array(buffer, 16 + vertexCount * 12, vertexCount * 3);
-        const uvs = new Float32Array(buffer, 16 + vertexCount * 24, vertexCount * 2);
-        const indices = new Uint32Array(buffer, 16 + vertexCount * 32, indexCount);
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-        geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
-        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-        geometry.computeBoundingBox();
-        geometry.computeBoundingSphere();
-        return geometry;
       }
 
       // --- 3D preview ---
@@ -279,7 +245,7 @@
           window.addEventListener("mouseup", up);
           return;
         }
-        if (event.button !== 0 || !modelMesh) return;
+        if (event.button !== 0 || loading || !modelMesh) return;
         pushUndo();
         painting = true;
         strokeSurface = "model";
@@ -315,128 +281,115 @@
         updateCamera();
       }, { passive: false });
 
-      function disposePreview() {
-        if (!modelMesh) return;
-        scene.remove(modelMesh);
-        modelMesh.traverse((object) => {
+      function disposePreview(preview) {
+        if (!preview) return;
+        preview.removeFromParent();
+        const resources = new Set();
+        const images = new Set();
+        preview.traverse((object) => {
           if (!object.isMesh) return;
-          object.geometry?.dispose?.();
+          resources.add(object.geometry);
           const materials = Array.isArray(object.material)
             ? object.material
             : [object.material];
           for (const material of materials) {
             if (!material) continue;
-            if (material.map && material.map !== glowTexture)
-              material.map.dispose?.();
-            material.dispose?.();
+            resources.add(material);
+            for (const texture of Object.values(material)) {
+              if (!texture?.isTexture || texture === glowTexture) continue;
+              resources.add(texture);
+              if (texture.image?.close) images.add(texture.image);
+            }
           }
         });
-        modelMesh = null;
+        for (const resource of resources) resource.dispose();
+        for (const image of images) image.close();
       }
 
-      async function loadModel(id) {
-        const definition =
-          MODELS.find((model) => model.id === id) || MODELS[0];
-        modelId = definition.id;
+      async function loadModel(definition) {
+        if (loading || !definition) return;
+        loading = true;
+        painting = false;
+        strokeSurface = null;
+        modelSelect.disabled = true;
+        exportBtn.disabled = true;
         modelSelect.value = definition.id;
         setStatus("加载中…");
         let preview = null;
         let texture = null;
-        let center = new THREE.Vector3();
-        let radius = 1;
-
-        if (definition.kind === "glb") {
-          const gltf = await new CharacterGLTFLoader().loadAsync(
-            definition.url,
-          );
-          preview = gltf.scene;
+        let existingGlow = null;
+        try {
+          preview = await loadToolModel(definition);
           preview.traverse((object) => {
             if (!object.isMesh) return;
             const materials = Array.isArray(object.material)
               ? object.material
               : [object.material];
-            for (const material of materials)
-              if (material?.map && !texture) texture = material.map;
-          });
-          if (!texture) throw new Error("孔明灯 GLB 没有基础贴图");
-          texture.flipY = false;
-          texture.colorSpace = THREE.SRGBColorSpace;
-          preview.traverse((object) => {
-            if (!object.isMesh) return;
-            object.material = new THREE.MeshStandardMaterial({
-              map: texture,
-              emissiveMap: glowTexture,
-              emissive: new THREE.Color(0xffffff),
-              emissiveIntensity: 2.2,
-              roughness: 0.9,
-            });
+            for (const material of materials) {
+              if (!material) continue;
+              texture ??= material.map;
+              if (!material.emissive) continue;
+              material.emissiveMap = glowTexture;
+              material.emissive.set(0xffffff);
+              material.emissiveIntensity = 2.2;
+              material.needsUpdate = true;
+            }
           });
           const bounds = new THREE.Box3().setFromObject(preview);
           const sphere = bounds.getBoundingSphere(new THREE.Sphere());
-          bounds.getCenter(center);
-          preview.position.sub(center);
-          orbitTarget.set(0, 0, 0);
-          radius = sphere.radius * 2.6;
-        } else {
-          const [meshResponse, loadedTexture] = await Promise.all([
-            fetch(definition.meshUrl).then((response) => response.arrayBuffer()),
-            new THREE.TextureLoader().loadAsync(definition.textureUrl),
-          ]);
-          const geometry = parseImportedMesh(meshResponse);
-          loadedTexture.flipY = false;
-          loadedTexture.colorSpace = THREE.SRGBColorSpace;
-          texture = loadedTexture;
-          const material = new THREE.MeshStandardMaterial({
-            map: texture,
-            emissiveMap: glowTexture,
-            emissive: new THREE.Color(0xffffff),
-            emissiveIntensity: 2.2,
-            roughness: 0.9,
-          });
-          preview = new THREE.Mesh(geometry, material);
-          geometry.boundingBox.getCenter(center);
-          orbitTarget.copy(center);
-          radius = geometry.boundingSphere.radius * 2.6;
-        }
+          if (bounds.isEmpty()) throw new Error("模型没有可显示的尺寸");
+          if (definition.glowUrl)
+            existingGlow = await textureLoader.loadAsync(definition.glowUrl).catch(() => null);
 
-        disposePreview();
-        modelMesh = preview;
-        scene.add(modelMesh);
-        orbit.radius = Math.max(0.4, radius);
-        orbit.theta = 0.8;
-        orbit.phi = 1.1;
-        updateCamera();
+          disposePreview(modelMesh);
+          modelMesh = preview;
+          preview = null;
+          scene.add(modelMesh);
+          orbitTarget.copy(sphere.center);
+          orbit.radius = Math.max(0.4, sphere.radius * 2.6);
+          orbit.theta = 0.8;
+          orbit.phi = 1.1;
+          updateCamera();
 
-        glowCtx.clearRect(0, 0, GLOW_SIZE, GLOW_SIZE);
-        undoStack.length = 0;
-        try {
-          const existing = await new THREE.TextureLoader().loadAsync(
-            definition.glowUrl,
-          );
-          const image = existing.image;
-          glowCtx.drawImage(image, 0, 0, GLOW_SIZE, GLOW_SIZE);
-          existing.dispose();
-          // Generated glow files are opaque black-background RGB; key the
-          // background out so the diffuse stays visible underneath.
-          const frame = glowCtx.getImageData(0, 0, GLOW_SIZE, GLOW_SIZE);
-          const channel = frame.data;
-          for (let index = 0; index < channel.length; index += 4) {
-            if (
-              channel[index] < 12 &&
-              channel[index + 1] < 12 &&
-              channel[index + 2] < 12
-            )
-              channel[index + 3] = 0;
+          glowCtx.clearRect(0, 0, GLOW_SIZE, GLOW_SIZE);
+          undoStack.length = 0;
+          if (existingGlow) {
+            glowCtx.drawImage(existingGlow.image, 0, 0, GLOW_SIZE, GLOW_SIZE);
+            // The exported map has opaque black outside painted regions.
+            const frame = glowCtx.getImageData(0, 0, GLOW_SIZE, GLOW_SIZE);
+            const channel = frame.data;
+            for (let index = 0; index < channel.length; index += 4) {
+              if (channel[index] < 12 && channel[index + 1] < 12 && channel[index + 2] < 12)
+                channel[index + 3] = 0;
+            }
+            glowCtx.putImageData(frame, 0, 0);
           }
-          glowCtx.putImageData(frame, 0, 0);
-          setStatus(`已载入现有 glow 图（${definition.id}）`);
-        } catch {
-          setStatus("空白 glow 图（该模型当前无灯光）");
+          setStatus(existingGlow ? `已载入现有 glow 图（${definition.id}）` : "空白 glow 图 · 可直接涂抹");
+          exportHint.textContent =
+            definition.id === "aholo-kongming"
+              ? "将导出的贴图放入 assets/sky-lantern/ 后刷新山谷。"
+              : definition.glowUrl
+                ? "将导出的贴图放入 assets/imported-models/ 后刷新山谷。"
+                : "当前模型的发光贴图可下载为独立文件。";
+          loadedModel = definition;
+          const url = new URL(location.href);
+          url.searchParams.set("model", definition.id);
+          history.replaceState(history.state, "", url);
+          diffuseImage = texture?.image ?? null;
+          dirty = true;
+          redrawTexturePanel();
+          resize3D();
+        } catch (error) {
+          console.error(error);
+          if (loadedModel) modelSelect.value = loadedModel.id;
+          setStatus(`加载失败：${error.message || error}`);
+        } finally {
+          existingGlow?.dispose();
+          disposePreview(preview);
+          loading = false;
+          modelSelect.disabled = false;
+          exportBtn.disabled = !loadedModel;
         }
-        diffuseImage = texture.image;
-        dirty = true;
-        redrawTexturePanel();
-        resize3D();
       }
 
       // --- Texture painting panel ---
@@ -487,7 +440,7 @@
       }
 
       texCanvas.addEventListener("mousedown", (event) => {
-        if (event.button !== 0) return;
+        if (event.button !== 0 || loading || !modelMesh) return;
         pushUndo();
         painting = true;
         strokeSurface = "tex";
@@ -551,12 +504,12 @@
       });
       dimLevel.addEventListener("input", redrawTexturePanel);
       modelSelect.addEventListener("change", (event) => {
-        loadModel(event.target.value).catch((error) => {
-          console.error(error);
-          setStatus(`加载失败：${error.message || error}`);
-        });
+        void loadModel(models.find((model) => model.id === event.target.value));
       });
-      document.getElementById("exportBtn").addEventListener("click", () => {
+      exportBtn.addEventListener("click", () => {
+        if (loading || !loadedModel) return;
+        const model = loadedModel;
+        const filename = `${model.id}.glow.webp`;
         // Flatten onto black so the exported file matches the opaque RGB
         // convention of the offline pipeline.
         const flat = document.createElement("canvas");
@@ -565,12 +518,13 @@
         flat.getContext("2d").fillRect(0, 0, GLOW_SIZE, GLOW_SIZE);
         flat.getContext("2d").drawImage(glowCanvas, 0, 0);
         flat.toBlob((blob) => {
+          if (!blob) return;
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
-          link.download = `${modelId}.glow.webp`;
+          link.download = filename;
           link.click();
           URL.revokeObjectURL(link.href);
-          setStatus(`已导出 ${modelId}.glow.webp`);
+          if (loadedModel === model && !loading) setStatus(`已导出 ${filename}`);
         }, "image/webp", 0.9);
       });
       window.addEventListener("keydown", (event) => {
@@ -602,13 +556,14 @@
         requestAnimationFrame(frame);
       }
 
-      const requestedModel = new URLSearchParams(location.search).get("model");
-      const initialModel = MODELS.some((model) => model.id === requestedModel)
-        ? requestedModel
-        : MODELS[0].id;
-      loadModel(initialModel).catch((error) => {
+      loadToolModels().then((catalog) => {
+        models = catalog;
+        renderModelOptions();
+        const requested = new URLSearchParams(location.search).get("model");
+        return loadModel(models.find((model) => model.id === requested) ?? models.find((model) => model.id === "aholo-kongming") ?? models[0]);
+      }).catch((error) => {
         console.error(error);
-        setStatus(`加载失败：${error.message || error}`);
+        setStatus(`模型目录加载失败：${error.message || error}`);
       });
       resize3D();
       requestAnimationFrame(frame);

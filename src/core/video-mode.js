@@ -139,8 +139,10 @@ class VideoModeController {
   async writeFrame(job) {
     try {
       const index = job.completedFrames;
-      if (index > 0) this.stepSimulation(job.dt);
-      this.renderFrame(index === 0 ? 0 : job.dt);
+      const dt = index === 0 ? 0 : job.dt;
+      const timeRunning = this.ctx.photo.timeRunning;
+      if (dt) this.stepSimulation(dt);
+      this.renderFrame(timeRunning ? dt : 0);
       job.audio?.sample(index);
       await job.encoder.addFrame(this.canvas, index);
       if (this.job !== job) return;
@@ -151,7 +153,8 @@ class VideoModeController {
         return;
       }
       // The final frame occupies one interval, just like the others.
-      this.stepSimulation(job.dt);
+      if (timeRunning && this.ctx.photo.timeRunning)
+        this.stepSimulation(job.dt);
       job.phase = "encoding";
       this.ctx.input.setEnabled(false);
       this.emit();
@@ -177,6 +180,7 @@ class VideoModeController {
     if (this.job !== job) return;
     this.job = null;
     this.ctx.input.setEnabled(false);
+    this.ctx.input.setCameraOnly(false);
     job.audio?.close();
     if (job.viewportChanged) {
       this.ctx.post.bloom.enabled = job.savedBloom;

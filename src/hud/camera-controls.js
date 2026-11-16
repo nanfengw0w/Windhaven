@@ -64,6 +64,7 @@ class CameraControls {
     hud.createClimateCard("camera", "镜头位置", this.el);
     ctx.events.on("camera:change", () => this.slow());
     ctx.events.on("photo:change", () => this.slow());
+    ctx.events.on("video:change", () => this._syncLock());
     ctx.events.on("exploration:change", () => this.slow());
     this.slow();
   }
@@ -104,6 +105,13 @@ class CameraControls {
     buttons[index].scrollIntoView({ block: "nearest" });
   }
 
+  _syncLock() {
+    const locked = Boolean(this.ctx.photo?.cameraLocked);
+    if (this.locked === locked) return;
+    this.locked = locked;
+    for (const button of this.buttons.values()) button.disabled = locked;
+  }
+
   slow() {
     this.selected =
       this.ctx.cameraRig.activePreset !== undefined
@@ -113,8 +121,8 @@ class CameraControls {
       const active = id === this.selected;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", String(active));
-      button.disabled = !!this.ctx.photo?.cameraLocked;
     }
+    this._syncLock();
   }
 }
 

@@ -73,6 +73,7 @@ class VideoControls {
       class: "wg-photo-action is-primary",
     });
     this.closeButton = videoAction("返回拍照");
+    this.timeButton = videoAction("继续时间");
     this.cancelButton = videoAction("取消录制");
     this.download = createHudElement("a", {
       class: "wg-photo-action is-primary wg-video-download",
@@ -135,7 +136,10 @@ class VideoControls {
       [
         createHudElement("div", { class: "wg-video-head" }, [
           this.heading,
-          this.closeButton,
+          createHudElement("div", { class: "wg-video-head-actions" }, [
+            this.timeButton,
+            this.closeButton,
+          ]),
         ]),
         this.settings,
         this.progressPane,
@@ -147,6 +151,9 @@ class VideoControls {
 
     this.button.addEventListener("click", () => this.ctx.video?.enter());
     this.closeButton.addEventListener("click", () => this.ctx.video?.exit());
+    this.timeButton.addEventListener("click", () =>
+      this.ctx.photo?.toggleTime(),
+    );
     this.cancelButton.addEventListener("click", () => this.ctx.video?.cancel());
     this.fps.addEventListener("change", () => this.syncSettings(true));
     this.frames.addEventListener("input", () => this.syncSettings());
@@ -174,6 +181,9 @@ class VideoControls {
       event.preventDefault(),
     );
     ctx.events.on("video:change", (state) => this.setState(state));
+    ctx.events.on("photo:change", ({ timeRunning }) => {
+      this.timeButton.textContent = timeRunning ? "暂停时间" : "继续时间";
+    });
     this.syncSettings();
   }
 
@@ -215,6 +225,7 @@ class VideoControls {
     this.overlay.hidden = !active;
     this.settings.hidden = recording;
     this.closeButton.hidden = recording;
+    this.timeButton.disabled = recording && phase !== "recording";
     this.progressPane.hidden = !recording;
     this.progress.max = totalFrames || 1;
     this.progress.value = completedFrames;

@@ -4,48 +4,44 @@
 
 ## 在线体验
 
-[打开风栖谷 · GitHub Pages](https://nanfengw0w.github.io/Windhaven/)。建议在桌面浏览器体验。点击右上角 **Aholo 造物 / Create**，选择「守山灵猫」，再点击山谷中的空地放置。可切换天气，观察地标积雪，也可在浏览器里保存布局。实时照片或文字生成需要下方的 Node 服务。
+[打开风栖谷 · GitHub Pages](https://nanfengw0w.github.io/Windhaven/)。建议在桌面浏览器体验。点击右上角 **Aholo 造物 / Create**，选择「守山灵猫」，再点击山谷中的空地放置。可切换天气，观察地标积雪，也可在浏览器里保存布局。
+
+> **GitHub Pages 演示暂不支持照片转 3D 和文字转 3D。** GitHub Pages 只托管静态前端，无法运行项目的 Node.js 后端。实时生成依赖该后端调用 Aholo Lux3D、查询任务进度并下载生成模型。要体验完整的造物流程，可以[下载源码并在本地运行](#下载源码并在本地运行)。
 
 GitHub Actions 在 `main` 更新时使用 `npm run build -- --mode pages` 构建并部署静态演示版。
 
-## 快速开始
+## 下载源码并在本地运行
 
-要求 Node.js 22.12+。
+要求 Node.js 22.12 或更高版本和自己的 Aholo API Key。
 
-```bash
-npm ci
-cp .env.example .env.local   # Windows: copy .env.example .env.local
-# 在 .env.local 里填 AHOLO_API_KEY（只在服务端使用，不要加 VITE_ 前缀）
-```
+1. [下载 ZIP 源码](https://github.com/nanfengw0w/Windhaven/archive/refs/heads/main.zip)并解压，或克隆仓库。
 
-开两个终端：
+   ```bash
+   git clone https://github.com/nanfengw0w/Windhaven.git
+   cd Windhaven
+   ```
 
-```bash
-# 终端 A：Aholo API + 静态资源服务
-npm run server
+2. 在项目目录运行 `npm ci`。把 `.env.example` 复制为 `.env.local`，在其中填写 `AHOLO_API_KEY`。如果使用国际区 Key，将 `AHOLO_REGION` 设为 `com`。
+3. 在项目目录打开两个终端，分别启动 Node 服务和 Vite。
 
-# 终端 B：Vite 开发服务器
-npm run dev
-```
+   ```bash
+   # 终端 A：Aholo API
+   npm run server
 
-打开 <http://127.0.0.1:4190>，点击右上角 **Aholo 造物 / Create**。
+   # 终端 B：Vite 开发服务器
+   npm run dev
+   ```
 
-## 生产运行
+4. 打开 <http://127.0.0.1:4190>，点击右上角 **Aholo 造物 / Create**，选择「照片」或「文字」生成模型。
+
+### 本地生产构建
 
 ```bash
 npm run build
 npm start
 ```
 
-打开 <http://127.0.0.1:4192>。生产环境由同一个 Node 进程提供页面、API 和生成资产，不需要单独启动 Vite。
-
-### 部署有实时生成的完整版
-
-使用仓库根目录的 `render.yaml` 创建 Render Blueprint。它使用同一个 Node 服务提供网页、Aholo API 和生成文件。创建时在 Render 的环境变量中填写 `AHOLO_API_KEY`。如果密钥属于国际区，把 `AHOLO_REGION` 设为 `com`。
-
-比赛演示的浏览器登录用户名为 `judge`，密码是 Render 自动生成的 `WINDHAVEN_DEMO_PASSWORD`。将访问密码单独交给评委。该密码保护生成额度和上传文件。
-
-Blueprint 使用免费实例。空闲 15 分钟后实例会休眠，重启会清空云端生成缓存。需要保留模型时，可以在支持持久磁盘的实例上挂载 `/opt/render/project/src/server/cache`。
+打开 <http://127.0.0.1:4192>。同一个 Node 服务提供网页、API 和生成资产。
 
 ### 发光贴图涂抹工具
 

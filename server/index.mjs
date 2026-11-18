@@ -29,6 +29,12 @@ const examplesFile = path.join(
   "index.json",
 );
 const port = Number(process.env.PORT || 4192);
+const demoPassword = process.env.WINDHAVEN_DEMO_PASSWORD;
+if (process.env.RENDER === "true" && (!hasAholoKey || !demoPassword)) {
+  throw new Error(
+    "Set AHOLO_API_KEY and WINDHAVEN_DEMO_PASSWORD before deploying Windhaven to Render.",
+  );
+}
 fs.mkdirSync(jobsRoot, { recursive: true });
 
 const jobs = new Map();
@@ -346,7 +352,6 @@ function recoverJobs() {
 loadCache();
 
 const app = express();
-app.use(express.json({ limit: "2mb" }));
 
 // Lightweight request log: no bodies, keys, or headers beyond size/origin.
 app.use((request, response, next) => {
@@ -370,6 +375,35 @@ app.use((request, response, next) => {
   });
   next();
 });
+
+if (demoPassword) {
+  const expected = crypto
+    .createHash("sha256")
+    .update(`judge:${demoPassword}`)
+    .digest();
+  app.get("/healthz", (_request, response) => response.sendStatus(200));
+  app.use((request, response, next) => {
+    const match = /^Basic ([A-Za-z0-9+/]+={0,2})$/i.exec(
+      request.get("authorization") || "",
+    );
+    if (match) {
+      const credentials = Buffer.from(match[1], "base64");
+      const received = crypto.createHash("sha256").update(credentials).digest();
+      if (crypto.timingSafeEqual(received, expected)) return next();
+    }
+    response.set(
+      "WWW-Authenticate",
+      'Basic realm="Windhaven", charset="UTF-8"',
+    );
+    response.set("Cache-Control", "no-store");
+    response.sendStatus(401);
+  });
+  app.use("/api/assets", (_request, response, next) => {
+    response.set("Cache-Control", "private, no-store");
+    next();
+  });
+}
+app.use(express.json({ limit: "2mb" }));
 
 app.get("/api/health", (_request, response) => {
   response.json({
@@ -530,7 +564,7 @@ app.use(
     setHeaders(response, file) {
       if (/\.glb$/i.test(file))
         response.setHeader("Content-Type", "model/gltf-binary");
-      if (/\.(png|jpg|jpeg|webp)$/i.test(file))
+      if (!demoPassword && /\.(png|jpg|jpeg|webp)$/i.test(file))
         response.setHeader("Cache-Control", "public, max-age=3600");
     },
   }),

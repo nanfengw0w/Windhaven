@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: windhaven
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm test && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
+      - key: HOST
+        value: 0.0.0.0
+      - key: AHOLO_API_KEY
+        sync: false
+      - key: WINDHAVEN_DEMO_PASSWORD
+        generateValue: true

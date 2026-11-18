@@ -39,6 +39,14 @@ npm start
 
 打开 <http://127.0.0.1:4192>。生产环境由同一个 Node 进程提供页面、API 和生成资产，不需要单独启动 Vite。
 
+### 部署有实时生成的完整版
+
+使用仓库根目录的 `render.yaml` 创建 Render Blueprint。它使用同一个 Node 服务提供网页、Aholo API 和生成文件。创建时在 Render 的环境变量中填写 `AHOLO_API_KEY`。如果密钥属于国际区，把 `AHOLO_REGION` 设为 `com`。
+
+比赛演示的浏览器登录用户名为 `judge`，密码是 Render 自动生成的 `WINDHAVEN_DEMO_PASSWORD`。将访问密码单独交给评委。该密码保护生成额度和上传文件。
+
+Blueprint 使用免费实例。空闲 15 分钟后实例会休眠，重启会清空云端生成缓存。需要保留模型时，可以在支持持久磁盘的实例上挂载 `/opt/render/project/src/server/cache`。
+
 ### 发光贴图涂抹工具
 
 开发服务器启动后打开：

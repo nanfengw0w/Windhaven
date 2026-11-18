@@ -9,6 +9,7 @@ import {
 } from "./dom.js";
 import { HUD_ICONS } from "./icons.js";
 const COACH_STORAGE_KEY = "weatherglass.coach.v2";
+const STATIC_DEMO = import.meta.env.MODE === "pages";
 const COACH_STEPS = [
   {
     id: "grab",
@@ -44,7 +45,9 @@ const COACH_STEPS = [
   {
     id: "aholo",
     icon: "spark",
-    text: "打开 Aholo，把一张照片变成山谷地标",
+    text: STATIC_DEMO
+      ? "打开 Aholo，把示例地标放进山谷"
+      : "打开 Aholo，把一张照片变成山谷地标",
     target: (ctx) => ctx.aholoCreate?.launch,
   },
 ];
@@ -254,7 +257,9 @@ class InteractionCoach {
         setTimeout(
           () =>
             this.toasts.toast(
-              "基础操作完成。用 Aholo 造一个属于你的地标吧。",
+              STATIC_DEMO
+                ? "基础操作完成。试试把 Aholo 示例放进山谷。"
+                : "基础操作完成。用 Aholo 造一个属于你的地标吧。",
               5200,
               {
                 icon: "spark",

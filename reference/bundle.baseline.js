@@ -34870,6 +34870,7 @@ void main() {
 }
 {
   const COACH_STORAGE_KEY = "weatherglass.coach.v2";
+  const STATIC_DEMO = import.meta.env.MODE === "pages";
   const COACH_STEPS = [{
     id: "grab",
     icon: "hand",
@@ -34898,7 +34899,7 @@ void main() {
   }, {
     id: "aholo",
     icon: "spark",
-    text: "打开 Aholo，把一张照片变成山谷地标",
+    text: STATIC_DEMO ? "打开 Aholo，把示例地标放进山谷" : "打开 Aholo，把一张照片变成山谷地标",
     target: ctx => ctx.aholoCreate?.launch
   }];
   class ToastManager {
@@ -35019,7 +35020,7 @@ void main() {
       this.current = t, this._show(COACH_STEPS[t], t);
     }
     _finish(t) {
-      this.done = !0, this.current = -1, this._save(), this._highlight(null), this._closeEl(), t && setTimeout(() => this.toasts.toast("基础操作完成。用 Aholo 造一个属于你的地标吧。", 5200, {
+      this.done = !0, this.current = -1, this._save(), this._highlight(null), this._closeEl(), t && setTimeout(() => this.toasts.toast(STATIC_DEMO ? "基础操作完成。试试把 Aholo 示例放进山谷。" : "基础操作完成。用 Aholo 造一个属于你的地标吧。", 5200, {
         icon: "spark"
       }), 500);
     }
@@ -42915,6 +42916,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
   const POLL_INTERVAL_MS = 2000;
   const POLL_MAX_FAILURES = 4;
   const POLL_MAX_WAIT_MS = 15 * 60_000;
+  const STATIC_DEMO = import.meta.env.MODE === "pages";
   const MODEL_LOADER = new CharacterGLTFLoader();
   const ROLES = [{
     id: "guardian",
@@ -42945,6 +42947,9 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
   function formatBytes(bytes) {
     if (!Number.isFinite(bytes) || bytes <= 0) return "";
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+  function resolveExampleAsset(url) {
+    return url.startsWith("/generated/examples/") ? new URL(`.${url}`, document.baseURI).href : url;
   }
   function shortAngle(value) {
     let angle = value;
@@ -43011,7 +43016,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.scene = ctx.scene;
       this.camera = ctx.camera;
       this.open = false;
-      this.tab = "photo";
+      this.tab = STATIC_DEMO ? "models" : "photo";
       this.views = {
         photo: generationView(),
         text: generationView(),
@@ -43090,10 +43095,11 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.closeButton.setAttribute("aria-label", "收起造物工作台");
       this.closeButton.addEventListener("click", () => this.closePanel());
       header.append(brand, this.closeButton);
-      const lead = el("p", "wg-aholo-lead", "用照片或文字生成地标。生成期间可以继续观察和操作山谷。");
+      const lead = el("p", "wg-aholo-lead", STATIC_DEMO ? "把 Aholo Lux3D 生成的示例放进山谷，看看它在不同天气中的变化。实时生成需要本地 Node 服务。" : "用照片或文字生成地标。生成期间可以继续观察和操作山谷。");
       const tabs = el("div", "wg-aholo-tabs");
       this.tabButtons = new Map();
-      for (const [id, label] of [["photo", "照片 / Photo"], ["text", "文字 / Text"], ["models", "我的模型"], ["saves", "山谷存档"]]) {
+      for (const [id, label] of [["photo", "照片 / Photo"], ["text", "文字 / Text"], ["models", STATIC_DEMO ? "示例模型 / Examples" : "我的模型"], ["saves", "山谷存档"]]) {
+        if (STATIC_DEMO && (id === "photo" || id === "text")) continue;
         const button = el("button", "wg-aholo-tab", label);
         button.type = "button";
         button.dataset.tab = id;
@@ -43265,7 +43271,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this._renderEditTools();
       this.panel.append(header, lead, this.editTools, tabs, panePhoto, paneText, paneModels, this.panes.saves, this.options, this.roleHint, this.modelResult, this.footer);
       document.body.append(this.overlay, this.editModes);
-      this.setTab("photo");
+      this.setTab(this.tab);
     }
     _updateRoleHint() {
       const id = this.views[this.tab].role;
@@ -43292,7 +43298,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         this._updateRoleHint();
       }
       this._renderView();
-      if (tab === "models") this._loadModels();
+      if (tab === "models" && this.open) this._loadModels();
       if (tab === "saves") this._renderSaves();
     }
     _buildSaves() {
@@ -43786,7 +43792,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       }
       const key = `${url}|${height}`;
       if (!this.loadingTemplates.has(key)) {
-        const loading = MODEL_LOADER.loadAsync(url).then(gltf => {
+        const loading = MODEL_LOADER.loadAsync(resolveExampleAsset(url)).then(gltf => {
           const template = this._prepareModel(gltf, {
             ...meta,
             height
@@ -43886,36 +43892,46 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.modelsLoading = true;
       this.modelsHint.textContent = "正在读取模型…";
       try {
-        const response = await fetch("/api/models", {
+        const url = STATIC_DEMO ? resolveExampleAsset("/generated/examples/index.json") : "/api/models";
+        const response = await fetch(url, {
           signal: AbortSignal.timeout(8000)
         });
         if (!response.ok) throw new Error("Could not load models");
         const models = await response.json();
         if (!Array.isArray(models)) throw new Error("Invalid model library");
-        this.modelsHint.textContent = models.length ? "点击模型卡片，再到山谷画面里选择位置。" : "还没有生成的模型。可以从照片或文字开始。";
+        this.modelsHint.textContent = models.length ? "点击模型卡片，再到山谷画面里选择位置。" : STATIC_DEMO ? "暂无示例模型。" : "还没有生成的模型。可以从照片或文字开始。";
         this.thumbnailObserver.disconnect();
-        this.modelsGrid.replaceChildren(...models.map(model => {
+        this.modelsGrid.replaceChildren(...models.map(entry => {
+          const model = STATIC_DEMO ? {
+            modelUrl: entry.model,
+            thumbUrl: resolveExampleAsset(entry.thumb),
+            role: entry.role
+          } : entry;
           const role = (ROLES.find(({
             id
           }) => id === model.role) || DEFAULT_ROLE).label.split(" / ")[0];
-          const title = `${role} #${model.taskId || model.id.slice(0, 8)}`;
-          const type = model.mode === "photo" ? "照片生成" : "文字生成";
-          const date = new Date(model.createdAt).toLocaleDateString("zh-CN");
-          const card = this._modelCard(title, `${type} · ${date}`, model);
+          const title = STATIC_DEMO ? entry.title : `${role} #${entry.taskId || entry.id.slice(0, 8)}`;
+          const subtitle = STATIC_DEMO ? `${entry.subtitle} · Aholo #${entry.taskId}` : `${entry.mode === "photo" ? "照片生成" : "文字生成"} · ${new Date(entry.createdAt).toLocaleDateString("zh-CN")}`;
+          const card = this._modelCard(title, subtitle, model);
           const preview = el("span", "wg-aholo-model-preview");
           preview.setAttribute("aria-hidden", "true");
           preview.dataset.modelUrl = model.modelUrl;
           preview.dataset.thumbUrl = model.thumbUrl || "";
           const image = el("img", "wg-aholo-model-image");
           image.alt = "";
-          image.hidden = true;
-          preview.append(image, el("span", "wg-aholo-model-preview-label", "预览加载中…"));
+          preview.append(image);
+          if (STATIC_DEMO) {
+            image.src = model.thumbUrl;
+          } else {
+            image.hidden = true;
+            preview.append(el("span", "wg-aholo-model-preview-label", "预览加载中…"));
+            this.thumbnailObserver.observe(preview);
+          }
           card.prepend(preview);
-          this.thumbnailObserver.observe(preview);
           return card;
         }));
       } catch {
-        this.modelsHint.textContent = "暂时无法读取模型库，请确认后端已启动。";
+        this.modelsHint.textContent = STATIC_DEMO ? "暂时无法读取示例模型。重新打开工作台可重试。" : "暂时无法读取模型库，请确认后端已启动。";
       } finally {
         this.modelsLoading = false;
       }

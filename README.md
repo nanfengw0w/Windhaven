@@ -2,6 +2,12 @@
 
 一个程序化的 Three.js 微缩山谷，也是一台可以“造物”的天气玻璃球：手抓云、下雨、吹风、放雾、拖太阳，或者用 **Aholo Lux3D** 从一张照片 / 一句话生成一个地标，把它放进山谷里，让它淋雨、积雪、被风吹、被雷劈。
 
+## 在线体验
+
+[打开风栖谷 · GitHub Pages](https://nanfengw0w.github.io/Windhaven/)。建议在桌面浏览器体验。点击右上角 **Aholo 造物 / Create**，选择「守山灵猫」，再点击山谷中的空地放置。可切换天气，观察地标积雪，也可在浏览器里保存布局。实时照片或文字生成需要下方的 Node 服务。
+
+GitHub Actions 在 `main` 更新时使用 `npm run build -- --mode pages` 构建并部署静态演示版。
+
 ## 快速开始
 
 要求 Node.js 22.12+。

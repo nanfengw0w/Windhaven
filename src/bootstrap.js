@@ -100,7 +100,7 @@ window.addEventListener("error", (event) =>
 window.addEventListener("unhandledrejection", (event) =>
   runtimeErrors.push(String(event.reason)),
 );
-function bootWeatherglass() {
+async function bootWeatherglass() {
   installCloudShadowPatch();
   const canvas = document.getElementById("scene"),
     quality = new QualityController(appParams),
@@ -177,6 +177,28 @@ function bootWeatherglass() {
         runtimeErrors.push(`${moduleName}: ${error.message}`));
     }
   }
+  const modelTasks = [
+    ctx.modules.alpineTown?.modelsReady,
+    ctx.modules.farm?.scarecrow?.ready,
+    ctx.modules.mountainRuins?.modelsReady,
+    ctx.modules.character?.ready,
+    ctx.modules.sky?.lanterns?.ready,
+    ctx.modules.aholo?.savedLayoutReady,
+  ].filter(Boolean);
+  const loadingStatus = document.querySelector(".veil-sub");
+  let settledModels = 0;
+  function showModelProgress() {
+    loadingStatus.textContent = `正在准备模型 · ${settledModels} / ${modelTasks.length}`;
+  }
+  if (modelTasks.length) showModelProgress();
+  ctx.assetsReady = Promise.allSettled(
+    modelTasks.map((task) =>
+      task.finally(() => {
+        settledModels++;
+        showModelProgress();
+      }),
+    ),
+  );
   const scenarioName = Object.hasOwn(SCENARIOS, appParams.get("scenario"))
     ? appParams.get("scenario")
     : "calm";
@@ -419,6 +441,11 @@ function bootWeatherglass() {
     setupModelInspection(ctx);
   if (import.meta.env.DEV && appParams.get("inspection") === "willows")
     setupWillowInspection(ctx);
+  ctx.input.setEnabled(false);
+  await ctx.assetsReady;
+  loadingStatus.textContent = "正在呈现山谷…";
+  ctx.input.setEnabled(true);
+  previousFrameTimeMs = performance.now();
   const warmupSeconds = parseFloat(appParams.get("warm") || "0");
   (stepSimulation(0),
     warmupSeconds > 0 && debugApi.simulate(warmupSeconds),
@@ -427,9 +454,7 @@ function bootWeatherglass() {
       cameraRig.preset(appParams.get("cam"), !0),
     animateFrame());
 }
-try {
-  bootWeatherglass();
-} catch (error) {
+bootWeatherglass().catch((error) => {
   (console.error("[boot] fatal", error),
     runtimeErrors.push(`fatal: ${error.message}`));
   const fatalMessage = document.getElementById("fatal");
@@ -437,4 +462,4 @@ try {
     ((fatalMessage.textContent =
       "Windhaven Valley could not start: " + error.message),
     (fatalMessage.style.display = "block"));
-}
+});

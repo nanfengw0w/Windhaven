@@ -3,6 +3,7 @@ import "./vendor/three-runtime.js";
 import "./vendor/transform-controls.js";
 import "./core/config.js";
 import "./core/events.js";
+import "./core/model-loading.js";
 import "./core/quality.js";
 import "./vendor/postprocessing.js";
 import "./render/scene-depth.js";

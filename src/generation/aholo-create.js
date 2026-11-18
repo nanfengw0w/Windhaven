@@ -4,6 +4,11 @@ import { Ry } from "../vendor/three-runtime.js";
 import { TransformControls } from "../vendor/transform-controls.js";
 import { CharacterGLTFLoader } from "../character/gltf-loader.js";
 import { LANDSCAPE_BOUNDS } from "../core/config.js";
+import {
+  disposeModel,
+  loadModelGlb,
+  loadWithModelTimeout,
+} from "../core/model-loading.js";
 import { patchAholoWeatherMaterial } from "./aholo-weather-material.js";
 import { ModelThumbnails } from "./model-thumbnails.js";
 import { ValleySaves } from "./valley-saves.js";
@@ -199,7 +204,7 @@ class AholoCreate {
     ctx.events.on("tap", () => {
       if (this.selectedEntry) this._selectPlaced(null);
     });
-    this._restoreCurrentLayout();
+    this.savedLayoutReady = this._restoreCurrentLayout();
   }
 
   /* ---------------------------------------------------------------- UI ---- */
@@ -637,7 +642,7 @@ class AholoCreate {
       const { current } = this.saves.load();
       if (!current.length) return;
       this.pendingLayout = current;
-      this._applyLayout(current, "已恢复上次摆放。", false);
+      return this._applyLayout(current, "已恢复上次摆放。", false);
     } catch {
       this.layoutNotice = "暂时无法读取上次布局。";
     }
@@ -1073,7 +1078,11 @@ class AholoCreate {
     }
     const key = `${url}|${height}`;
     if (!this.loadingTemplates.has(key)) {
-      const loading = MODEL_LOADER.loadAsync(resolveExampleAsset(url))
+      const loading = loadWithModelTimeout(
+        (signal) =>
+          loadModelGlb(MODEL_LOADER, resolveExampleAsset(url), signal),
+        ({ scene }) => disposeModel(scene),
+      )
         .then((gltf) => {
           const template = this._prepareModel(gltf, { ...meta, height });
           this.editAnchors.set(

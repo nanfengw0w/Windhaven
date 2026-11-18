@@ -36,7 +36,7 @@ async function loadTownModels(town, loader = loadImportedModels) {
     if (models) disposeImportedModels(models);
     town.stats.models = "failed";
     town.stats.modelError = error.message;
-    console.error("[models] Keeping procedural landmarks:", error);
+    console.warn("[models] Keeping procedural landmarks:", error);
     return false;
   }
 }

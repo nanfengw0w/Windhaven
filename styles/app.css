@@ -58,8 +58,11 @@ body {
   pointer-events: auto;
 }
 /* U leaves only the scene, including when photo/exploration or stats are active. */
-body.no-ui > :not(#scene) {
+body.no-ui > :not(#scene, #veil, #fatal) {
   display: none !important;
+}
+body:not(.ready) > :not(#scene, #veil, #fatal) {
+  visibility: hidden;
 }
 #veil {
   position: fixed;

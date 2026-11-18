@@ -3,6 +3,7 @@
   "vendor/transform-controls.js",
   "core/config.js",
   "core/events.js",
+  "core/model-loading.js",
   "core/quality.js",
   "vendor/postprocessing.js",
   "render/scene-depth.js",

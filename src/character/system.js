@@ -1,36 +1,12 @@
 import { createSeededRandom } from "../core/math.js";
+import { disposeModel } from "../core/model-loading.js";
 import { ExplorationNavigation } from "../simulation/exploration-navigation.js";
 import { CharacterAnimation } from "./animation.js";
 import { CharacterDrag } from "./drag.js";
-import { loadCharacterModel } from "./model.js";
+import { createFallbackCharacter, loadCharacterModel } from "./model.js";
 
 const CHARACTER_WANDER_RADIUS = 0.6;
 const CHARACTER_WANDER_SPEED = 0.12;
-
-function disposeCharacterRoot(root) {
-  const geometries = new Set();
-  const materials = new Set();
-  const textures = new Set();
-  const skeletons = new Set();
-  root.traverse((object) => {
-    if (object.geometry) geometries.add(object.geometry);
-    if (object.skeleton) skeletons.add(object.skeleton);
-    for (const material of Array.isArray(object.material)
-      ? object.material
-      : [object.material]) {
-      if (!material) continue;
-      materials.add(material);
-      for (const value of Object.values(material)) {
-        if (value?.isTexture) textures.add(value);
-      }
-    }
-  });
-  root.removeFromParent();
-  for (const skeleton of skeletons) skeleton.dispose();
-  for (const geometry of geometries) geometry.dispose();
-  for (const material of materials) material.dispose();
-  for (const texture of textures) texture.dispose();
-}
 
 class CharacterSystem {
   constructor(ctx, { loader = loadCharacterModel } = {}) {
@@ -84,7 +60,7 @@ class CharacterSystem {
           "Character asset is missing its scene or animation clips",
         );
       if (this.disposed) {
-        disposeCharacterRoot(model.root);
+        disposeModel(model.root);
         return false;
       }
       this.model = model.root;
@@ -108,14 +84,22 @@ class CharacterSystem {
       this.syncVisual();
       return true;
     } catch (error) {
-      if (model?.root?.isObject3D) disposeCharacterRoot(model.root);
       this.animation?.dispose();
       this.animation = null;
       this.model = null;
-      this.stats.model = this.disposed ? "disposed" : "failed";
+      this.visualRoot = null;
+      this.profile = null;
+      if (model?.root?.isObject3D) {
+        model.root.removeFromParent();
+        disposeModel(model.root);
+      }
+      if (this.disposed) return false;
+      this.model = createFallbackCharacter();
+      this.group.add(this.model);
+      this.stats.model = "fallback";
       this.stats.error = error.message;
-      if (!this.disposed)
-        console.error("[character] Could not load protagonist:", error);
+      console.warn("[character] Using procedural traveler:", error);
+      this.syncVisual();
       return false;
     }
   }
@@ -360,7 +344,10 @@ class CharacterSystem {
     this.disposed = true;
     this.drag.dispose();
     this.animation?.dispose();
-    if (this.model) disposeCharacterRoot(this.model);
+    if (this.model) {
+      this.model.removeFromParent();
+      disposeModel(this.model);
+    }
     this.group.removeFromParent();
     this.model = null;
     this.animation = null;

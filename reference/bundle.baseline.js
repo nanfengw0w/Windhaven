@@ -4300,6 +4300,78 @@ void main() {
   }
 }
 {
+  const MODEL_LOAD_TIMEOUT_MS = 60_000;
+  async function loadWithModelTimeout(load, dispose) {
+    const controller = new AbortController();
+    let timer;
+    const deadline = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        const error = new Error("Model loading timed out.");
+        controller.abort(error);
+        reject(error);
+      }, MODEL_LOAD_TIMEOUT_MS);
+    });
+    const pending = (async () => {
+      const asset = await load(controller.signal);
+      if (controller.signal.aborted) {
+        dispose?.(asset);
+        throw controller.signal.reason;
+      }
+      return asset;
+    })();
+    try {
+      return await Promise.race([pending, deadline]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  async function fetchModelResponse(url, signal) {
+    const response = await fetch(url, {
+      signal
+    });
+    if (!response.ok) throw new Error(`Asset request failed (${response.status}): ${url}`);
+    return response;
+  }
+  async function loadModelGlb(loader, url, signal) {
+    const source = new URL(url, document.baseURI);
+    const response = await fetchModelResponse(source.href, signal);
+    const data = await response.arrayBuffer();
+    const resourcePath = source.protocol === "data:" ? "" : new URL(".", source).href;
+    return loader.parseAsync(data, resourcePath);
+  }
+  async function loadModelTexture(loader, url, signal) {
+    const response = await fetchModelResponse(url, signal);
+    const objectUrl = URL.createObjectURL(await response.blob());
+    try {
+      return await loader.loadAsync(objectUrl);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+  function disposeModel(...models) {
+    const resources = new Set();
+    const images = new Set();
+    for (const model of models) {
+      model.traverse(object => {
+        if (object.geometry) resources.add(object.geometry);
+        if (object.skeleton) resources.add(object.skeleton);
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        for (const material of materials) {
+          if (!material || resources.has(material)) continue;
+          resources.add(material);
+          for (const value of Object.values(material)) {
+            if (!value?.isTexture) continue;
+            resources.add(value);
+            if (value.image?.close) images.add(value.image);
+          }
+        }
+      });
+    }
+    for (const resource of resources) resource.dispose();
+    for (const image of images) image.close();
+  }
+}
+{
   function probeWebGLRenderer() {
     try {
       const r = document.createElement("canvas"),
@@ -9861,11 +9933,14 @@ bool railwayTunnelCut(vec3 p) {
     }
     for (const image of images) image.close?.();
   }
-  async function loadImportedModels(ctx, options = {}) {
+  function loadImportedModels(ctx, options = {}) {
+    return loadWithModelTimeout(signal => loadImportedModelSet(ctx, options, signal), disposeImportedModels);
+  }
+  async function loadImportedModelSet(ctx, options, signal) {
     const fetchAsset = options.fetch ?? globalThis.fetch;
     if (typeof fetchAsset !== "function") throw new Error("Model loading requires fetch");
     const textureLoader = options.textureLoader ?? new Ry.TextureLoader();
-    const loadTexture = options.loadTexture ?? (url => textureLoader.loadAsync(url));
+    const loadTexture = options.loadTexture ?? (url => loadModelTexture(textureLoader, url, signal));
     const maxAnisotropy = ctx.renderer?.capabilities?.getMaxAnisotropy?.() ?? 1;
     const anisotropy = Math.max(1, Math.min(8, maxAnisotropy));
     const models = new Map();
@@ -9873,7 +9948,9 @@ bool railwayTunnelCut(vec3 p) {
     const materials = new Set();
     const textures = new Set();
     const results = await Promise.allSettled((options.assets ?? MODEL_ASSETS).map(async asset => {
-      const response = await fetchAsset(asset.mesh.href);
+      const response = await fetchAsset(asset.mesh.href, {
+        signal
+      });
       if (!response.ok) throw new Error(`${asset.id}: model request failed (${response.status})`);
       const geometry = parseImportedMesh(await response.arrayBuffer(), asset.id);
       geometries.add(geometry);
@@ -10887,7 +10964,7 @@ void main() {
       if (models) disposeImportedModels(models);
       town.stats.models = "failed";
       town.stats.modelError = error.message;
-      console.error("[models] Keeping procedural landmarks:", error);
+      console.warn("[models] Keeping procedural landmarks:", error);
       return false;
     }
   }
@@ -24852,6 +24929,8 @@ void main() {
       alphaTest: source.alphaTest,
       side: source.side,
       vertexColors: source.vertexColors,
+      emissive: source.emissive ?? 0x000000,
+      emissiveIntensity: source.emissiveIntensity ?? 1,
       roughness: 1,
       metalness: 0,
       transparent: true,
@@ -24919,6 +24998,18 @@ void main() {
     if (parts.length === 0) throw new Error("No meshes in the sky lantern GLB.");
     return parts;
   }
+  function createFallbackLantern() {
+    const geometry = new Ry.CylinderGeometry(0.31, 0.4, 1, 8, 1, true);
+    const material = new Ry.MeshStandardMaterial({
+      color: 0xf7b05f,
+      emissive: 0xff8d32,
+      emissiveIntensity: 1.1,
+      side: Ry.DoubleSide
+    });
+    const mesh = new Ry.Mesh(geometry, material);
+    mesh.name = "procedural-sky-lantern";
+    return mesh;
+  }
   function createFlightSlots(ctx) {
     const random = createSeededRandom(54121);
     const [columns, rows] = ctx.quality.pick([7, 5], [8, 6], [9, 6]);
@@ -24964,41 +25055,38 @@ void main() {
       this.groundLights = [0, 1].map(() => new Ry.PointLight(0xffb46a, 0, 1.55, 2));
       group.add(...this.groundLights);
       this.parts = [];
-      this.loading = false;
-      this.loadFailed = false;
       this.elapsed = 0;
       this.visibility = 0;
       this.transform = new Ry.Object3D();
+      this.ready = this.load();
     }
     async load() {
-      this.loading = true;
+      const [gltf, glowTexture] = await Promise.allSettled([loadWithModelTimeout(signal => loadModelGlb(new CharacterGLTFLoader(), MODEL_URL.href, signal), ({
+        scene
+      }) => disposeModel(scene)), loadWithModelTimeout(signal => loadModelTexture(new Ry.TextureLoader(), GLOW_URL.href, signal), texture => texture.dispose())]);
+      const slots = createFlightSlots(this.ctx);
+      const opacity = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
+      const flame = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
+      const scene = gltf.value?.scene;
       try {
-        const [{
-          scene
-        }, glowTexture] = await Promise.all([new CharacterGLTFLoader().loadAsync(MODEL_URL.href), new Ry.TextureLoader().loadAsync(GLOW_URL.href).catch(() => null)]);
-        const slots = createFlightSlots(this.ctx);
-        const opacity = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
-        const flame = new Ry.InstancedBufferAttribute(new Float32Array(slots.length), 1).setUsage(Ry.DynamicDrawUsage);
-        const parts = instanceLanternModel(scene, opacity, flame, glowTexture);
-        this.group.add(...parts);
-        this.slots = slots;
-        this.opacity = opacity;
-        this.flame = flame;
-        this.parts = parts;
+        if (!scene) throw gltf.reason ?? new Error("Missing sky lantern scene.");
+        this.parts = instanceLanternModel(scene, opacity, flame, glowTexture.value);
       } catch (error) {
-        this.loadFailed = true;
-        console.warn("[sky-lanterns] Could not load the Aholo Lux3D model.", error);
-      } finally {
-        this.loading = false;
+        if (scene) disposeModel(scene);
+        glowTexture.value?.dispose();
+        const fallback = createFallbackLantern();
+        this.parts = instanceLanternModel(fallback, opacity, flame);
+        disposeModel(fallback);
+        console.warn("[sky-lanterns] Using procedural lanterns:", error);
       }
+      this.group.add(...this.parts);
+      this.slots = slots;
+      this.opacity = opacity;
+      this.flame = flame;
     }
     update(dt) {
+      if (!this.parts.length) return;
       const selected = this.ctx.weather.currentScenario === "lanterns";
-      if (!selected) this.loadFailed = false;
-      if (!this.parts.length) {
-        if (selected && !this.loading && !this.loadFailed) this.load();
-        return;
-      }
       const darkness = smoothstep(0.14, 0.85, this.ctx.world.night);
       const target = selected ? darkness : 0;
       this.visibility = damp(this.visibility, target, 1.35, dt);
@@ -38830,6 +38918,33 @@ vec3 scarecrowDeformedNormal(vec3 source, vec3 sourceNormal) {
       assets: SCARECROW_ASSETS
     });
   }
+  function createFallbackScarecrow(ctx) {
+    const root = new ThreeGroup();
+    root.name = "procedural-scarecrow";
+    const wood = new Ry.MeshStandardMaterial({
+      color: 0x69503b
+    });
+    const cloth = new Ry.MeshStandardMaterial({
+      color: 0x804a38
+    });
+    const straw = new Ry.MeshStandardMaterial({
+      color: 0xc9a469
+    });
+    for (const material of [wood, cloth, straw]) bindImportedWeather(material, ctx);
+    function add(geometry, material, y) {
+      const mesh = new ThreeMesh(geometry, material);
+      mesh.position.y = y;
+      mesh.castShadow = mesh.receiveShadow = true;
+      root.add(mesh);
+    }
+    add(new Ry.BoxGeometry(0.05, 0.8, 0.05), wood, 0.4);
+    add(new Ry.BoxGeometry(0.88, 0.09, 0.12), cloth, 0.62);
+    add(new Ry.CylinderGeometry(0.16, 0.21, 0.31, 8), cloth, 0.52);
+    add(new Ry.SphereGeometry(0.125, 8, 6), straw, 0.77);
+    add(new Ry.CylinderGeometry(0.16, 0.26, 0.13, 10), straw, 0.935);
+    root.scale.setScalar(FARM.scarecrow.height);
+    return root;
+  }
   class FarmScarecrow {
     constructor(ctx, parent = ctx.scene, {
       loader = loadScarecrowModel
@@ -38846,6 +38961,14 @@ vec3 scarecrowDeformedNormal(vec3 source, vec3 sourceNormal) {
       this.models = null;
       this.depthMaterial = null;
       this.motion = new ScarecrowMotion(ctx);
+      const {
+        x,
+        z,
+        yaw,
+        burial
+      } = FARM.scarecrow;
+      this.group.position.set(x, terrainHeight(x, z) - burial, z);
+      this.group.rotation.y = yaw;
       parent.add(this.group);
       this.ready = this._load(ctx, loader);
     }
@@ -38860,11 +38983,7 @@ vec3 scarecrowDeformedNormal(vec3 source, vec3 sourceNormal) {
         const asset = models.get("scarecrow");
         if (!asset?.geometry || !asset.material || !(asset.size?.y > 0)) throw new Error("Invalid scarecrow model");
         const {
-          x,
-          z,
-          yaw,
-          height,
-          burial
+          height
         } = FARM.scarecrow;
         const center = asset.bounds.getCenter(new ThreeVector3());
         const scale = height / asset.size.y;
@@ -38879,8 +38998,6 @@ vec3 scarecrowDeformedNormal(vec3 source, vec3 sourceNormal) {
         bindScarecrowMotion(mesh.material, asset, this.motion.uniforms);
         bindScarecrowMotion(this.depthMaterial, asset, this.motion.uniforms);
         mesh.customDepthMaterial = this.depthMaterial;
-        this.group.position.set(x, terrainHeight(x, z) - burial, z);
-        this.group.rotation.y = yaw;
         this.group.add(mesh);
         this.group.updateMatrixWorld(true);
         this.mesh = mesh;
@@ -38899,9 +39016,19 @@ vec3 scarecrowDeformedNormal(vec3 source, vec3 sourceNormal) {
         this.depthMaterial = null;
         this.motion.dispose();
         if (!this.disposed) {
-          this.stats.model = "failed";
-          this.stats.error = error.message;
-          console.error("[farm] Could not load scarecrow:", error);
+          this.fallback = createFallbackScarecrow(ctx);
+          this.group.add(this.fallback);
+          Object.assign(this.stats, {
+            model: "fallback",
+            count: 1,
+            height: FARM.scarecrow.height,
+            drawCalls: this.fallback.children.length,
+            triangles: this.fallback.children.reduce((sum, {
+              geometry
+            }) => sum + geometry.index.count / 3, 0),
+            error: error.message
+          });
+          console.warn("[farm] Using procedural scarecrow:", error);
         }
         return false;
       }
@@ -38915,6 +39042,7 @@ vec3 scarecrowDeformedNormal(vec3 source, vec3 sourceNormal) {
       this.motion.dispose();
       this.group.removeFromParent();
       this.group.clear();
+      if (this.fallback) disposeModel(this.fallback);
       if (this.models) disposeImportedModels(this.models);
       this.models = null;
       this.mesh = null;
@@ -40107,7 +40235,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       if (!ruins.disposed) {
         ruins.stats.model = "failed";
         ruins.stats.modelError = error.message;
-        console.error("[ruins] Keeping procedural fallback:", error);
+        console.warn("[ruins] Keeping procedural fallback:", error);
       }
       return false;
     }
@@ -41080,14 +41208,44 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     };
   }
   async function loadCharacterModel() {
+    let gltf;
     try {
-      const gltf = await new CharacterGLTFLoader().loadAsync(CHARACTER_MODEL_URL.href);
+      gltf = await loadWithModelTimeout(signal => loadModelGlb(new CharacterGLTFLoader(), CHARACTER_MODEL_URL.href, signal), ({
+        scene
+      }) => disposeModel(scene));
       return prepareCharacterModel(gltf);
     } catch (error) {
+      if (gltf?.scene) disposeModel(gltf.scene);
       throw new Error(`无法加载旅行者骨骼模型：${error.message || String(error)}`, {
         cause: error
       });
     }
+  }
+  function createFallbackCharacter() {
+    const root = new Ry.Group();
+    root.name = "procedural-traveler";
+    const coat = new Ry.MeshStandardMaterial({
+      color: 0x5c7159
+    });
+    const trousers = new Ry.MeshStandardMaterial({
+      color: 0x393532
+    });
+    const head = new Ry.MeshStandardMaterial({
+      color: 0xca9d78
+    });
+    function add(geometry, material, x, y, z = 0) {
+      const mesh = new Ry.Mesh(geometry, material);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = mesh.receiveShadow = true;
+      root.add(mesh);
+    }
+    add(new Ry.CylinderGeometry(0.15, 0.19, 0.43, 8), coat, 0, 0.46);
+    add(new Ry.SphereGeometry(0.13, 8, 6), head, 0, 0.8);
+    add(new Ry.CylinderGeometry(0.075, 0.075, 0.3, 6), trousers, -0.09, 0.15);
+    add(new Ry.CylinderGeometry(0.075, 0.075, 0.3, 6), trousers, 0.09, 0.15);
+    add(new Ry.BoxGeometry(0.22, 0.3, 0.12), trousers, 0, 0.48, 0.16);
+    root.scale.setScalar(CHARACTER_MODEL_HEIGHT / 0.93);
+    return root;
   }
 }
 {
@@ -41401,28 +41559,6 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
 {
   const CHARACTER_WANDER_RADIUS = 0.6;
   const CHARACTER_WANDER_SPEED = 0.12;
-  function disposeCharacterRoot(root) {
-    const geometries = new Set();
-    const materials = new Set();
-    const textures = new Set();
-    const skeletons = new Set();
-    root.traverse(object => {
-      if (object.geometry) geometries.add(object.geometry);
-      if (object.skeleton) skeletons.add(object.skeleton);
-      for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-        if (!material) continue;
-        materials.add(material);
-        for (const value of Object.values(material)) {
-          if (value?.isTexture) textures.add(value);
-        }
-      }
-    });
-    root.removeFromParent();
-    for (const skeleton of skeletons) skeleton.dispose();
-    for (const geometry of geometries) geometry.dispose();
-    for (const material of materials) material.dispose();
-    for (const texture of textures) texture.dispose();
-  }
   class CharacterSystem {
     constructor(ctx, {
       loader = loadCharacterModel
@@ -41482,7 +41618,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         model = await loader();
         if (!model?.root?.isObject3D || !Array.isArray(model.animations)) throw new Error("Character asset is missing its scene or animation clips");
         if (this.disposed) {
-          disposeCharacterRoot(model.root);
+          disposeModel(model.root);
           return false;
         }
         this.model = model.root;
@@ -41500,13 +41636,22 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         this.syncVisual();
         return true;
       } catch (error) {
-        if (model?.root?.isObject3D) disposeCharacterRoot(model.root);
         this.animation?.dispose();
         this.animation = null;
         this.model = null;
-        this.stats.model = this.disposed ? "disposed" : "failed";
+        this.visualRoot = null;
+        this.profile = null;
+        if (model?.root?.isObject3D) {
+          model.root.removeFromParent();
+          disposeModel(model.root);
+        }
+        if (this.disposed) return false;
+        this.model = createFallbackCharacter();
+        this.group.add(this.model);
+        this.stats.model = "fallback";
         this.stats.error = error.message;
-        if (!this.disposed) console.error("[character] Could not load protagonist:", error);
+        console.warn("[character] Using procedural traveler:", error);
+        this.syncVisual();
         return false;
       }
     }
@@ -41711,7 +41856,10 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this.disposed = true;
       this.drag.dispose();
       this.animation?.dispose();
-      if (this.model) disposeCharacterRoot(this.model);
+      if (this.model) {
+        this.model.removeFromParent();
+        disposeModel(this.model);
+      }
       this.group.removeFromParent();
       this.model = null;
       this.animation = null;
@@ -42053,7 +42201,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       this._direction = new ThreeVector3();
       this._rotation = new ThreeEuler(0, 0, 0, "YXZ");
       this.ready = false;
-      Promise.allSettled([ctx.modules.alpineTown?.modelsReady, ctx.modules.farm?.scarecrow?.ready, ctx.modules.mountainRuins?.modelsReady, ctx.modules.character?.ready]).then(() => {
+      ctx.assetsReady.then(() => {
         this.ready = true;
       });
       this._listen(window, "keydown", event => this._key(event, true), true);
@@ -42761,28 +42909,6 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
 {
   const THUMBNAIL_SIZE = 192;
   const CACHE_LIMIT = 64;
-  function disposeModel(...models) {
-    const resources = new Set();
-    const images = new Set();
-    for (const model of models) {
-      model.traverse(object => {
-        if (object.geometry) resources.add(object.geometry);
-        if (object.skeleton) resources.add(object.skeleton);
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        for (const material of materials) {
-          if (!material || resources.has(material)) continue;
-          resources.add(material);
-          for (const value of Object.values(material)) {
-            if (!value?.isTexture) continue;
-            resources.add(value);
-            if (value.image?.close) images.add(value.image);
-          }
-        }
-      });
-    }
-    for (const resource of resources) resource.dispose();
-    for (const image of images) image.close();
-  }
   class ModelThumbnails {
     constructor() {
       this.loader = new CharacterGLTFLoader();
@@ -43071,7 +43197,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       ctx.events.on("tap", () => {
         if (this.selectedEntry) this._selectPlaced(null);
       });
-      this._restoreCurrentLayout();
+      this.savedLayoutReady = this._restoreCurrentLayout();
     }
     _build() {
       this.launch = el("button", "wg-aholo-launch");
@@ -43395,7 +43521,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         } = this.saves.load();
         if (!current.length) return;
         this.pendingLayout = current;
-        this._applyLayout(current, "已恢复上次摆放。", false);
+        return this._applyLayout(current, "已恢复上次摆放。", false);
       } catch {
         this.layoutNotice = "暂时无法读取上次布局。";
       }
@@ -43792,7 +43918,9 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
       }
       const key = `${url}|${height}`;
       if (!this.loadingTemplates.has(key)) {
-        const loading = MODEL_LOADER.loadAsync(resolveExampleAsset(url)).then(gltf => {
+        const loading = loadWithModelTimeout(signal => loadModelGlb(MODEL_LOADER, resolveExampleAsset(url), signal), ({
+          scene
+        }) => disposeModel(scene)).then(gltf => {
           const template = this._prepareModel(gltf, {
             ...meta,
             height
@@ -44669,7 +44797,7 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
   const runtimeErrors = [];
   window.addEventListener("error", event => runtimeErrors.push(String(event.message || event)));
   window.addEventListener("unhandledrejection", event => runtimeErrors.push(String(event.reason)));
-  function bootWeatherglass() {
+  async function bootWeatherglass() {
     installCloudShadowPatch();
     const canvas = document.getElementById("scene"),
       quality = new QualityController(appParams),
@@ -44720,6 +44848,17 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
         console.error(`[boot] module "${moduleName}" failed to initialise`, error), runtimeErrors.push(`${moduleName}: ${error.message}`);
       }
     }
+    const modelTasks = [ctx.modules.alpineTown?.modelsReady, ctx.modules.farm?.scarecrow?.ready, ctx.modules.mountainRuins?.modelsReady, ctx.modules.character?.ready, ctx.modules.sky?.lanterns?.ready, ctx.modules.aholo?.savedLayoutReady].filter(Boolean);
+    const loadingStatus = document.querySelector(".veil-sub");
+    let settledModels = 0;
+    function showModelProgress() {
+      loadingStatus.textContent = `正在准备模型 · ${settledModels} / ${modelTasks.length}`;
+    }
+    if (modelTasks.length) showModelProgress();
+    ctx.assetsReady = Promise.allSettled(modelTasks.map(task => task.finally(() => {
+      settledModels++;
+      showModelProgress();
+    })));
     const scenarioName = Object.hasOwn(SCENARIOS, appParams.get("scenario")) ? appParams.get("scenario") : "calm";
     SCENARIOS[scenarioName] && applyScenario(ctx, scenarioName), appParams.has("season") && (world.season = parseFloat(appParams.get("season"))), appParams.has("time") && (world.timeOfDay = parseFloat(appParams.get("time"))), appParams.has("temp") && (world.tempOffset = parseFloat(appParams.get("temp"))), appParams.has("tool") && ctx.input.setTool(appParams.get("tool")), appParams.get("ui") === "0" && document.body.classList.add("no-ui");
     world.dayCycle = appParams.get("dayCycle") === "1";
@@ -44864,14 +45003,17 @@ vec3 farmNormal(vec3 n, vec3 local, vec2 bend) {
     }
     if (import.meta.env.DEV && appParams.get("inspection") === "models") setupModelInspection(ctx);
     if (import.meta.env.DEV && appParams.get("inspection") === "willows") setupWillowInspection(ctx);
+    ctx.input.setEnabled(false);
+    await ctx.assetsReady;
+    loadingStatus.textContent = "正在呈现山谷…";
+    ctx.input.setEnabled(true);
+    previousFrameTimeMs = performance.now();
     const warmupSeconds = parseFloat(appParams.get("warm") || "0");
     stepSimulation(0), warmupSeconds > 0 && debugApi.simulate(warmupSeconds), !terrainInspectionEnabled && appParams.has("cam") && cameraRig.preset(appParams.get("cam"), !0), animateFrame();
   }
-  try {
-    bootWeatherglass();
-  } catch (error) {
+  bootWeatherglass().catch(error => {
     console.error("[boot] fatal", error), runtimeErrors.push(`fatal: ${error.message}`);
     const fatalMessage = document.getElementById("fatal");
     fatalMessage && (fatalMessage.textContent = "Windhaven Valley could not start: " + error.message, fatalMessage.style.display = "block");
-  }
+  });
 }

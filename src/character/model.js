@@ -1,4 +1,9 @@
 import { Ry } from "../vendor/three-runtime.js";
+import {
+  disposeModel,
+  loadModelGlb,
+  loadWithModelTimeout,
+} from "../core/model-loading.js";
 import { CharacterGLTFLoader } from "./gltf-loader.js";
 
 const CHARACTER_MODEL_HEIGHT = 0.2;
@@ -115,12 +120,20 @@ function prepareCharacterModel(gltf, yaw = CHARACTER_MODEL_YAW) {
 }
 
 async function loadCharacterModel() {
+  let gltf;
   try {
-    const gltf = await new CharacterGLTFLoader().loadAsync(
-      CHARACTER_MODEL_URL.href,
+    gltf = await loadWithModelTimeout(
+      (signal) =>
+        loadModelGlb(
+          new CharacterGLTFLoader(),
+          CHARACTER_MODEL_URL.href,
+          signal,
+        ),
+      ({ scene }) => disposeModel(scene),
     );
     return prepareCharacterModel(gltf);
   } catch (error) {
+    if (gltf?.scene) disposeModel(gltf.scene);
     throw new Error(
       `无法加载旅行者骨骼模型：${error.message || String(error)}`,
       { cause: error },
@@ -128,9 +141,31 @@ async function loadCharacterModel() {
   }
 }
 
+function createFallbackCharacter() {
+  const root = new Ry.Group();
+  root.name = "procedural-traveler";
+  const coat = new Ry.MeshStandardMaterial({ color: 0x5c7159 });
+  const trousers = new Ry.MeshStandardMaterial({ color: 0x393532 });
+  const head = new Ry.MeshStandardMaterial({ color: 0xca9d78 });
+  function add(geometry, material, x, y, z = 0) {
+    const mesh = new Ry.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = mesh.receiveShadow = true;
+    root.add(mesh);
+  }
+  add(new Ry.CylinderGeometry(0.15, 0.19, 0.43, 8), coat, 0, 0.46);
+  add(new Ry.SphereGeometry(0.13, 8, 6), head, 0, 0.8);
+  add(new Ry.CylinderGeometry(0.075, 0.075, 0.3, 6), trousers, -0.09, 0.15);
+  add(new Ry.CylinderGeometry(0.075, 0.075, 0.3, 6), trousers, 0.09, 0.15);
+  add(new Ry.BoxGeometry(0.22, 0.3, 0.12), trousers, 0, 0.48, 0.16);
+  root.scale.setScalar(CHARACTER_MODEL_HEIGHT / 0.93);
+  return root;
+}
+
 export {
   CHARACTER_MODEL_HEIGHT,
   CHARACTER_MODEL_YAW,
   loadCharacterModel,
   prepareCharacterModel,
+  createFallbackCharacter,
 };

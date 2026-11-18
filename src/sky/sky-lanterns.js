@@ -8,6 +8,12 @@ import {
   smoothstep,
 } from "../core/math.js";
 import { CharacterGLTFLoader } from "../character/gltf-loader.js";
+import {
+  disposeModel,
+  loadModelGlb,
+  loadModelTexture,
+  loadWithModelTimeout,
+} from "../core/model-loading.js";
 import { bindWindowGlow, updateWindowGlow } from "../render/window-glow.js";
 import { sampleLanternFlame } from "./lantern-light.js";
 
@@ -32,6 +38,8 @@ function createLanternMaterial(source, glowTexture) {
     alphaTest: source.alphaTest,
     side: source.side,
     vertexColors: source.vertexColors,
+    emissive: source.emissive ?? 0x000000,
+    emissiveIntensity: source.emissiveIntensity ?? 1,
     roughness: 1,
     metalness: 0,
     transparent: true,
@@ -128,6 +136,19 @@ function instanceLanternModel(scene, opacity, flame, glowTexture) {
   return parts;
 }
 
+function createFallbackLantern() {
+  const geometry = new Ry.CylinderGeometry(0.31, 0.4, 1, 8, 1, true);
+  const material = new Ry.MeshStandardMaterial({
+    color: 0xf7b05f,
+    emissive: 0xff8d32,
+    emissiveIntensity: 1.1,
+    side: Ry.DoubleSide,
+  });
+  const mesh = new Ry.Mesh(geometry, material);
+  mesh.name = "procedural-sky-lantern";
+  return mesh;
+}
+
 function createFlightSlots(ctx) {
   const random = createSeededRandom(54121);
   const [columns, rows] = ctx.quality.pick([7, 5], [8, 6], [9, 6]);
@@ -186,53 +207,60 @@ class SkyLanterns {
     );
     group.add(...this.groundLights);
     this.parts = [];
-    this.loading = false;
-    this.loadFailed = false;
     this.elapsed = 0;
     this.visibility = 0;
     this.transform = new Ry.Object3D();
+    this.ready = this.load();
   }
 
   async load() {
-    this.loading = true;
+    const [gltf, glowTexture] = await Promise.allSettled([
+      loadWithModelTimeout(
+        (signal) =>
+          loadModelGlb(new CharacterGLTFLoader(), MODEL_URL.href, signal),
+        ({ scene }) => disposeModel(scene),
+      ),
+      loadWithModelTimeout(
+        (signal) =>
+          loadModelTexture(new Ry.TextureLoader(), GLOW_URL.href, signal),
+        (texture) => texture.dispose(),
+      ),
+    ]);
+    const slots = createFlightSlots(this.ctx);
+    const opacity = new Ry.InstancedBufferAttribute(
+      new Float32Array(slots.length),
+      1,
+    ).setUsage(Ry.DynamicDrawUsage);
+    const flame = new Ry.InstancedBufferAttribute(
+      new Float32Array(slots.length),
+      1,
+    ).setUsage(Ry.DynamicDrawUsage);
+    const scene = gltf.value?.scene;
     try {
-      const [{ scene }, glowTexture] = await Promise.all([
-        new CharacterGLTFLoader().loadAsync(MODEL_URL.href),
-        new Ry.TextureLoader().loadAsync(GLOW_URL.href).catch(() => null),
-      ]);
-      const slots = createFlightSlots(this.ctx);
-      const opacity = new Ry.InstancedBufferAttribute(
-        new Float32Array(slots.length),
-        1,
-      ).setUsage(Ry.DynamicDrawUsage);
-      const flame = new Ry.InstancedBufferAttribute(
-        new Float32Array(slots.length),
-        1,
-      ).setUsage(Ry.DynamicDrawUsage);
-      const parts = instanceLanternModel(scene, opacity, flame, glowTexture);
-      this.group.add(...parts);
-      this.slots = slots;
-      this.opacity = opacity;
-      this.flame = flame;
-      this.parts = parts;
-    } catch (error) {
-      this.loadFailed = true;
-      console.warn(
-        "[sky-lanterns] Could not load the Aholo Lux3D model.",
-        error,
+      if (!scene) throw gltf.reason ?? new Error("Missing sky lantern scene.");
+      this.parts = instanceLanternModel(
+        scene,
+        opacity,
+        flame,
+        glowTexture.value,
       );
-    } finally {
-      this.loading = false;
+    } catch (error) {
+      if (scene) disposeModel(scene);
+      glowTexture.value?.dispose();
+      const fallback = createFallbackLantern();
+      this.parts = instanceLanternModel(fallback, opacity, flame);
+      disposeModel(fallback);
+      console.warn("[sky-lanterns] Using procedural lanterns:", error);
     }
+    this.group.add(...this.parts);
+    this.slots = slots;
+    this.opacity = opacity;
+    this.flame = flame;
   }
 
   update(dt) {
+    if (!this.parts.length) return;
     const selected = this.ctx.weather.currentScenario === "lanterns";
-    if (!selected) this.loadFailed = false;
-    if (!this.parts.length) {
-      if (selected && !this.loading && !this.loadFailed) this.load();
-      return;
-    }
 
     const darkness = smoothstep(0.14, 0.85, this.ctx.world.night);
     const target = selected ? darkness : 0;

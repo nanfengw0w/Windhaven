@@ -1,33 +1,9 @@
 import { CharacterGLTFLoader } from "../character/gltf-loader.js";
 import { Ry } from "../vendor/three-runtime.js";
+import { disposeModel } from "../core/model-loading.js";
 
 const THUMBNAIL_SIZE = 192;
 const CACHE_LIMIT = 64;
-
-function disposeModel(...models) {
-  const resources = new Set();
-  const images = new Set();
-  for (const model of models) {
-    model.traverse((object) => {
-      if (object.geometry) resources.add(object.geometry);
-      if (object.skeleton) resources.add(object.skeleton);
-      const materials = Array.isArray(object.material)
-        ? object.material
-        : [object.material];
-      for (const material of materials) {
-        if (!material || resources.has(material)) continue;
-        resources.add(material);
-        for (const value of Object.values(material)) {
-          if (!value?.isTexture) continue;
-          resources.add(value);
-          if (value.image?.close) images.add(value.image);
-        }
-      }
-    });
-  }
-  for (const resource of resources) resource.dispose();
-  for (const image of images) image.close();
-}
 
 class ModelThumbnails {
   constructor() {

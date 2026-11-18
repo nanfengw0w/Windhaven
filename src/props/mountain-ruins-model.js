@@ -187,7 +187,7 @@ async function attachMountainRuinModel(ruins, loader = loadMountainRuinAsset) {
     if (!ruins.disposed) {
       ruins.stats.model = "failed";
       ruins.stats.modelError = error.message;
-      console.error("[ruins] Keeping procedural fallback:", error);
+      console.warn("[ruins] Keeping procedural fallback:", error);
     }
     return false;
   }

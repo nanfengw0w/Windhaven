@@ -27,15 +27,8 @@ class PhotoModeController {
     this._listeners = [];
     this._direction = new ThreeVector3();
     this._rotation = new ThreeEuler(0, 0, 0, "YXZ");
-    // Initial asset replacement is asynchronous. Do not freeze a fallback
-    // building only to have its imported model appear midway through a shot.
     this.ready = false;
-    Promise.allSettled([
-      ctx.modules.alpineTown?.modelsReady,
-      ctx.modules.farm?.scarecrow?.ready,
-      ctx.modules.mountainRuins?.modelsReady,
-      ctx.modules.character?.ready,
-    ]).then(() => {
+    ctx.assetsReady.then(() => {
       this.ready = true;
     });
     this._listen(window, "keydown", (event) => this._key(event, true), true);

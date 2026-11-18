@@ -9,6 +9,10 @@ import {
 } from "../vendor/three-runtime.js";
 import { bindWindowGlow } from "../render/window-glow.js";
 import { bindMapClipping } from "./map-clipping.js";
+import {
+  loadWithModelTimeout,
+  loadModelTexture,
+} from "../core/model-loading.js";
 
 // Explicit URLs let Vite include and fingerprint every model in production.
 // Lit models carry a hand-curated window-glow atlas (painted from the
@@ -217,13 +221,21 @@ function disposeResources(geometries, materials, textures) {
 }
 
 /** Load shared resources only on explicit invocation; no scene mutations. */
-async function loadImportedModels(ctx, options = {}) {
+function loadImportedModels(ctx, options = {}) {
+  return loadWithModelTimeout(
+    (signal) => loadImportedModelSet(ctx, options, signal),
+    disposeImportedModels,
+  );
+}
+
+async function loadImportedModelSet(ctx, options, signal) {
   const fetchAsset = options.fetch ?? globalThis.fetch;
   if (typeof fetchAsset !== "function")
     throw new Error("Model loading requires fetch");
   const textureLoader = options.textureLoader ?? new Ry.TextureLoader();
   const loadTexture =
-    options.loadTexture ?? ((url) => textureLoader.loadAsync(url));
+    options.loadTexture ??
+    ((url) => loadModelTexture(textureLoader, url, signal));
   const maxAnisotropy = ctx.renderer?.capabilities?.getMaxAnisotropy?.() ?? 1;
   const anisotropy = Math.max(1, Math.min(8, maxAnisotropy));
   const models = new Map();
@@ -232,7 +244,7 @@ async function loadImportedModels(ctx, options = {}) {
   const textures = new Set();
   const results = await Promise.allSettled(
     (options.assets ?? MODEL_ASSETS).map(async (asset) => {
-      const response = await fetchAsset(asset.mesh.href);
+      const response = await fetchAsset(asset.mesh.href, { signal });
       if (!response.ok)
         throw new Error(
           `${asset.id}: model request failed (${response.status})`,
